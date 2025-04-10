@@ -1,0 +1,6 @@
+.env
+audios/
+config/
+opensearch-security/
+performance-analyzer/
+venv_librosa/
