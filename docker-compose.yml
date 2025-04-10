@@ -1,0 +1,47 @@
+version: '3.8'
+
+services:
+  opensearch:
+    image: opensearchproject/opensearch:latest
+    container_name: opensearch
+    environment:
+      - discovery.type=single-node
+      - OPENSEARCH_INITIAL_ADMIN_PASSWORD=${OPENSEARCH_ADMIN_PWD}
+      - OPENSEARCH_JAVA_OPTS=-Djava.security.manager=allow
+
+      # ✅ Désactiver la configuration automatique du plugin sécurité
+      - DISABLE_INSTALL_DEMO_CONFIG=true
+
+      # ✅ Configuration SSL correcte
+      - plugins.security.ssl.transport.pemcert_filepath=/usr/share/opensearch/config/certs/opensearch.crt
+      - plugins.security.ssl.transport.pemkey_filepath=/usr/share/opensearch/config/certs/opensearch.key
+      - plugins.security.ssl.transport.pemtrustedcas_filepath=/usr/share/opensearch/config/certs/ca.crt
+
+      - plugins.security.ssl.http.enabled=true
+      - plugins.security.ssl.http.pemcert_filepath=/usr/share/opensearch/config/certs/opensearch.crt
+      - plugins.security.ssl.http.pemkey_filepath=/usr/share/opensearch/config/certs/opensearch.key
+      - plugins.security.ssl.http.pemtrustedcas_filepath=/usr/share/opensearch/config/certs/ca.crt
+
+      # ✅ Sécurité OpenSearch
+      - plugins.security.allow_unsafe_democertificates=false
+      - plugins.security.allow_default_init_securityindex=true
+
+    env_file:
+      - .env
+
+    ports:
+      - "9200:9200"
+      - "9600:9600" # Port utilisé par Performance Analyzer
+
+    volumes:
+      - opensearch-data:/usr/share/opensearch/data
+      - ./config:/usr/share/opensearch/config # 📌 Fixé ici, plus de dossiers en double
+      - ./config/certs:/usr/share/opensearch/config/certs # 📌 Corrigé pour éviter la duplication
+      - ./opensearch-security:/usr/share/opensearch/config/opensearch-security
+      - ./opensearch-performance-analyzer:/usr/share/opensearch/config/opensearch-performance-analyzer
+
+    restart: always
+
+volumes:
+  opensearch-data:
+    driver: local
