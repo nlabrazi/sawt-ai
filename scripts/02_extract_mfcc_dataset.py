@@ -78,8 +78,6 @@ def process_file(file_info):
         if key in existing_keys:
             continue
 
-        # tqdm.write(f"🛠️  {imam} | Sourate {sourate} | Augmentation : {aug_name}")
-
         try:
             y_aug = aug_func(y, sr)
             mfcc_mean = extract_mfcc_from_audio(y=y_aug, sr=sr)
