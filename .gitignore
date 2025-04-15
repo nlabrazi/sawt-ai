@@ -1,7 +1,21 @@
+# Ignorer les fichiers de configuration
 .env
 .vscode
-audios/
+
+# Ignorer les dossiers de configuration
 config/
+venv_librosa/
 opensearch-security/
 performance-analyzer/
-venv_librosa/
+
+# Ignorer les dossiers de données
+audios/
+output/
+
+# Ignorer les fichiers compilés Python
+*.pyc
+__pycache__/
+
+# Fichiers d'archivage
+models/archive/
+mfcc_data/archive/

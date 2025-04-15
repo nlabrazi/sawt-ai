@@ -9,7 +9,7 @@ from keras.utils import to_categorical
 from keras.callbacks import EarlyStopping
 
 # 📥 Charger les données
-with open("mfcc_data/mfcc_data_augmented.jsonl", "r") as f:
+with open("mfcc_data/mfcc_data_v2.jsonl", "r") as f:
     data = [json.loads(line) for line in f]
 
 X = np.array([d["mfcc"] for d in data])
@@ -79,5 +79,6 @@ loss, accuracy = model.evaluate(X_test, y_test)
 print(f"🎯 Précision test : {accuracy * 100:.2f}%")
 
 # 💾 Sauvegarde du modèle
-model.save("models/model_cnn_imam_fixed.keras")
+# model.save("models/model_cnn_imam_fixed.keras")
+model.save("models/model_cnn_imam_v3.keras", save_format="keras")
 print("✅ Modèle sauvegardé dans models/model_cnn_imam_fixed.keras")

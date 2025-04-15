@@ -1,2 +1,29 @@
-librosa
-boto3
+# Core ML
+tensorflow==2.15.0
+keras==2.15.0
+scikit-learn==1.6.1
+numpy==1.26.4
+librosa==0.10.1
+numba==0.58.1
+joblib==1.3.2
+ml-dtypes==0.2.0
+
+# Transcription
+whisper @ git+https://github.com/openai/whisper.git
+ffmpeg-python==0.2.0
+
+# NLP
+sentence-transformers==2.5.1
+transformers==4.39.3
+rapidfuzz==3.6.1
+
+# Utilitaires
+rich==13.7.1
+tqdm==4.66.2
+termcolor==3.0.1
+requests==2.32.3
+
+# Pour compatibilité CUDA (optionnel, mais conseillé avec RTX 4070 Ti)
+tensorflow-io-gcs-filesystem>=0.23.1
+protobuf==4.25.6
+wrapt==1.14.1

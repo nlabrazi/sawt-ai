@@ -20,7 +20,7 @@ for entry in tqdm(data):
     if len(mfcc) == 13:
         try:
             mfcc_fixed = extract_mfcc_from_audio(
-                audio_path=entry["file_path"]
+                AUDIO_PATH=entry["file_path"]
             )
             entry["mfcc"] = mfcc_fixed
         except Exception as e:
