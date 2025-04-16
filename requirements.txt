@@ -20,7 +20,7 @@ rapidfuzz==3.6.1
 
 # Utilitaires
 rich==13.7.1
-tqdm==4.66.2
+tqdm==4.66.3
 termcolor==3.0.1
 requests==2.32.3
 
