@@ -15,7 +15,7 @@ ffmpeg-python==0.2.0
 
 # NLP
 sentence-transformers==2.5.1
-transformers==4.39.3
+transformers==4.48.0
 rapidfuzz==3.6.1
 
 # Utilitaires
