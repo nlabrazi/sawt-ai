@@ -1,3 +1,24 @@
+## [Unreleased] - 2025-04-18
+
+
+- 🔧 chore: update changelog
+- ✨ feat: improve CNN training with cleaned dataset and add accuracy plot output
+- 🔧 chore: adding to .gitignore unneeded folders & files
+- 🔧 chore: remove .vscode from repository and add to .gitignore
+- 📝 docs: add initial CHANGELOG for version 1.0.0
+- 🔸 first commit SawtAI
+- ✨ feat: add initial application files for sawt-ai
+
+## [Unreleased] - 2025-04-18
+
+
+- ✨ feat: improve CNN training with cleaned dataset and add accuracy plot output
+- 🔧 chore: adding to .gitignore unneeded folders & files
+- 🔧 chore: remove .vscode from repository and add to .gitignore
+- 📝 docs: add initial CHANGELOG for version 1.0.0
+- 🔸 first commit SawtAI
+- ✨ feat: add initial application files for sawt-ai
+
 # Changelog
 
 All notable changes to this project will be documented in this file.
