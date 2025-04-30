@@ -1,23 +1,6 @@
-<!-- Improved compatibility of back to top link: See: https://github.com/othneildrew/Best-README-Template/pull/73 -->
 <a name="readme-top"></a>
-<!--
-*** Thanks for checking out the Best-README-Template. If you have a suggestion
-*** that would make this better, please fork the repo and create a pull request
-*** or simply open an issue with the tag "enhancement".
-*** Don't forget to give the project a star!
-*** Thanks again! Now go create something AMAZING! :D
--->
-
-
 
 <!-- PROJECT SHIELDS -->
-<!--
-*** I'm using markdown "reference style" links for readability.
-*** Reference links are enclosed in brackets [ ] instead of parentheses ( ).
-*** See the bottom of this document for the declaration of the reference variables
-*** for contributors-url, forks-url, etc. This is an optional, concise syntax you may use.
-*** https://www.markdownguide.org/basic-syntax/#reference-style-links
--->
 [![Contributors][contributors-shield]][contributors-url]
 [![Forks][forks-shield]][forks-url]
 [![Stargazers][stars-shield]][stars-url]
@@ -34,118 +17,148 @@
     <li>
       <a href="#about-the-project">About The Project</a>
       <ul>
-        <li><a href="#built-with">Built With</a></li>
+        <li><a href="#️-description">Description</a></li>
+        <li><a href="#-planned-features">Planned Features</a></li>
+        <li><a href="#️-built-with">Built With</a></li>
       </ul>
     </li>
     <li>
-      <a href="#getting-started">Getting Started</a>
+      <a href="#-getting-started">Getting Started</a>
       <ul>
-        <li><a href="#prerequisites">Prerequisites</a></li>
-        <li><a href="#installation">Installation</a></li>
+        <li><a href="#-installation">Installation</a></li>
       </ul>
     </li>
-    <li><a href="#usage">Usage</a></li>
-    <li><a href="#roadmap">Roadmap</a></li>
-    <li><a href="#contributing">Contributing</a></li>
-    <li><a href="#license">License</a></li>
-    <li><a href="#contact">Contact</a></li>
-    <li><a href="#acknowledgments">Acknowledgments</a></li>
+    <li><a href="#-contributing">Contributing</a>
+      <ul>
+        <li><a href="#-license">License</a></li>
+        <li><a href="#-contact">Contact</a></li>
+      </ul>
+    </li>
   </ol>
 </details>
 
 
 
 <!-- ABOUT THE PROJECT -->
-## About The Project
+# 🧠 About The Project
 
-[![Product Name Screen Shot][product-screenshot]](https://nabil-labrazi.com)
+<p align="center">
+  <a href="https://nabil-labrazi.fr">
+    <img src="public/assets/images/screenshot.png" alt="Screenshot" width="100%" height="400" />
+  </a>
+</p>
 
-<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+<!-- DESCRIPTION -->
+### ℹ️ Description
+
+Sawt-AI is an AI-powered application designed to detect and classify Quranic verses from audio inputs. It leverages machine learning techniques to process and analyze audio data for accurate recognition.
+
+- 🎧 Audio Processing: Utilizes MFCC (Mel-Frequency Cepstral Coefficients) for feature extraction from audio files.
+- 🧠 Machine Learning Models: Implements trained models to classify and identify Quranic verses.
+- 📊 Dataset Management: Includes structured datasets for training and evaluation purposes.
+
+---
+
+## 🚀 Planned Features
+
+- 🔍 Enhanced Accuracy: Improve model precision through advanced training techniques.
+- 🌐 Web Interface: Develop a user-friendly web interface for easier interaction.
+- 📱 Mobile Compatibility: Optimize the application for mobile device usage.
+- 🗣️ Real-time Detection: Enable real-time audio analysis and verse recognition.
+- 🛠️ Customization Options: Allow users to customize detection parameters and settingsd.
+
+---
 
 
 
-### Built With
+### 🏗️ Built With
 
 * [![Python][Python.io]][Python-url]
+* [![Docker][Docker.io]][Docker-url]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
 <!-- GETTING STARTED -->
-## Getting Started
+# ✅ Getting Started
 
-This is an example of how you may give instructions on setting up your project locally.
-To get a local copy up and running follow these simple example steps.
+This project runs on 🐍 Python. Ensure you have Python and Docker installed on your system before proceeding with the installation.
+Below are installation instructions for a Python-based project.
 
-### Prerequisites
+### 💻 Installation
 
-This is an example of how to list things you need to use the software and how to install them.
-* npm
-  ```sh
-  npm install npm@latest -g
-  ```
+```bash
+# Clone the repository
+git clone https://github.com/nlabrazi/sawt-ai.git
+cd sawt-ai
 
-### Installation
+# Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows use `venv\Scripts\activate`
 
-1. Get a free API Key at [https://example.com](https://example.com)
-2. Clone the repo
-   ```sh
-   git clone https://github.com/nlabrazi/sawt-ai.git
-   ```
-3. Install NPM packages
-   ```sh
-   npm install
-   ```
-4. Enter your API in `config.js`
-   ```js
-   const API_KEY = 'ENTER YOUR API';
-   ```
+# Install dependencies
+pip install -r requirements.txt
+
+# Set up environment variables
+cp .env.example .env
+# Update the .env file with your configuration
+
+# Run the application
+python main.py
+
+```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
 <!-- CONTRIBUTING -->
-## Contributing
+# 🙌 Contributing
 
-Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+We welcome all contributions! 🛠️ Whether it's fixing a typo, improving documentation, or suggesting a new feature — **every little bit helps**.
 
-If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
-Don't forget to give the project a star! Thanks again!
+To contribute:
+1. 🍴 Fork the repo
+2. 🔧 Create a feature branch (`git checkout -b feat/my-feature`)
+3. 💬 Commit your changes (`git commit -m "feat: add my feature"`)
+4. 🚀 Push to your fork (`git push origin feat/my-feature`)
+5. 📨 Open a pull request
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+Thanks a lot for your support! 💙
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
 <!-- LICENSE -->
-## License
+### 📄 License
 
-Distributed under the MIT License. See `LICENSE.txt` for more information.
+This project is licensed under the **MIT License** 📜.
+You're free to use, modify, and distribute it — just remember to give credit 🤝.
+
+See the full license in [`LICENSE.txt`](https://en.wikipedia.org/wiki/MIT_License) for details.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
 <!-- CONTACT -->
-## Contact
+### 📬 Contact
 
-Your Name - [@Nabil71405502](https://twitter.com/Nabil71405502) - na.labrazi@gmail.com
-
-Project Link: [https://github.com/nlabrazi/sawt-ai](https://github.com/nlabrazi/sawt-ai)
+- 👤 [Linkedin][linkedin-url]
+- 🐦 [@Nabil](https://twitter.com/Nabil71405502)
+- 📧 na.labrazi@gmail.com
+- 🔗 [Portfolio](https://nabil-labrazi.fr)
+- 📁 [Project Repository](https://github.com/nlabrazi/sawt-ai)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
 
 
 <!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
 [contributors-shield]: https://img.shields.io/github/contributors/nlabrazi/sawt-ai.svg?style=for-the-badge
 [contributors-url]: https://github.com/nlabrazi/sawt-ai/graphs/contributors
 [forks-shield]: https://img.shields.io/github/forks/nlabrazi/sawt-ai.svg?style=for-the-badge
@@ -158,7 +171,7 @@ Project Link: [https://github.com/nlabrazi/sawt-ai](https://github.com/nlabrazi/
 [license-url]: https://github.com/nlabrazi/sawt-ai/blob/master/LICENSE.txt
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/nabil-labrazi
-[product-screenshot]: /public/assets/images/screenshot.png
+[product-screenshot]: app/assets/images/screenshot.png
 [Next.js]: https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white
 [Next-url]: https://nextjs.org/
 [Rails.js]: https://img.shields.io/badge/rails-%23CC0000.svg?style=for-the-badge&logo=ruby-on-rails&logoColor=white
@@ -193,3 +206,13 @@ Project Link: [https://github.com/nlabrazi/sawt-ai](https://github.com/nlabrazi/
 [Prisma-url]: https://www.prisma.io/
 [Python.io]: https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54
 [Python-url]: https://www.python.org/
+[Railway.io]: https://img.shields.io/badge/Railway-000000?style=for-the-badge&logo=railway&logoColor=white
+[Railway-url]: https://railway.app/
+[Docker.io]: https://img.shields.io/badge/docker-2496ED?style=for-the-badge&logo=docker&logoColor=white
+[Docker-url]: https://www.docker.com/
+[PostgreSQL.js]: https://img.shields.io/badge/postgresql-316192?style=for-the-badge&logo=postgresql&logoColor=white
+[PostgreSQL-url]: https://www.postgresql.org/
+[TailwindCSS.js]: https://img.shields.io/badge/tailwindcss-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white
+[TailwindCSS-url]: https://tailwindcss.com/
+[Stimulus.js]: https://img.shields.io/badge/stimulus-0a0a0a?style=for-the-badge&logo=stimulus&logoColor=white
+[Stimulus-url]: https://stimulus.hotwired.dev/
