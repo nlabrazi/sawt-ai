@@ -1,27 +1,15 @@
 # ROLE
 # ----
-# Trouve le verset ou groupe de versets le plus proche
-# à partir des segments retournés par Whisper.
+# Trouve le meilleur match de versets à partir des segments de transcription.
 
-import json
 from difflib import SequenceMatcher
 
+from app.core.model_loader import get_quran_versets
 from app.utils.normalize_arabic import normalize_arabic
 
 
-VERSes_PATH = "assets/quran_versets.json"
-
-
-def load_versets(path: str = VERSes_PATH):
-    with open(path, "r", encoding="utf-8") as f:
-        return json.load(f)
-
-
 def detect_versets(segments):
-    """
-    Reçoit les segments Whisper et retourne le meilleur match coranique.
-    """
-    versets = load_versets()
+    versets_data = get_quran_versets()
 
     transcription = normalize_arabic(
         " ".join(segment["text"] for segment in segments).strip()
@@ -29,7 +17,7 @@ def detect_versets(segments):
 
     matches = []
 
-    for sourate in versets:
+    for sourate in versets_data:
         verses = sourate["verses"]
 
         for window_size in [1, 2, 3, 4, 5]:
