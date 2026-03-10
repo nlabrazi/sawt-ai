@@ -1,0 +1,21 @@
+version: "3.9"
+
+services:
+
+  api:
+    build: ./api
+    container_name: sawt_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./api:/app
+
+  ui:
+    image: node:20
+    container_name: sawt_ui
+    working_dir: /app
+    volumes:
+      - .:/app
+    ports:
+      - "3000:3000"
+    command: npm run dev
