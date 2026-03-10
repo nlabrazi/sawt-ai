@@ -1,75 +1,218 @@
-# Nuxt Minimal Starter
+<a name="readme-top"></a>
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+<!-- PROJECT SHIELDS -->
+[![Contributors][contributors-shield]][contributors-url]
+[![Forks][forks-shield]][forks-url]
+[![Stargazers][stars-shield]][stars-url]
+[![Issues][issues-shield]][issues-url]
+[![MIT License][license-shield]][license-url]
+[![LinkedIn][linkedin-shield]][linkedin-url]
 
-## Setup
 
-Make sure to install dependencies:
+
+<!-- TABLE OF CONTENTS -->
+<details>
+  <summary>Table of Contents</summary>
+  <ol>
+    <li>
+      <a href="#about-the-project">About The Project</a>
+      <ul>
+        <li><a href="#️-description">Description</a></li>
+        <li><a href="#-planned-features">Planned Features</a></li>
+        <li><a href="#️-built-with">Built With</a></li>
+      </ul>
+    </li>
+    <li>
+      <a href="#-getting-started">Getting Started</a>
+      <ul>
+        <li><a href="#-installation">Installation</a></li>
+      </ul>
+    </li>
+    <li><a href="#-contributing">Contributing</a>
+      <ul>
+        <li><a href="#-license">License</a></li>
+        <li><a href="#-contact">Contact</a></li>
+      </ul>
+    </li>
+  </ol>
+</details>
+
+
+
+<!-- ABOUT THE PROJECT -->
+# 🧠 About The Project
+
+<p align="center">
+  <a href="https://nabil-labrazi.fr">
+    <img src="public/assets/images/screenshot.png" alt="Screenshot" width="100%" height="400" />
+  </a>
+</p>
+
+
+
+<!-- DESCRIPTION -->
+### ℹ️ Description
+
+Sawt-AI is an AI-powered application designed to detect and classify Quranic verses from audio inputs. It leverages machine learning techniques to process and analyze audio data for accurate recognition.
+
+- 🎧 Audio Processing: Utilizes MFCC (Mel-Frequency Cepstral Coefficients) for feature extraction from audio files.
+- 🧠 Machine Learning Models: Implements trained models to classify and identify Quranic verses.
+- 📊 Dataset Management: Includes structured datasets for training and evaluation purposes.
+
+---
+
+## 🚀 Planned Features
+
+- 🔍 Enhanced Accuracy: Improve model precision through advanced training techniques.
+- 🌐 Web Interface: Develop a user-friendly web interface for easier interaction.
+- 📱 Mobile Compatibility: Optimize the application for mobile device usage.
+- 🗣️ Real-time Detection: Enable real-time audio analysis and verse recognition.
+- 🛠️ Customization Options: Allow users to customize detection parameters and settingsd.
+
+---
+
+
+
+### 🏗️ Built With
+
+* [![Python][Python.io]][Python-url]
+* [![Docker][Docker.io]][Docker-url]
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- GETTING STARTED -->
+# ✅ Getting Started
+
+This project runs on 🐍 Python. Ensure you have Python and Docker installed on your system before proceeding with the installation.
+Below are installation instructions for a Python-based project.
+
+### 💻 Installation
 
 ```bash
-# npm
-npm install
+# Clone the repository
+git clone https://github.com/nlabrazi/sawt-ai.git
+cd sawt-ai
 
-# pnpm
-pnpm install
+# Create and activate a virtual environment
+python -m venv venv
+source venv/bin/activate  # On Windows use `venv\Scripts\activate`
 
-# yarn
-yarn install
+# Install dependencies
+pip install -r requirements.txt
 
-# bun
-bun install
+# Set up environment variables
+cp .env.example .env
+# Update the .env file with your configuration
+
+# Run the application
+python main.py
+
 ```
 
-## Development Server
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-Start the development server on `http://localhost:3000`:
 
-```bash
-# npm
-npm run dev
 
-# pnpm
-pnpm dev
+<!-- CONTRIBUTING -->
+# 🙌 Contributing
 
-# yarn
-yarn dev
+We welcome all contributions! 🛠️ Whether it's fixing a typo, improving documentation, or suggesting a new feature — **every little bit helps**.
 
-# bun
-bun run dev
-```
+To contribute:
+1. 🍴 Fork the repo
+2. 🔧 Create a feature branch (`git checkout -b feat/my-feature`)
+3. 💬 Commit your changes (`git commit -m "feat: add my feature"`)
+4. 🚀 Push to your fork (`git push origin feat/my-feature`)
+5. 📨 Open a pull request
 
-## Production
+Thanks a lot for your support! 💙
 
-Build the application for production:
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-```bash
-# npm
-npm run build
 
-# pnpm
-pnpm build
 
-# yarn
-yarn build
+<!-- LICENSE -->
+### 📄 License
 
-# bun
-bun run build
-```
+This project is licensed under the **MIT License** 📜.
+You're free to use, modify, and distribute it — just remember to give credit 🤝.
 
-Locally preview production build:
+See the full license in [`LICENSE.txt`](https://en.wikipedia.org/wiki/MIT_License) for details.
 
-```bash
-# npm
-npm run preview
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
 
-# pnpm
-pnpm preview
 
-# yarn
-yarn preview
 
-# bun
-bun run preview
-```
+<!-- CONTACT -->
+### 📬 Contact
 
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.
+- 👤 [Linkedin][linkedin-url]
+- 🐦 [@Nabil](https://twitter.com/Nabil71405502)
+- 📧 na.labrazi@gmail.com
+- 🔗 [Portfolio](https://nabil-labrazi.fr)
+- 📁 [Project Repository](https://github.com/nlabrazi/sawt-ai)
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
+
+
+
+<!-- MARKDOWN LINKS & IMAGES -->
+[contributors-shield]: https://img.shields.io/github/contributors/nlabrazi/sawt-ai.svg?style=for-the-badge
+[contributors-url]: https://github.com/nlabrazi/sawt-ai/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/nlabrazi/sawt-ai.svg?style=for-the-badge
+[forks-url]: https://github.com/nlabrazi/sawt-ai/network/members
+[stars-shield]: https://img.shields.io/github/stars/nlabrazi/sawt-ai.svg?style=for-the-badge
+[stars-url]: https://github.com/nlabrazi/sawt-ai/stargazers
+[issues-shield]: https://img.shields.io/github/issues/nlabrazi/sawt-ai.svg?style=for-the-badge
+[issues-url]: https://github.com/nlabrazi/sawt-ai/issues
+[license-shield]: https://img.shields.io/github/license/nlabrazi/sawt-ai.svg?style=for-the-badge
+[license-url]: https://github.com/nlabrazi/sawt-ai/blob/master/LICENSE.txt
+[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
+[linkedin-url]: https://linkedin.com/in/nabil-labrazi
+[product-screenshot]: app/assets/images/screenshot.png
+[Next.js]: https://img.shields.io/badge/next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white
+[Next-url]: https://nextjs.org/
+[Rails.js]: https://img.shields.io/badge/rails-%23CC0000.svg?style=for-the-badge&logo=ruby-on-rails&logoColor=white
+[Rails-url]: https://rubyonrails.org/
+[React.js]: https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB
+[React-url]: https://reactjs.org/
+[Ruby.js]: https://img.shields.io/badge/ruby-%23CC342D.svg?style=for-the-badge&logo=ruby&logoColor=white
+[Ruby-url]: https://www.ruby-lang.org/en/
+[Vue.js]: https://img.shields.io/badge/Vue.js-35495E?style=for-the-badge&logo=vuedotjs&logoColor=4FC08D
+[Vue-url]: https://vuejs.org/
+[Angular.io]: https://img.shields.io/badge/Angular-DD0031?style=for-the-badge&logo=angular&logoColor=white
+[Angular-url]: https://angular.io/
+[Svelte.dev]: https://img.shields.io/badge/Svelte-4A4A55?style=for-the-badge&logo=svelte&logoColor=FF3E00
+[Svelte-url]: https://svelte.dev/
+[Laravel.com]: https://img.shields.io/badge/Laravel-FF2D20?style=for-the-badge&logo=laravel&logoColor=white
+[Laravel-url]: https://laravel.com
+[Bootstrap.com]: https://img.shields.io/badge/Bootstrap-563D7C?style=for-the-badge&logo=bootstrap&logoColor=white
+[Bootstrap-url]: https://getbootstrap.com
+[JQuery.com]: https://img.shields.io/badge/jQuery-0769AD?style=for-the-badge&logo=jquery&logoColor=white
+[JQuery-url]: https://jquery.com
+[Javascript.js]: https://img.shields.io/badge/javascript-%23323330.svg?style=for-the-badge&logo=javascript&logoColor=%23F7DF1E
+[Javascript-url]: https://developer.mozilla.org/en-US/docs/Web/JavaScript
+[NodeJs.js]: https://img.shields.io/badge/node.js-6DA55F?style=for-the-badge&logo=node.js&logoColor=white
+[NodeJs-url]: https://nodejs.org/en/
+[TypeScript.js]: https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white
+[TypeScript-url]: https://www.typescriptlang.org/
+[RxJS.js]: https://img.shields.io/badge/rxjs-%23B7178C.svg?style=for-the-badge&logo=reactivex&logoColor=white
+[RxJS-url]: https://rxjs.dev/
+[NestJs.io]: https://img.shields.io/badge/nestjs-E0234E?style=for-the-badge&logo=nestjs&logoColor=white
+[NestJs-url]: https://nestjs.com/
+[Prisma.io]: https://img.shields.io/badge/Prisma-3982CE?style=for-the-badge&logo=Prisma&logoColor=white
+[Prisma-url]: https://www.prisma.io/
+[Python.io]: https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54
+[Python-url]: https://www.python.org/
+[Railway.io]: https://img.shields.io/badge/Railway-000000?style=for-the-badge&logo=railway&logoColor=white
+[Railway-url]: https://railway.app/
+[Docker.io]: https://img.shields.io/badge/docker-2496ED?style=for-the-badge&logo=docker&logoColor=white
+[Docker-url]: https://www.docker.com/
+[PostgreSQL.js]: https://img.shields.io/badge/postgresql-316192?style=for-the-badge&logo=postgresql&logoColor=white
+[PostgreSQL-url]: https://www.postgresql.org/
+[TailwindCSS.js]: https://img.shields.io/badge/tailwindcss-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white
+[TailwindCSS-url]: https://tailwindcss.com/
+[Stimulus.js]: https://img.shields.io/badge/stimulus-0a0a0a?style=for-the-badge&logo=stimulus&logoColor=white
+[Stimulus-url]: https://stimulus.hotwired.dev/
