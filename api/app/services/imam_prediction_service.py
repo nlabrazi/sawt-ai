@@ -33,5 +33,5 @@ def predict_imam(audio_path: str):
             for idx in top_indices
         ]
 
-    except Exception as e:
-        return {"error": f"Erreur prédiction imam: {str(e)}"}
+    except Exception:
+        return []
