@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.routes.recognize import router as recognize_router
+from app.routes.feedback import router as feedback_router
 from app.core.model_loader import load_all_models
 
 app = FastAPI()
@@ -21,6 +22,7 @@ def startup_event():
 
 
 app.include_router(recognize_router)
+app.include_router(feedback_router)
 
 
 @app.get("/health")

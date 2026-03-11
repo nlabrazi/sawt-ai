@@ -2,8 +2,9 @@
 // ROLE
 // ----
 // Formulaire de feedback utilisateur pour confirmer
-// ou corriger le verset détecté.
+// ou corriger le verset détecté, puis envoyer le tout au backend.
 
+import { useFeedback } from '~/composables/useFeedback'
 import type { RecognizeResponse } from '~/composables/useRecognition'
 
 const props = defineProps<{
@@ -18,33 +19,55 @@ const correctedStartVerse = ref('')
 const correctedEndVerse = ref('')
 const correctionComment = ref('')
 
-function submitPositiveFeedback() {
-  isCorrect.value = true
-  feedbackSent.value = true
+const { sending, error, sendFeedback } = useFeedback()
 
-  console.log('Feedback positif', {
-    is_correct: true,
-    detected_verse: props.result.verse,
-    transcription_text: props.result.transcription_text,
-  })
+async function submitPositiveFeedback() {
+  try {
+    isCorrect.value = true
+
+    await sendFeedback({
+      is_correct: true,
+      transcription_text: props.result.transcription_text,
+      detected_verse: props.result.verse,
+      correction: null,
+      comment: null,
+    })
+
+    feedbackSent.value = true
+  } catch {
+    // erreur déjà gérée dans le composable
+  }
 }
 
 function submitNegativeFeedback() {
   isCorrect.value = false
 }
 
-function submitCorrection() {
-  feedbackSent.value = true
+async function submitCorrection() {
+  const startVerse = Number(correctedStartVerse.value)
+  const endVerse = Number(correctedEndVerse.value)
 
-  console.log('Feedback négatif avec correction', {
-    is_correct: false,
-    transcription_text: props.result.transcription_text,
-    detected_verse: props.result.verse,
-    corrected_sourate: correctedSourate.value,
-    corrected_start_verse: correctedStartVerse.value,
-    corrected_end_verse: correctedEndVerse.value,
-    correction_comment: correctionComment.value,
-  })
+  if (!correctedSourate.value.trim() || !Number.isInteger(startVerse) || !Number.isInteger(endVerse)) {
+    return
+  }
+
+  try {
+    await sendFeedback({
+      is_correct: false,
+      transcription_text: props.result.transcription_text,
+      detected_verse: props.result.verse,
+      correction: {
+        sourate_name: correctedSourate.value.trim(),
+        start_verse: startVerse,
+        end_verse: endVerse,
+      },
+      comment: correctionComment.value.trim() || null,
+    })
+
+    feedbackSent.value = true
+  } catch {
+    // erreur déjà gérée dans le composable
+  }
 }
 </script>
 
@@ -55,11 +78,11 @@ function submitCorrection() {
       <h3>Le verset détecté est-il correct&nbsp;?</h3>
 
       <div class="actions">
-        <button type="button" class="action-button success" @click="submitPositiveFeedback">
+        <button type="button" class="action-button success" :disabled="sending" @click="submitPositiveFeedback">
           Oui, c’est correct
         </button>
 
-        <button type="button" class="action-button danger" @click="submitNegativeFeedback">
+        <button type="button" class="action-button danger" :disabled="sending" @click="submitNegativeFeedback">
           Non, il faut corriger
         </button>
       </div>
@@ -67,18 +90,18 @@ function submitCorrection() {
       <div v-if="isCorrect === false" class="correction-form">
         <div class="field">
           <label for="sourate">Sourate correcte</label>
-          <input id="sourate" v-model="correctedSourate" type="text" placeholder="Ex: Al-Baqara" />
+          <input id="sourate" v-model="correctedSourate" type="text" placeholder="Ex: Al-Fatiha" />
         </div>
 
         <div class="field-row">
           <div class="field">
             <label for="start-verse">Verset début</label>
-            <input id="start-verse" v-model="correctedStartVerse" type="text" placeholder="Ex: 1" />
+            <input id="start-verse" v-model="correctedStartVerse" type="number" min="1" placeholder="Ex: 1" />
           </div>
 
           <div class="field">
             <label for="end-verse">Verset fin</label>
-            <input id="end-verse" v-model="correctedEndVerse" type="text" placeholder="Ex: 3" />
+            <input id="end-verse" v-model="correctedEndVerse" type="number" min="1" placeholder="Ex: 7" />
           </div>
         </div>
 
@@ -88,10 +111,14 @@ function submitCorrection() {
             placeholder="Précision utile pour corriger plus tard" />
         </div>
 
-        <button type="button" class="submit-button" @click="submitCorrection">
-          Envoyer la correction
+        <button type="button" class="submit-button" :disabled="sending" @click="submitCorrection">
+          {{ sending ? 'Envoi...' : 'Envoyer la correction' }}
         </button>
       </div>
+
+      <p v-if="error" class="error-message">
+        {{ error }}
+      </p>
     </template>
 
     <template v-else>
@@ -148,6 +175,12 @@ h3 {
 .action-button:hover,
 .submit-button:hover {
   transform: translateY(-1px);
+}
+
+.action-button:disabled,
+.submit-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .success {
@@ -218,6 +251,11 @@ textarea {
   margin-top: 12px;
   color: #cbd5e1;
   line-height: 1.6;
+}
+
+.error-message {
+  margin-top: 14px;
+  color: #fecaca;
 }
 
 @media (max-width: 640px) {
