@@ -44,7 +44,7 @@
 
 <p align="center">
   <a href="https://nabil-labrazi.fr">
-    <img src="public/assets/images/screenshot.png" alt="Screenshot" width="100%" height="400" />
+    <img src="ui/public/assets/images/screenshot.png" alt="Screenshot" width="100%" height="400" />
   </a>
 </p>
 
