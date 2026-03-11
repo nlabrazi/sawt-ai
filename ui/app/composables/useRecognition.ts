@@ -52,10 +52,17 @@ export function useRecognition() {
     }
   }
 
+  function reset() {
+    loading.value = false
+    error.value = null
+    result.value = null
+  }
+
   return {
     loading,
     error,
     result,
     recognizeAudio,
+    reset,
   }
 }
