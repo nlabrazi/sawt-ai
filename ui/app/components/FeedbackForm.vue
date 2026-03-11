@@ -193,6 +193,15 @@ textarea {
   background: rgba(2, 6, 23, 0.45);
   color: #fff;
   font: inherit;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+input:focus,
+textarea:focus {
+  outline: none;
+  border-color: rgba(96, 165, 250, 0.45);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
+  background: rgba(2, 6, 23, 0.62);
 }
 
 textarea {
