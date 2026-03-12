@@ -29,6 +29,7 @@ def detect_versets(segments):
                 matches.append({
                     "sourate_id": sourate["id"],
                     "sourate_name": sourate["name"],
+                    "transliteration": sourate.get("transliteration", ""),
                     "start_verse": chunk[0]["id"],
                     "end_verse": chunk[-1]["id"],
                     "text": combined_text,

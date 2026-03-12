@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import RecognitionActionButton from '~/components/RecognitionActionButton.vue'
 import RecognitionLoader from '~/components/RecognitionLoader.vue'
+import type { LoadingStep } from '~/composables/useRecognition'
 
 defineProps<{
   loading: boolean
+  step: LoadingStep
 }>()
 
 defineEmits<{
@@ -22,13 +24,13 @@ defineEmits<{
     <div class="center-stack compact-center">
       <RecognitionActionButton disabled loading />
 
-      <h2 class="main-title loading-title">Détection en cours</h2>
+      <h2 class="main-title loading-title">Détection en cours...</h2>
       <p class="main-subtitle">
-        Analyse de la récitation et recherche du verset
+        Analyse de la récitation en cours
       </p>
 
       <div class="loader-shell">
-        <RecognitionLoader :loading="loading" />
+        <RecognitionLoader :loading="loading" :step="step" />
       </div>
     </div>
   </section>

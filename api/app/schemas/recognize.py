@@ -15,6 +15,7 @@ class ImamPrediction(BaseModel):
 class VerseMatch(BaseModel):
     sourate_id: int
     sourate_name: str
+    transliteration: str
     start_verse: int
     end_verse: int
     text: str

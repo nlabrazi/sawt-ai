@@ -5,13 +5,20 @@ import RecognitionResultScreen from '~/components/RecognitionResultScreen.vue'
 import { useRecognitionFlow } from '~/composables/useRecognitionFlow'
 
 const {
+  screenState,
+  onMicroClick,
+  submitAudio,
   loading,
+  loadingStep,
+  resetApp,
   error,
   result,
-  screenState,
-  submitAudio,
-  onMicroClick,
-  resetApp,
+  uploadError,
+  micError,
+  isRecording,
+  recordingSeconds,
+  maxRecordingSeconds,
+  audioLevel,
 } = useRecognitionFlow()
 </script>
 
@@ -19,25 +26,16 @@ const {
   <main class="page">
     <div class="background-glow background-glow-1" />
     <div class="background-glow background-glow-2" />
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
 
-    <RecognitionIdleScreen
-      v-if="screenState === 'idle'"
-      @micro-click="onMicroClick"
-      @select-file="submitAudio"
-    />
+    <RecognitionIdleScreen v-if="screenState === 'idle'" :upload-error="uploadError" :mic-error="micError"
+      :is-recording="isRecording" :recording-seconds="recordingSeconds" :max-recording-seconds="maxRecordingSeconds"
+      :audio-level="audioLevel" @micro-click="onMicroClick" @select-file="submitAudio" />
 
-    <RecognitionLoadingScreen
-      v-else-if="screenState === 'loading'"
-      :loading="loading"
-      @cancel="resetApp"
-    />
+    <RecognitionLoadingScreen v-else-if="screenState === 'loading'" :loading="loading" :step="loadingStep"
+      @cancel="resetApp" />
 
-    <RecognitionResultScreen
-      v-else
-      :error="error"
-      :result="result"
-      @reset="resetApp"
-    />
+    <RecognitionResultScreen v-else :error="error" :result="result" @reset="resetApp" />
   </main>
 </template>
 
@@ -84,5 +82,11 @@ const {
   width: 320px;
   height: 320px;
   background: rgba(14, 165, 233, 0.08);
+}
+
+.quran-text {
+  font-family: "Amiri", serif;
+  font-size: 28px;
+  line-height: 1.8;
 }
 </style>

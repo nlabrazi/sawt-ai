@@ -1,6 +1,15 @@
 <script setup lang="ts">
 import RecognitionActionButton from '~/components/RecognitionActionButton.vue'
 
+const props = defineProps<{
+  uploadError?: string | null
+  micError?: string | null
+  isRecording?: boolean
+  recordingSeconds?: number
+  maxRecordingSeconds?: number
+  audioLevel?: number
+}>()
+
 const emit = defineEmits<{
   'micro-click': []
   'select-file': [file: File]
@@ -19,6 +28,8 @@ function onFileChange(event: Event) {
   if (!file) return
 
   emit('select-file', file)
+
+  input.value = ''
 }
 </script>
 
@@ -29,7 +40,7 @@ function onFileChange(event: Event) {
     </div>
 
     <div class="center-stack">
-      <RecognitionActionButton @click="emit('micro-click')" />
+      <RecognitionActionButton :is-recording="isRecording" :audio-level="audioLevel" @click="emit('micro-click')" />
 
       <h1 class="main-title">Touchez pour réciter</h1>
       <p class="main-subtitle">
@@ -41,15 +52,17 @@ function onFileChange(event: Event) {
         <button class="secondary-link" type="button" @click="openFilePicker">
           Choisir un fichier
         </button>
+
+        <p class="upload-hint">
+          Formats : wav, mp3, m4a, ogg · max 12 Mo · max 90 sec
+        </p>
+
+        <p v-if="uploadError" class="upload-error">
+          {{ uploadError }}
+        </p>
       </div>
 
-      <input
-        ref="fileInput"
-        class="hidden-input"
-        type="file"
-        accept=".wav,.mp3,.m4a,.ogg"
-        @change="onFileChange"
-      />
+      <input ref="fileInput" class="hidden-input" type="file" accept=".wav,.mp3,.m4a,.ogg" @change="onFileChange" />
     </div>
   </section>
 </template>
@@ -133,6 +146,18 @@ function onFileChange(event: Event) {
   opacity: 0.9;
   transform: translateY(-1px);
   color: #bfdbfe;
+}
+
+.upload-hint {
+  margin: 2px 0 0;
+  font-size: 13px;
+  color: #64748b;
+}
+
+.upload-error {
+  margin: 6px 0 0;
+  color: #fca5a5;
+  font-size: 14px;
 }
 
 .hidden-input {
