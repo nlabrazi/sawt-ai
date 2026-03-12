@@ -3,37 +3,72 @@ import FeedbackForm from '~/components/FeedbackForm.vue'
 import ResultCard from '~/components/ResultCard.vue'
 import type { RecognizeResponse } from '~/composables/useRecognition'
 
-defineProps<{
-  error: string | null
+const props = defineProps<{
   result: RecognizeResponse | null
+  error?: string | null
 }>()
 
 defineEmits<{
   reset: []
 }>()
+
+const LOW_CONFIDENCE_THRESHOLD = 0.8
+
+const banner = computed(() => {
+  if (props.error) {
+    return {
+      text: props.error,
+      className: 'banner-error',
+    }
+  }
+
+  if (!props.result?.verse) {
+    return {
+      text: 'Aucun verset fiable trouvé.',
+      className: 'banner-error',
+    }
+  }
+
+  const similarity = props.result.verse.similarity
+  const isLowConfidence = similarity <= 1
+    ? similarity < LOW_CONFIDENCE_THRESHOLD
+    : similarity < 80
+
+  if (isLowConfidence) {
+    return {
+      text: 'Résultat à vérifier.',
+      className: 'banner-warning',
+    }
+  }
+
+  return {
+    text: 'Résultat fiable.',
+    className: 'banner-success',
+  }
+})
 </script>
 
 <template>
   <section class="screen result-screen">
-    <div class="result-layout">
-      <div class="result-top-bar">
-        <div>
-          <p class="brand-kicker">Sawt AI</p>
-          <h1 class="result-title">Résultat de la reconnaissance</h1>
-        </div>
-
-        <button class="top-action" type="button" @click="$emit('reset')">
-          Nouvelle détection
-        </button>
+    <div class="top-bar">
+      <div>
+        <p class="brand-kicker">Sawt AI</p>
+        <h1 class="page-title">Résultat de la reconnaissance</h1>
       </div>
 
-      <div v-if="error" class="error-banner">
-        {{ error }}
-      </div>
+      <button class="top-action" type="button" @click="$emit('reset')">
+        Nouvelle détection
+      </button>
+    </div>
 
+    <div class="banner" :class="banner.className">
+      {{ banner.text }}
+    </div>
+
+    <div class="content-stack">
       <ResultCard v-if="result" :result="result" />
 
-      <FeedbackForm v-if="result" :result="result" />
+      <FeedbackForm v-if="result?.verse" :result="result" />
     </div>
   </section>
 </template>
@@ -48,23 +83,11 @@ defineEmits<{
 }
 
 .result-screen {
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  padding-top: 28px;
-  padding-bottom: 40px;
-  overflow-y: auto;
+  max-width: 980px;
+  margin: 0 auto;
 }
 
-.result-layout {
-  width: 100%;
-  max-width: 920px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-}
-
-.result-top-bar {
+.top-bar {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
@@ -79,10 +102,10 @@ defineEmits<{
   color: #93c5fd;
 }
 
-.result-title {
-  margin: 8px 0 0;
-  font-size: 28px;
-  line-height: 1.15;
+.page-title {
+  margin: 10px 0 0;
+  font-size: 34px;
+  line-height: 1.08;
   font-weight: 800;
   letter-spacing: -0.03em;
 }
@@ -105,12 +128,36 @@ defineEmits<{
   border-color: rgba(147, 197, 253, 0.28);
 }
 
-.error-banner {
-  padding: 14px 16px;
+.banner {
+  margin-top: 22px;
   border-radius: 18px;
+  padding: 16px 18px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.banner-success {
+  color: #dcfce7;
+  background: rgba(34, 197, 94, 0.14);
+  border: 1px solid rgba(34, 197, 94, 0.24);
+}
+
+.banner-warning {
+  color: #fde68a;
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(245, 158, 11, 0.24);
+}
+
+.banner-error {
   color: #fecaca;
-  background: rgba(127, 29, 29, 0.35);
-  border: 1px solid rgba(239, 68, 68, 0.18);
+  background: rgba(239, 68, 68, 0.14);
+  border: 1px solid rgba(239, 68, 68, 0.24);
+}
+
+.content-stack {
+  margin-top: 22px;
+  display: grid;
+  gap: 22px;
 }
 
 @media (max-width: 768px) {
@@ -118,9 +165,13 @@ defineEmits<{
     padding: 18px 14px 28px;
   }
 
-  .result-top-bar {
+  .top-bar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .page-title {
+    font-size: 28px;
   }
 }
 </style>
