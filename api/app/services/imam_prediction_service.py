@@ -6,16 +6,21 @@ import os
 os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
 
 import numpy as np
-from whisper.audio import load_audio, SAMPLE_RATE
+import librosa
 
 from app.core.model_loader import get_imam_model, get_label_encoder
 from app.utils.mfcc import extract_mfcc_from_audio
 
+TARGET_SAMPLE_RATE = 16000
+
 
 def predict_imam(audio_path: str):
     try:
-        y_audio = load_audio(audio_path)
-        sr = SAMPLE_RATE
+        y_audio, sr = librosa.load(
+            audio_path,
+            sr=TARGET_SAMPLE_RATE,
+            mono=True,
+        )
 
         mfcc = extract_mfcc_from_audio(y=y_audio, sr=sr)
 

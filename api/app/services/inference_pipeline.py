@@ -1,14 +1,37 @@
 # ROLE
 # ----
 # Orchestration principale :
-# transcription -> détection verset
-# La détection imam est temporairement désactivée pour la V1.
+# transcription -> détection verset -> détection imam
 
 from app.services.transcription_service import transcribe_audio
 from app.services.verse_detection_service import detect_versets
+from app.services.imam_prediction_service import predict_imam
+
+
+def compute_imam_status(predictions):
+    """
+    Détermine le niveau de confiance.
+    """
+    if not predictions:
+        return "unknown"
+
+    top_score = predictions[0]["score"]
+
+    if top_score >= 0.85:
+        return "high"
+
+    if top_score >= 0.65:
+        return "medium"
+
+    return "low"
 
 
 def run_inference_pipeline(audio_path: str):
+    """
+    Pipeline principal
+    """
+
+    # 1️⃣ transcription whisper
     segments = transcribe_audio(audio_path)
 
     transcription_text = " ".join(
@@ -16,11 +39,18 @@ def run_inference_pipeline(audio_path: str):
         for segment in segments
     ).strip()
 
+    # 2️⃣ détection verset
     verse = detect_versets(segments)
+
+    # 3️⃣ détection imam
+    imam_predictions = predict_imam(audio_path)
+
+    # 4️⃣ calcul statut
+    imam_status = compute_imam_status(imam_predictions)
 
     return {
         "transcription_text": transcription_text,
         "verse": verse,
-        "imam_predictions": [],
-        "imam_status": "soon",
+        "imam_predictions": imam_predictions,
+        "imam_status": imam_status,
     }

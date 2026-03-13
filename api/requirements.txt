@@ -10,5 +10,6 @@ ctranslate2==4.6.2
 av==12.3.0
 
 scikit-learn
-tensorflow
+tensorflow==2.15.0
+keras==2.15.0
 python-multipart
