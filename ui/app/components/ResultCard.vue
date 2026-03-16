@@ -3,6 +3,7 @@
 // ----
 // Affiche le résultat principal,
 // avec option d'affichage/masquage du tajwid à la demande.
+// Gère aussi un fallback propre si l'imam n'a pas pu être reconnu.
 
 import { useTajwid } from '~/composables/useTajwid'
 import type { RecognizeResponse } from '~/composables/useRecognition'
@@ -38,6 +39,10 @@ const otherImams = computed(() => {
   return props.result.imam_predictions?.slice(1) ?? []
 })
 
+const hasImamResult = computed(() => {
+  return !!props.result.imam_predictions?.length
+})
+
 const imamStatusUi = computed(() => {
   switch (props.result.imam_status) {
     case 'high':
@@ -64,6 +69,27 @@ const imamStatusUi = computed(() => {
         className: 'imam-status-unknown',
       }
   }
+})
+
+const imamFallbackText = computed(() => {
+  switch (props.result.imam_status) {
+    case 'low':
+      return 'Imam détecté avec une confiance trop faible.'
+
+    case 'unknown':
+      return 'Imam non reconnu pour cet extrait.'
+
+    default:
+      return 'Identification de l’imam indisponible.'
+  }
+})
+
+const imamFallbackDescription = computed(() => {
+  if (props.result.verse) {
+    return 'Le verset a bien été détecté, mais le récitateur n’a pas pu être confirmé avec assez de fiabilité.'
+  }
+
+  return 'L’audio a bien été analysé, mais aucun récitateur fiable n’a pu être identifié.'
 })
 
 function formatImamName(name: string) {
@@ -98,7 +124,9 @@ async function toggleTajwid() {
 
 <template>
   <div class="result-card">
-    <p class="eyebrow">Résultat</p>
+    <p class="eyebrow">
+      Résultat
+    </p>
 
     <template v-if="result.verse">
       <section class="hero-panel">
@@ -119,7 +147,7 @@ async function toggleTajwid() {
         </p>
       </section>
 
-      <section v-if="topImam" class="imam-panel">
+      <section class="imam-panel">
         <div class="imam-panel-header">
           <p class="panel-label imam-panel-label">
             Imam récitant
@@ -130,25 +158,41 @@ async function toggleTajwid() {
           </span>
         </div>
 
-        <p class="imam-kicker">
-          Récité par
-        </p>
-
-        <p class="imam-name">
-          {{ formatImamName(topImam.name) }}
-        </p>
-
-        <div v-if="otherImams.length" class="imam-suggestions">
-          <p class="imam-suggestions-label">
-            Autres suggestions
+        <template v-if="hasImamResult && topImam">
+          <p class="imam-kicker">
+            Récité par
           </p>
 
-          <div class="imam-chip-list">
-            <span v-for="imam in otherImams" :key="imam.name" class="imam-chip">
-              {{ formatImamName(imam.name) }}
-            </span>
+          <p class="imam-name">
+            {{ formatImamName(topImam.name) }}
+          </p>
+
+          <div v-if="otherImams.length" class="imam-suggestions">
+            <p class="imam-suggestions-label">
+              Autres suggestions
+            </p>
+
+            <div class="imam-chip-list">
+              <span v-for="imam in otherImams" :key="imam.name" class="imam-chip">
+                {{ formatImamName(imam.name) }}
+              </span>
+            </div>
           </div>
-        </div>
+        </template>
+
+        <template v-else>
+          <p class="imam-kicker">
+            Statut
+          </p>
+
+          <p class="imam-name imam-name-fallback">
+            {{ imamFallbackText }}
+          </p>
+
+          <p class="imam-fallback-description">
+            {{ imamFallbackDescription }}
+          </p>
+        </template>
       </section>
 
       <section class="verse-panel">
@@ -196,7 +240,7 @@ async function toggleTajwid() {
           Aucun verset fiable n’a été trouvé pour cet audio.
         </p>
 
-        <section v-if="topImam" class="imam-panel imam-panel-alone">
+        <section class="imam-panel imam-panel-alone">
           <div class="imam-panel-header">
             <p class="panel-label imam-panel-label">
               Imam récitant
@@ -207,13 +251,41 @@ async function toggleTajwid() {
             </span>
           </div>
 
-          <p class="imam-kicker">
-            Voix la plus probable
-          </p>
+          <template v-if="hasImamResult && topImam">
+            <p class="imam-kicker">
+              Voix la plus probable
+            </p>
 
-          <p class="imam-name">
-            {{ formatImamName(topImam.name) }}
-          </p>
+            <p class="imam-name">
+              {{ formatImamName(topImam.name) }}
+            </p>
+
+            <div v-if="otherImams.length" class="imam-suggestions">
+              <p class="imam-suggestions-label">
+                Autres suggestions
+              </p>
+
+              <div class="imam-chip-list">
+                <span v-for="imam in otherImams" :key="imam.name" class="imam-chip">
+                  {{ formatImamName(imam.name) }}
+                </span>
+              </div>
+            </div>
+          </template>
+
+          <template v-else>
+            <p class="imam-kicker">
+              Statut
+            </p>
+
+            <p class="imam-name imam-name-fallback">
+              {{ imamFallbackText }}
+            </p>
+
+            <p class="imam-fallback-description">
+              {{ imamFallbackDescription }}
+            </p>
+          </template>
         </section>
       </section>
     </template>
@@ -351,6 +423,16 @@ async function toggleTajwid() {
   font-weight: 700;
   line-height: 1.3;
   color: #f8fafc;
+}
+
+.imam-name-fallback {
+  font-size: 20px;
+}
+
+.imam-fallback-description {
+  margin: 12px 0 0;
+  line-height: 1.7;
+  color: #cbd5e1;
 }
 
 .imam-suggestions {
@@ -518,17 +600,17 @@ async function toggleTajwid() {
   }
 
   .imam-name {
-    font-size: 21px;
+    font-size: 22px;
+  }
+
+  .imam-name-fallback {
+    font-size: 18px;
   }
 
   .arabic-text,
   .tajwid-text {
     font-size: 24px;
-  }
-
-  .tajwid-toggle {
-    width: 100%;
-    justify-content: center;
+    line-height: 1.9;
   }
 }
 </style>
