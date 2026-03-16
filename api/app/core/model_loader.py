@@ -2,14 +2,12 @@
 # ----
 # Charge une seule fois les ressources lourdes au démarrage de l'API :
 # - modèle Whisper via faster-whisper
-# - label encoder
+# - modèle imam CNN
+# - label encoder imam
 # - versets du Coran
-# La détection imam est désactivée temporairement.
 
 import json
-
 from faster_whisper import WhisperModel
-
 
 WHISPER_MODEL_NAME = "base"
 QURAN_VERSETS_PATH = "assets/quran_versets.json"

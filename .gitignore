@@ -18,6 +18,9 @@ logs
 .DS_Store
 .fleet
 .idea
+api/data/*.jsonl
+.venv
+training/*
 
 # Local env files
 .env
