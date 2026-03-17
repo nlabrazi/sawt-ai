@@ -8,11 +8,6 @@ librosa==0.10.2.post1
 numpy==1.26.4
 ctranslate2==4.6.2
 av==12.3.0
-
-scikit-learn
-tensorflow==2.15.0
-keras==2.15.0
-
 torch==2.8.0
 torchaudio==2.8.0
 speechbrain==1.0.3

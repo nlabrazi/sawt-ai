@@ -10,6 +10,7 @@ from pydantic import BaseModel
 class VerseMatchPayload(BaseModel):
     sourate_id: int
     sourate_name: str
+    transliteration: Optional[str] = None
     start_verse: int
     end_verse: int
     text: str

@@ -19,6 +19,7 @@ export type FeedbackPayload = {
 }
 
 export function useFeedback() {
+  const apiBaseUrl = useRuntimeConfig().public.apiBaseUrl.replace(/\/$/, '')
   const sending = ref(false)
   const error = ref<string | null>(null)
 
@@ -27,7 +28,7 @@ export function useFeedback() {
     error.value = null
 
     try {
-      await $fetch('http://localhost:8000/feedback', {
+      await $fetch(`${apiBaseUrl}/feedback`, {
         method: 'POST',
         body: payload,
       })

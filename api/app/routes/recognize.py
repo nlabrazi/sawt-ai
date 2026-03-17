@@ -4,7 +4,7 @@
 # et déclenche le pipeline Sawt AI.
 
 from fastapi import APIRouter, HTTPException, UploadFile
-import shutil
+from pathlib import Path
 import uuid
 
 from app.services.inference_pipeline import run_inference_pipeline
@@ -22,10 +22,12 @@ async def recognize(file: UploadFile):
         raise HTTPException(status_code=413, detail="Fichier trop volumineux.")
 
     temp_path = f"/tmp/{uuid.uuid4()}.wav"
+    temp_file = Path(temp_path)
 
-    with open(temp_path, "wb") as buffer:
+    with temp_file.open("wb") as buffer:
         buffer.write(file_bytes)
 
-    result = run_inference_pipeline(temp_path)
-
-    return result
+    try:
+        return run_inference_pipeline(temp_path)
+    finally:
+        temp_file.unlink(missing_ok=True)
