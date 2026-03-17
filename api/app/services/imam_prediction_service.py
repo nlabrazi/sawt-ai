@@ -1,7 +1,11 @@
+from __future__ import annotations
+
 # ROLE
 # ----
 # Prédit les 3 imams les plus probables à partir de l'audio.
 
+import logging
+import os
 from pathlib import Path
 import torch
 import torch.nn as nn
@@ -11,14 +15,23 @@ import torchaudio
 from speechbrain.inference.classifiers import EncoderClassifier
 
 TARGET_SAMPLE_RATE = 16000
-MODEL_PATH = Path("/training/artifacts/models/imam_ecapa_v2/best_model.pt")
-SUMMARY_PATH = Path("/training/artifacts/models/imam_ecapa_v2/summary.json")
+DEFAULT_MODEL_PATH = (
+    Path(__file__).resolve().parents[3]
+    / "training"
+    / "artifacts"
+    / "models"
+    / "imam_ecapa_v2"
+    / "best_model.pt"
+)
+MODEL_PATH = Path(os.getenv("IMAM_MODEL_PATH", str(DEFAULT_MODEL_PATH)))
+logger = logging.getLogger(__name__)
 
-print("MODEL_PATH =", MODEL_PATH)
-print("MODEL_EXISTS =", MODEL_PATH.exists())
+encoder: EncoderClassifier | None = None
+model: "ImamEmbeddingMLP" | None = None
+index_to_name: dict[int, str] | None = None
 
 
-def build_index_to_name_map(label_map):
+def build_index_to_name_map(label_map: object) -> dict[int, str]:
     if isinstance(label_map, list):
         return {i: str(name) for i, name in enumerate(label_map)}
 
@@ -56,31 +69,44 @@ class ImamEmbeddingMLP(nn.Module):
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-encoder = EncoderClassifier.from_hparams(
-    source="speechbrain/spkrec-ecapa-voxceleb",
-    run_opts={"device": device},
-)
 
-checkpoint = torch.load(MODEL_PATH, map_location=device)
+def load_imam_resources() -> tuple[EncoderClassifier, ImamEmbeddingMLP, dict[int, str]]:
+    global encoder, model, index_to_name
 
-model = ImamEmbeddingMLP(
-    checkpoint["input_dim"],
-    checkpoint["hidden_dim"],
-    checkpoint["num_classes"],
-)
+    if encoder is not None and model is not None and index_to_name is not None:
+        return encoder, model, index_to_name
 
-model.load_state_dict(checkpoint["model_state_dict"])
-model.to(device)
-model.eval()
+    if not MODEL_PATH.exists():
+        raise FileNotFoundError(f"Imam model not found: {MODEL_PATH}")
 
-raw_label_map = checkpoint.get("labels", {})
-print("RAW_LABEL_MAP =", raw_label_map)
+    if encoder is None:
+        encoder = EncoderClassifier.from_hparams(
+            source="speechbrain/spkrec-ecapa-voxceleb",
+            run_opts={"device": device},
+        )
 
-index_to_name = build_index_to_name_map(raw_label_map)
-print("INDEX_TO_NAME =", index_to_name)
+    checkpoint = torch.load(MODEL_PATH, map_location=device)
+
+    loaded_model = ImamEmbeddingMLP(
+        checkpoint["input_dim"],
+        checkpoint["hidden_dim"],
+        checkpoint["num_classes"],
+    )
+    loaded_model.load_state_dict(checkpoint["model_state_dict"])
+    loaded_model.to(device)
+    loaded_model.eval()
+
+    loaded_index_to_name = build_index_to_name_map(checkpoint.get("labels", {}))
+
+    model = loaded_model
+    index_to_name = loaded_index_to_name
+
+    logger.info("Imam prediction model loaded from %s", MODEL_PATH)
+
+    return encoder, model, index_to_name
 
 
-def load_audio(audio_path):
+def load_audio(audio_path: str) -> torch.Tensor:
     waveform, sr = torchaudio.load(audio_path)
 
     if waveform.shape[0] > 1:
@@ -93,9 +119,12 @@ def load_audio(audio_path):
     return waveform.squeeze(0)
 
 
-def extract_embedding(audio):
+def extract_embedding(
+    audio: torch.Tensor,
+    loaded_encoder: EncoderClassifier,
+) -> torch.Tensor:
     with torch.no_grad():
-        emb = encoder.encode_batch(audio.unsqueeze(0).to(device))
+        emb = loaded_encoder.encode_batch(audio.unsqueeze(0).to(device))
 
         if emb.dim() == 3:
             emb = emb.squeeze(1)
@@ -103,13 +132,14 @@ def extract_embedding(audio):
         return emb.squeeze(0).cpu()
 
 
-def predict_imam(audio_path):
+def predict_imam(audio_path: str) -> list[dict[str, str | float]]:
     try:
+        loaded_encoder, loaded_model, loaded_index_to_name = load_imam_resources()
         audio = load_audio(audio_path)
-        embedding = extract_embedding(audio)
+        embedding = extract_embedding(audio, loaded_encoder)
 
         with torch.no_grad():
-            logits = model(embedding.unsqueeze(0).to(device))
+            logits = loaded_model(embedding.unsqueeze(0).to(device))
             probs = F.softmax(logits, dim=1)[0].cpu()
 
         k = min(3, probs.shape[0])
@@ -118,7 +148,7 @@ def predict_imam(audio_path):
         results = []
 
         for score, idx in zip(top_scores.tolist(), top_indices.tolist()):
-            name = index_to_name.get(int(idx), f"class_{int(idx)}")
+            name = loaded_index_to_name.get(int(idx), f"class_{int(idx)}")
 
             results.append({
                 "name": name,
@@ -127,6 +157,6 @@ def predict_imam(audio_path):
 
         return results
 
-    except Exception as e:
-        print("[ERROR] imam prediction failed:", repr(e))
+    except Exception:
+        logger.exception("Imam prediction failed")
         return []

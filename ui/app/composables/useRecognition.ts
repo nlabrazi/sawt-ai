@@ -37,6 +37,7 @@ function wait(ms: number) {
 }
 
 export function useRecognition() {
+  const apiBaseUrl = useRuntimeConfig().public.apiBaseUrl.replace(/\/$/, '')
   const loading = ref(false)
   const error = ref<string | null>(null)
   const result = ref<RecognizeResponse | null>(null)
@@ -54,7 +55,7 @@ export function useRecognition() {
       const formData = new FormData()
       formData.append('file', file)
 
-      const response = await $fetch<RecognizeResponse>('http://localhost:8000/recognize', {
+      const response = await $fetch<RecognizeResponse>(`${apiBaseUrl}/recognize`, {
         method: 'POST',
         body: formData,
       })

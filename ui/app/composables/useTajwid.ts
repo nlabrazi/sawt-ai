@@ -17,6 +17,7 @@ function buildCacheKey(surahId: number, startVerse: number, endVerse: number) {
 }
 
 export function useTajwid() {
+  const apiBaseUrl = useRuntimeConfig().public.apiBaseUrl.replace(/\/$/, '')
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -31,7 +32,7 @@ export function useTajwid() {
     error.value = null
 
     try {
-      const response = await $fetch<TajwidResponse>('http://localhost:8000/tajwid', {
+      const response = await $fetch<TajwidResponse>(`${apiBaseUrl}/tajwid`, {
         method: 'GET',
         query: {
           surah_id: surahId,
