@@ -8,10 +8,13 @@ from app.services.verse_detection_service import detect_versets
 from app.services.imam_prediction_service import predict_imam
 
 
-def compute_imam_status(predictions):
+def compute_imam_status(predictions, detect_imam: bool = True):
     """
     Détermine le niveau de confiance.
     """
+    if not detect_imam:
+        return "disabled"
+
     if not predictions:
         return "unknown"
 
@@ -26,7 +29,7 @@ def compute_imam_status(predictions):
     return "low"
 
 
-def run_inference_pipeline(audio_path: str):
+def run_inference_pipeline(audio_path: str, detect_imam: bool = True):
     """
     Pipeline principal
     """
@@ -43,14 +46,15 @@ def run_inference_pipeline(audio_path: str):
     verse = detect_versets(segments)
 
     # 3️⃣ détection imam
-    imam_predictions = predict_imam(audio_path)
+    imam_predictions = predict_imam(audio_path) if detect_imam else []
 
     # 4️⃣ calcul statut
-    imam_status = compute_imam_status(imam_predictions)
+    imam_status = compute_imam_status(imam_predictions, detect_imam=detect_imam)
 
     return {
         "transcription_text": transcription_text,
         "verse": verse,
         "imam_predictions": imam_predictions,
         "imam_status": imam_status,
+        "imam_detection_enabled": detect_imam,
     }

@@ -70,6 +70,7 @@ export function useRecognitionFlow() {
   } = useMicrophoneRecorder()
 
   const uploadError = ref<string | null>(null)
+  const detectImam = ref(true)
 
   const screenState = computed<RecognitionScreenState>(() => {
     if (loading.value) return 'loading'
@@ -113,7 +114,7 @@ export function useRecognitionFlow() {
       }
     }
 
-    await recognizeAudio(file)
+    await recognizeAudio(file, detectImam.value)
   }
 
   async function onMicroClick() {
@@ -131,7 +132,7 @@ export function useRecognitionFlow() {
       return
     }
 
-    await recognizeAudio(recordedFile)
+    await recognizeAudio(recordedFile, detectImam.value)
   }
 
   watch(maxDurationReached, async (reached) => {
@@ -144,7 +145,7 @@ export function useRecognitionFlow() {
       return
     }
 
-    await recognizeAudio(recordedFile)
+    await recognizeAudio(recordedFile, detectImam.value)
   })
 
   function resetApp() {
@@ -169,5 +170,6 @@ export function useRecognitionFlow() {
     onMicroClick,
     resetApp,
     audioLevel,
+    detectImam,
   }
 }

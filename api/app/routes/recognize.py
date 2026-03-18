@@ -3,7 +3,7 @@
 # Endpoint API qui reçoit un fichier audio
 # et déclenche le pipeline Sawt AI.
 
-from fastapi import APIRouter, HTTPException, UploadFile
+from fastapi import APIRouter, Form, HTTPException, UploadFile
 from pathlib import Path
 import uuid
 
@@ -15,7 +15,10 @@ MAX_FILE_SIZE_BYTES = 12 * 1024 * 1024
 
 
 @router.post("/recognize")
-async def recognize(file: UploadFile):
+async def recognize(
+    file: UploadFile,
+    detect_imam: bool = Form(True),
+):
     file_bytes = await file.read()
 
     if len(file_bytes) > MAX_FILE_SIZE_BYTES:
@@ -28,6 +31,6 @@ async def recognize(file: UploadFile):
         buffer.write(file_bytes)
 
     try:
-        return run_inference_pipeline(temp_path)
+        return run_inference_pipeline(temp_path, detect_imam=detect_imam)
     finally:
         temp_file.unlink(missing_ok=True)

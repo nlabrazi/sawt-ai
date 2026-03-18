@@ -11,9 +11,13 @@ const props = withDefaults(defineProps<{
   audioLevel: 0,
 })
 
-defineEmits<{
+const emit = defineEmits<{
   click: []
 }>()
+
+function handleClick() {
+  emit('click')
+}
 
 const visualScale = computed(() => {
   const level = Math.max(0, Math.min(1, props.audioLevel))
@@ -36,10 +40,10 @@ const waveScale = computed(() => {
     'is-loading': loading,
     'is-recording': isRecording
   }" :style="{
-      '--visual-scale': String(visualScale),
-      '--halo-opacity': String(haloOpacity),
-      '--wave-scale': String(waveScale),
-    }" :disabled="disabled" type="button" @click="$emit('click')">
+    '--visual-scale': String(visualScale),
+    '--halo-opacity': String(haloOpacity),
+    '--wave-scale': String(waveScale),
+  }" :disabled="disabled" type="button" @click="handleClick">
     <span v-if="isRecording" class="record-wave wave-1" />
     <span v-if="isRecording" class="record-wave wave-2" />
     <span v-if="isRecording" class="record-wave wave-3" />

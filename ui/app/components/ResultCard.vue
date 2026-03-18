@@ -45,6 +45,12 @@ const hasImamResult = computed(() => {
 
 const imamStatusUi = computed(() => {
   switch (props.result.imam_status) {
+    case 'disabled':
+      return {
+        label: 'Désactivée',
+        className: 'imam-status-unknown',
+      }
+
     case 'high':
       return {
         label: 'Fiable',
@@ -73,6 +79,9 @@ const imamStatusUi = computed(() => {
 
 const imamFallbackText = computed(() => {
   switch (props.result.imam_status) {
+    case 'disabled':
+      return 'Détection imam désactivée pour cet audio.'
+
     case 'low':
       return 'Imam détecté avec une confiance trop faible.'
 
@@ -85,6 +94,10 @@ const imamFallbackText = computed(() => {
 })
 
 const imamFallbackDescription = computed(() => {
+  if (props.result.imam_status === 'disabled') {
+    return 'Le verset reste analysé normalement, mais l’identification du récitateur a été volontairement désactivée.'
+  }
+
   if (props.result.verse) {
     return 'Le verset a bien été détecté, mais le récitateur n’a pas pu être confirmé avec assez de fiabilité.'
   }

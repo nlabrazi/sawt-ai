@@ -23,6 +23,7 @@ export type RecognizeResponse = {
   verse: VerseMatch | null
   imam_predictions: ImamPrediction[]
   imam_status: string
+  imam_detection_enabled: boolean
 }
 
 export type LoadingStep = 'detecting' | 'result-found' | 'retrying'
@@ -43,7 +44,7 @@ export function useRecognition() {
   const result = ref<RecognizeResponse | null>(null)
   const loadingStep = ref<LoadingStep>('detecting')
 
-  async function recognizeAudio(file: File) {
+  async function recognizeAudio(file: File, detectImam = true) {
     loading.value = true
     error.value = null
     result.value = null
@@ -54,6 +55,7 @@ export function useRecognition() {
     try {
       const formData = new FormData()
       formData.append('file', file)
+      formData.append('detect_imam', String(detectImam))
 
       const response = await $fetch<RecognizeResponse>(`${apiBaseUrl}/recognize`, {
         method: 'POST',
