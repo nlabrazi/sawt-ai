@@ -3,9 +3,13 @@
 # Orchestration principale :
 # transcription -> détection verset -> détection imam
 
+import logging
+
 from app.services.transcription_service import transcribe_audio
 from app.services.verse_detection_service import detect_versets
 from app.services.imam_prediction_service import predict_imam
+
+logger = logging.getLogger(__name__)
 
 
 def compute_imam_status(predictions, detect_imam: bool = True):
@@ -50,6 +54,16 @@ def run_inference_pipeline(audio_path: str, detect_imam: bool = True):
 
     # 4️⃣ calcul statut
     imam_status = compute_imam_status(imam_predictions, detect_imam=detect_imam)
+
+    logger.info(
+        "Inference complete: segments=%s transcription_chars=%s verse_found=%s verse_similarity=%s imam_predictions=%s imam_status=%s",
+        len(segments),
+        len(transcription_text),
+        verse is not None,
+        verse.get("similarity") if verse else None,
+        len(imam_predictions),
+        imam_status,
+    )
 
     return {
         "transcription_text": transcription_text,
