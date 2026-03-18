@@ -8,17 +8,24 @@ const props = defineProps<{
   recordingSeconds?: number
   maxRecordingSeconds?: number
   audioLevel?: number
+  detectImam?: boolean
 }>()
 
 const emit = defineEmits<{
   'micro-click': []
   'select-file': [file: File]
+  'update:detect-imam': [value: boolean]
 }>()
 
-const fileInput = ref<HTMLInputElement | null>(null)
+const fileInputId = 'recognition-audio-file-input'
 
-function openFilePicker() {
-  fileInput.value?.click()
+function onMicroButtonClick() {
+  emit('micro-click')
+}
+
+function onDetectImamChange(event: Event) {
+  const input = event.target as HTMLInputElement
+  emit('update:detect-imam', input.checked)
 }
 
 function onFileChange(event: Event) {
@@ -40,7 +47,7 @@ function onFileChange(event: Event) {
     </div>
 
     <div class="center-stack">
-      <RecognitionActionButton :is-recording="isRecording" :audio-level="audioLevel" @click="emit('micro-click')" />
+      <RecognitionActionButton :is-recording="isRecording" :audio-level="audioLevel" @click="onMicroButtonClick" />
 
       <h1 class="main-title">Touchez pour réciter</h1>
       <p class="main-subtitle">
@@ -49,9 +56,20 @@ function onFileChange(event: Event) {
 
       <div class="secondary-action">
         <span class="secondary-text">Vous préférez importer un fichier audio ?</span>
-        <button class="secondary-link" type="button" @click="openFilePicker">
+        <label class="secondary-link" :for="fileInputId">
           Choisir un fichier
-        </button>
+        </label>
+
+        <label class="imam-toggle">
+          <input class="imam-toggle-checkbox" type="checkbox" :checked="detectImam" @change="onDetectImamChange">
+          <span class="imam-toggle-text">
+            Activer la détection d’imam
+          </span>
+        </label>
+
+        <p class="imam-toggle-hint">
+          Option utile si vous souhaitez limiter l’analyse au verset uniquement.
+        </p>
 
         <p class="upload-hint">
           Formats : wav, mp3, m4a, ogg · max 12 Mo · max 90 sec
@@ -60,9 +78,13 @@ function onFileChange(event: Event) {
         <p v-if="uploadError" class="upload-error">
           {{ uploadError }}
         </p>
+
+        <p v-if="micError" class="upload-error">
+          {{ micError }}
+        </p>
       </div>
 
-      <input ref="fileInput" class="hidden-input" type="file" accept=".wav,.mp3,.m4a,.ogg" @change="onFileChange" />
+      <input :id="fileInputId" class="hidden-input" type="file" accept=".wav,.mp3,.m4a,.ogg" @change="onFileChange" />
     </div>
   </section>
 </template>
@@ -120,11 +142,11 @@ function onFileChange(event: Event) {
 }
 
 .secondary-action {
-  margin-top: 34px;
+  margin-top: 30px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .secondary-text {
@@ -132,7 +154,52 @@ function onFileChange(event: Event) {
   font-size: 14px;
 }
 
+.imam-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  color: #94a3b8;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.imam-toggle:hover {
+  background: rgba(147, 197, 253, 0.08);
+}
+
+.imam-toggle:hover .imam-toggle-text {
+  color: #bfdbfe;
+}
+
+.imam-toggle-checkbox {
+  width: 15px;
+  height: 15px;
+  accent-color: #60a5fa;
+  cursor: pointer;
+  opacity: 0.9;
+}
+
+.imam-toggle-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: #94a3b8;
+}
+
+.imam-toggle-hint {
+  margin: 0;
+  max-width: 360px;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #64748b;
+}
+
 .secondary-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: none;
   background: transparent;
   color: #93c5fd;
@@ -161,7 +228,11 @@ function onFileChange(event: Event) {
 }
 
 .hidden-input {
-  display: none;
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
 }
 
 @media (max-width: 768px) {

@@ -19,6 +19,7 @@ const {
   recordingSeconds,
   maxRecordingSeconds,
   audioLevel,
+  detectImam,
 } = useRecognitionFlow()
 </script>
 
@@ -30,7 +31,8 @@ const {
 
     <RecognitionIdleScreen v-if="screenState === 'idle'" :upload-error="uploadError" :mic-error="micError"
       :is-recording="isRecording" :recording-seconds="recordingSeconds" :max-recording-seconds="maxRecordingSeconds"
-      :audio-level="audioLevel" @micro-click="onMicroClick" @select-file="submitAudio" />
+      :audio-level="audioLevel" v-model:detect-imam="detectImam" @micro-click="onMicroClick"
+      @select-file="submitAudio" />
 
     <RecognitionLoadingScreen v-else-if="screenState === 'loading'" :loading="loading" :step="loadingStep"
       @cancel="resetApp" />

@@ -128,6 +128,24 @@ export function useMicrophoneRecorder() {
     audioLevel.value = 0
 
     try {
+      if (!window.isSecureContext) {
+        micError.value = 'Le micro nécessite un site servi en HTTPS.'
+        cleanup()
+        return
+      }
+
+      if (!navigator.mediaDevices?.getUserMedia) {
+        micError.value = 'Ce navigateur ne permet pas l’accès au microphone.'
+        cleanup()
+        return
+      }
+
+      if (typeof MediaRecorder === 'undefined') {
+        micError.value = 'Ce navigateur ne prend pas en charge l’enregistrement audio.'
+        cleanup()
+        return
+      }
+
       mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true })
 
       const mimeType = getSupportedMimeType()
