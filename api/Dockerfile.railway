@@ -17,7 +17,7 @@ RUN pip install --no-cache-dir --upgrade pip setuptools wheel
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
 COPY api /app
-COPY training/artifacts/models/imam_ecapa_v2/best_model.pt /opt/models/imam_ecapa_v2/best_model.pt
+COPY api/models/imam_ecapa_v2/best_model.pt /opt/models/imam_ecapa_v2/best_model.pt
 
 EXPOSE 8000
 
