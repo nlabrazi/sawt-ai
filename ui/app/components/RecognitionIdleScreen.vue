@@ -63,12 +63,12 @@ function onFileChange(event: Event) {
         <label class="imam-toggle">
           <input class="imam-toggle-checkbox" type="checkbox" :checked="detectImam" @change="onDetectImamChange">
           <span class="imam-toggle-text">
-            Activer la détection d’imam
+            Reconnaître l’imam (récitateurs connus)
           </span>
         </label>
 
         <p class="imam-toggle-hint">
-          Option utile si vous souhaitez limiter l’analyse au verset uniquement.
+          Analyse du réciteur en plus du verset
         </p>
 
         <p class="upload-hint">
