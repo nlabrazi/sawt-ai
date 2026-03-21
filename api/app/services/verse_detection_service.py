@@ -2,10 +2,13 @@
 # ----
 # Trouve le meilleur match de versets à partir des segments de transcription.
 
+import logging
 from difflib import SequenceMatcher
 
 from app.core.model_loader import get_quran_versets
 from app.utils.normalize_arabic import normalize_arabic
+
+logger = logging.getLogger(__name__)
 
 
 def detect_versets(segments):
@@ -37,4 +40,13 @@ def detect_versets(segments):
                 })
 
     matches.sort(key=lambda item: item["similarity"], reverse=True)
-    return matches[0] if matches else None
+    best_match = matches[0] if matches else None
+
+    logger.info(
+        "Verse detection complete: transcription_chars=%s best_sourate=%s best_similarity=%s",
+        len(transcription),
+        best_match["sourate_name"] if best_match else None,
+        best_match["similarity"] if best_match else None,
+    )
+
+    return best_match
