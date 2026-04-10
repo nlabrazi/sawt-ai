@@ -85,8 +85,10 @@ Sawt-AI is an AI-powered application designed to detect and classify Quranic ver
 <!-- GETTING STARTED -->
 # ✅ Getting Started
 
-This project runs on 🐍 Python. Ensure you have Python and Docker installed on your system before proceeding with the installation.
-Below are installation instructions for a Python-based project.
+This project is now split into two services:
+
+- `ui`: Nuxt application on `http://localhost:3000`
+- `api`: FastAPI service on `http://localhost:8000`
 
 ### 💻 Installation
 
@@ -95,20 +97,37 @@ Below are installation instructions for a Python-based project.
 git clone https://github.com/nlabrazi/sawt-ai.git
 cd sawt-ai
 
-# Create and activate a virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+# Start both services
+docker compose up --build
+```
 
-# Install dependencies
-pip install -r requirements.txt
+### ▶️ Usage
 
-# Set up environment variables
-cp .env.example .env
-# Update the .env file with your configuration
+1. Open `http://localhost:3000`
+2. Record audio with the microphone or upload an audio file
+3. The UI sends the audio to `POST /recognize` on the API
+4. The API returns:
+   - Arabic transcription
+   - Best matching Quran verse
+   - Imam predictions if enabled
 
-# Run the application
-python main.py
+### 🔧 Local Notes
 
+- The API healthcheck is available at `http://localhost:8000/health`
+- Supported audio types include `wav`, `mp3`, `m4a`, `ogg`, `webm`
+- The uploaded file limit is `12 MB`
+- The maximum audio duration expected by the UI is `90 seconds`
+- Imam detection depends on the model mounted from `./training`
+
+### 🌍 Environment Variables
+
+Example API variables are available in [`api/.env.example`](api/.env.example):
+
+```env
+ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+WHISPER_MODEL_NAME=base
+QURAN_VERSETS_PATH=/app/assets/quran_versets.json
+IMAM_MODEL_PATH=/training/artifacts/models/imam_ecapa_v2/best_model.pt
 ```
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
