@@ -1,6 +1,7 @@
 import logging
 import os
 from contextlib import asynccontextmanager
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,14 +16,40 @@ LOG_LEVEL = getattr(logging, LOG_LEVEL_NAME, logging.INFO)
 logging.getLogger().setLevel(LOG_LEVEL)
 logging.getLogger("app").setLevel(LOG_LEVEL)
 
-ALLOWED_ORIGINS = [
-    origin.strip()
-    for origin in os.getenv(
-        "ALLOWED_ORIGINS",
-        "http://localhost:3000,http://127.0.0.1:3000",
-    ).split(",")
-    if origin.strip()
-]
+DEFAULT_ALLOWED_ORIGINS = (
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+)
+
+
+def parse_allowed_origins(raw_allowed_origins: str | None) -> list[str]:
+    origins = raw_allowed_origins or ",".join(DEFAULT_ALLOWED_ORIGINS)
+    normalized_origins: list[str] = []
+    seen_origins: set[str] = set()
+
+    for origin in origins.split(","):
+        normalized_origin = origin.strip().rstrip("/")
+
+        if not normalized_origin or normalized_origin in seen_origins:
+            continue
+
+        normalized_origins.append(normalized_origin)
+        seen_origins.add(normalized_origin)
+
+    return normalized_origins
+
+
+def build_cors_options(raw_allowed_origins: str | None = None) -> dict[str, Any]:
+    return {
+        "allow_origins": parse_allowed_origins(raw_allowed_origins),
+        "allow_credentials": True,
+        "allow_methods": ["*"],
+        "allow_headers": ["*"],
+    }
+
+
+ALLOWED_ORIGINS = parse_allowed_origins(os.getenv("ALLOWED_ORIGINS"))
+CORS_OPTIONS = build_cors_options(",".join(ALLOWED_ORIGINS))
 
 
 @asynccontextmanager
@@ -35,11 +62,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=ALLOWED_ORIGINS,
-    allow_origin_regex=r"https://.*\.netlify\.app",
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    **CORS_OPTIONS,
 )
 
 
