@@ -37,8 +37,43 @@ const RESULT_FOUND_STEP_MS = 850
 const RETRY_STEP_MS = 1100
 const LOW_CONFIDENCE_THRESHOLD = 0.8
 
-function wait(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms))
+function createAbortError() {
+  const error = new Error('The operation was aborted.')
+  error.name = 'AbortError'
+  return error
+}
+
+function isAbortError(error: unknown) {
+  if (error instanceof Error && error.name === 'AbortError') {
+    return true
+  }
+
+  if (error && typeof error === 'object' && 'cause' in error) {
+    return isAbortError(error.cause)
+  }
+
+  return false
+}
+
+function wait(ms: number, signal?: AbortSignal) {
+  if (signal?.aborted) {
+    return Promise.reject(createAbortError())
+  }
+
+  return new Promise<void>((resolve, reject) => {
+    const timeoutId = window.setTimeout(() => {
+      signal?.removeEventListener('abort', onAbort)
+      resolve()
+    }, ms)
+
+    const onAbort = () => {
+      window.clearTimeout(timeoutId)
+      signal?.removeEventListener('abort', onAbort)
+      reject(createAbortError())
+    }
+
+    signal?.addEventListener('abort', onAbort, { once: true })
+  })
 }
 
 export function useRecognition() {
@@ -47,8 +82,25 @@ export function useRecognition() {
   const error = ref<string | null>(null)
   const result = ref<RecognizeResponse | null>(null)
   const loadingStep = ref<LoadingStep>('detecting')
+  let activeController: AbortController | null = null
+  let activeRequestId = 0
+
+  function cancelActiveRequest() {
+    activeController?.abort()
+    activeController = null
+  }
+
+  function isActiveRequest(requestId: number) {
+    return requestId === activeRequestId
+  }
 
   async function recognizeAudio(file: File, detectImam = true) {
+    cancelActiveRequest()
+    const controller = new AbortController()
+    const requestId = activeRequestId + 1
+
+    activeController = controller
+    activeRequestId = requestId
     loading.value = true
     error.value = null
     result.value = null
@@ -64,13 +116,14 @@ export function useRecognition() {
       const response = await $fetch<RecognizeResponse>(`${apiBaseUrl}/recognize`, {
         method: 'POST',
         body: formData,
+        signal: controller.signal,
       })
 
       const elapsed = Date.now() - startedAt
       const remaining = Math.max(0, MIN_LOADING_MS - elapsed)
 
       if (remaining > 0) {
-        await wait(remaining)
+        await wait(remaining, controller.signal)
       }
 
       const hasVerse = !!response.verse
@@ -82,10 +135,14 @@ export function useRecognition() {
 
       if (hasVerse && isConfident) {
         loadingStep.value = 'result-found'
-        await wait(RESULT_FOUND_STEP_MS)
+        await wait(RESULT_FOUND_STEP_MS, controller.signal)
       } else {
         loadingStep.value = 'retrying'
-        await wait(RETRY_STEP_MS)
+        await wait(RETRY_STEP_MS, controller.signal)
+      }
+
+      if (!isActiveRequest(requestId)) {
+        return
       }
 
       result.value = response
@@ -94,14 +151,25 @@ export function useRecognition() {
         error.value = 'Aucun verset fiable trouvé pour cet audio.'
       }
     } catch (err) {
+      if (!isActiveRequest(requestId) || isAbortError(err)) {
+        return
+      }
+
       error.value = 'Erreur pendant la reconnaissance audio.'
       console.error(err)
     } finally {
+      if (!isActiveRequest(requestId)) {
+        return
+      }
+
       loading.value = false
+      activeController = null
     }
   }
 
   function reset() {
+    activeRequestId += 1
+    cancelActiveRequest()
     loading.value = false
     error.value = null
     result.value = null
