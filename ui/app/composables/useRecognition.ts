@@ -3,6 +3,10 @@
 // Gère l'appel API vers FastAPI pour envoyer un audio,
 // piloter le loader visuel et récupérer le résultat.
 
+import { useRuntimeConfig } from '#app'
+import { $fetch } from 'ofetch'
+import { ref } from 'vue'
+
 export type ImamPrediction = {
   name: string
   score: number

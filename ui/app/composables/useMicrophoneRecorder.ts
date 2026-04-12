@@ -7,6 +7,8 @@
 // - expose un compteur simple pour l'UI
 // - expose un niveau audio temps réel pour animer l'UI
 
+import { ref } from 'vue'
+
 const MAX_RECORDING_SECONDS = 90
 
 export function useMicrophoneRecorder() {

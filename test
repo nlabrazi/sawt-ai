@@ -1,0 +1,215 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import os
+import sys
+import time
+from contextlib import contextmanager
+from dataclasses import dataclass
+from pathlib import Path
+
+from rich import box
+from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+
+PROJECT_ROOT = Path(__file__).resolve().parent
+API_DIR = PROJECT_ROOT / "api"
+VENV_LIB_DIR = API_DIR / ".venv" / "lib"
+PYTEST_CONFIG = API_DIR / "pytest.ini"
+console = Console(file=sys.__stdout__)
+
+
+def ensure_pytest_available():
+    site_packages = next(iter(sorted(VENV_LIB_DIR.glob("python*/site-packages"))), None)
+
+    if site_packages is None:
+        console.print(
+            Panel.fit(
+                "Environnement de test API introuvable.\n"
+                "Initialisez-le avec :\n"
+                "`python3 -m venv api/.venv && api/.venv/bin/pip install -r api/requirements-test.txt`",
+                title="Pytest indisponible",
+                border_style="red",
+            )
+        )
+        raise SystemExit(1)
+
+    sys.path.insert(0, str(site_packages))
+
+    try:
+        import pytest
+    except ImportError:
+        console.print(
+            Panel.fit(
+                "Pytest n'est pas installe dans `api/.venv`.\n"
+                "Installez-le avec :\n"
+                "`api/.venv/bin/pip install -r api/requirements-test.txt`",
+                title="Pytest indisponible",
+                border_style="red",
+            )
+        )
+        raise SystemExit(1)
+
+    return pytest
+
+
+@contextmanager
+def pushd(path: Path):
+    previous = Path.cwd()
+    os.chdir(path)
+    try:
+        yield
+    finally:
+        os.chdir(previous)
+
+
+def test_label(nodeid: str) -> str:
+    return nodeid.replace("::", " > ")
+
+
+@dataclass
+class RecordedResult:
+    label: str
+    kind: str
+    duration: float
+    details: str | None = None
+
+
+class RichPytestPlugin:
+    def __init__(self) -> None:
+        self.passed = 0
+        self.failed = 0
+        self.errors = 0
+        self.skipped = 0
+        self.xfailed = 0
+        self.xpassed = 0
+        self.failure_details: list[RecordedResult] = []
+        self.tests_collected = 0
+        self.run_started_at = 0.0
+
+    def pytest_sessionstart(self, session) -> None:
+        self.run_started_at = time.perf_counter()
+        console.print(
+            Panel.fit(
+                "Running API test suite",
+                title="Sawt API Tests",
+                border_style="cyan",
+            )
+        )
+        console.print()
+
+    def pytest_collection_finish(self, session) -> None:
+        self.tests_collected = len(session.items)
+        console.print(f"[dim]Collected {self.tests_collected} tests[/]")
+        console.print()
+
+    def pytest_runtest_logreport(self, report) -> None:
+        label = test_label(report.nodeid)
+        elapsed = report.duration
+
+        if report.when == "call":
+            if report.passed:
+                if getattr(report, "wasxfail", False):
+                    self.xpassed += 1
+                    console.print(f"[bold magenta]XPASS[/] {label} [dim]({elapsed:.3f}s)[/]")
+                else:
+                    self.passed += 1
+                    console.print(f"[bold green]PASS[/] {label} [dim]({elapsed:.3f}s)[/]")
+                return
+
+            if report.failed:
+                self.failed += 1
+                console.print(f"[bold red]FAIL[/] {label} [dim]({elapsed:.3f}s)[/]")
+                self.failure_details.append(
+                    RecordedResult(
+                        label=label,
+                        kind="Failure",
+                        duration=elapsed,
+                        details=getattr(report, "longreprtext", None),
+                    )
+                )
+                return
+
+            if report.skipped:
+                if getattr(report, "wasxfail", False):
+                    self.xfailed += 1
+                    console.print(f"[bold cyan]XFAIL[/] {label} [dim]({elapsed:.3f}s)[/]")
+                else:
+                    self.skipped += 1
+                    reason = report.longrepr.reprcrash.message if hasattr(report.longrepr, "reprcrash") else "skipped"
+                    console.print(f"[bold yellow]SKIP[/] {label} [dim]({elapsed:.3f}s)[/] [yellow]{reason}[/]")
+                return
+
+        if report.when in {"setup", "teardown"} and report.failed:
+            self.errors += 1
+            console.print(f"[bold red]ERROR[/] {label} [{report.when}] [dim]({elapsed:.3f}s)[/]")
+            self.failure_details.append(
+                RecordedResult(
+                    label=label,
+                    kind=f"{report.when.title()} Error",
+                    duration=elapsed,
+                    details=getattr(report, "longreprtext", None),
+                )
+            )
+            return
+
+        if report.when == "setup" and report.skipped:
+            self.skipped += 1
+            reason = report.longrepr.reprcrash.message if hasattr(report.longrepr, "reprcrash") else "skipped"
+            console.print(f"[bold yellow]SKIP[/] {label} [dim]({elapsed:.3f}s)[/] [yellow]{reason}[/]")
+
+    def pytest_sessionfinish(self, session, exitstatus: int) -> None:
+        duration = time.perf_counter() - self.run_started_at
+
+        if self.failure_details:
+            console.print()
+            console.rule("[bold red]Failure Details[/]")
+            for failure in self.failure_details:
+                console.print(
+                    Panel.fit(
+                        (failure.details or "").rstrip() or "No additional details.",
+                        title=f"{failure.kind}: {failure.label}",
+                        border_style="red",
+                    )
+                )
+
+        summary = Table(box=box.SIMPLE, show_header=False)
+        summary.add_row("Passed", f"[green]{self.passed}[/]")
+        summary.add_row("Failed", f"[red]{self.failed}[/]")
+        summary.add_row("Errors", f"[red]{self.errors}[/]")
+        summary.add_row("Skipped", f"[yellow]{self.skipped}[/]")
+        summary.add_row("Expected Failures", f"[cyan]{self.xfailed}[/]")
+        summary.add_row("Unexpected Successes", f"[magenta]{self.xpassed}[/]")
+        summary.add_row("Collected", str(self.tests_collected))
+        summary.add_row("Duration", f"{duration:.3f}s")
+
+        status = "SUCCESS" if exitstatus == 0 else "FAILED"
+        border_style = "green" if exitstatus == 0 else "red"
+        console.print()
+        console.print(Panel.fit(summary, title=f"Test Run {status}", border_style=border_style))
+
+
+def build_pytest_args(raw_args: list[str]) -> list[str]:
+    explicit_target = any(arg and not arg.startswith("-") for arg in raw_args)
+    pytest_args = ["-c", str(PYTEST_CONFIG)]
+
+    if not explicit_target:
+        pytest_args.append("tests")
+
+    pytest_args.extend(raw_args)
+    return pytest_args
+
+
+def main(argv: list[str] | None = None) -> int:
+    pytest = ensure_pytest_available()
+    raw_args = list(argv or sys.argv[1:])
+    plugin = RichPytestPlugin()
+    pytest_args = build_pytest_args(raw_args)
+
+    with pushd(API_DIR):
+        return pytest.main(["-p", "no:terminal", *pytest_args], plugins=[plugin])
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

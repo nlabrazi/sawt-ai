@@ -4,12 +4,15 @@
 # - modèle Whisper via faster-whisper
 # - versets du Coran
 
+from __future__ import annotations
+
 import os
 import json
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-from faster_whisper import WhisperModel
+if TYPE_CHECKING:
+    from faster_whisper import WhisperModel
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 WHISPER_MODEL_NAME = os.getenv("WHISPER_MODEL_NAME", "base")
@@ -25,6 +28,8 @@ def load_all_models() -> None:
     global whisper_model, quran_versets
 
     if whisper_model is None:
+        from faster_whisper import WhisperModel
+
         whisper_model = WhisperModel(
             WHISPER_MODEL_NAME,
             device="cpu",

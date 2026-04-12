@@ -119,6 +119,36 @@ docker compose up --build
 - The maximum audio duration expected by the UI is `90 seconds`
 - Imam detection depends on the model mounted from `./training`
 
+### 🧪 Tests
+
+Backend API test runner with your `py=/usr/bin/python3` alias:
+
+```bash
+py test
+```
+
+Backend API tests:
+
+```bash
+python3 -m venv api/.venv
+api/.venv/bin/pip install -r api/requirements-test.txt
+api/.venv/bin/pytest -c api/pytest.ini
+```
+
+Frontend unit tests:
+
+```bash
+cd ui
+npm test
+```
+
+The current test suite covers:
+
+- FastAPI routes for `recognize`, `feedback`, and `tajwid`
+- Python utility and service logic
+- Frontend composables for recognition, feedback, and tajwid loading
+- Frontend utility parsing and a core UI button component
+
 ### 🌍 Environment Variables
 
 Example API variables are available in [`api/.env.example`](api/.env.example):

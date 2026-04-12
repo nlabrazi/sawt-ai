@@ -3,6 +3,10 @@
 // Charge le texte tajwid à la demande depuis le backend
 // et garde les résultats en cache mémoire.
 
+import { useRuntimeConfig } from '#app'
+import { $fetch } from 'ofetch'
+import { ref } from 'vue'
+
 type TajwidResponse = {
   surah_id: number
   start_verse: number
@@ -14,6 +18,10 @@ const tajwidCache = new Map<string, TajwidResponse>()
 
 function buildCacheKey(surahId: number, startVerse: number, endVerse: number) {
   return `${surahId}-${startVerse}-${endVerse}`
+}
+
+export function clearTajwidCache() {
+  tajwidCache.clear()
 }
 
 export function useTajwid() {
