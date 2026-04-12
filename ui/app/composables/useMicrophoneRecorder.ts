@@ -27,6 +27,7 @@ export function useMicrophoneRecorder() {
   let analyser: AnalyserNode | null = null
   let sourceNode: MediaStreamAudioSourceNode | null = null
   let animationFrameId: number | null = null
+  let stopPromise: Promise<File | null> | null = null
 
   function getSupportedMimeType() {
     const candidates = [
@@ -123,11 +124,16 @@ export function useMicrophoneRecorder() {
     audioLevel.value = 0
   }
 
+  function resetRecordingState() {
+    isRecording.value = false
+    recordingSeconds.value = 0
+    maxDurationReached.value = false
+    audioLevel.value = 0
+  }
+
   async function startRecording() {
     micError.value = null
-    maxDurationReached.value = false
-    recordingSeconds.value = 0
-    audioLevel.value = 0
+    resetRecordingState()
 
     try {
       if (!window.isSecureContext) {
@@ -174,15 +180,18 @@ export function useMicrophoneRecorder() {
     }
   }
 
-  async function stopRecording(): Promise<File | null> {
-    if (!mediaRecorder || !isRecording.value) return null
+  function stopRecording(): Promise<File | null> {
+    if (stopPromise) return stopPromise
+    if (!mediaRecorder || !isRecording.value) return Promise.resolve(null)
 
     stopTimer()
     stopAudioLevelTracking()
 
-    return new Promise((resolve) => {
-      mediaRecorder!.onstop = () => {
-        const mimeType = mediaRecorder?.mimeType || 'audio/webm'
+    const recorderToStop = mediaRecorder
+
+    stopPromise = new Promise((resolve) => {
+      recorderToStop.onstop = () => {
+        const mimeType = recorderToStop.mimeType || 'audio/webm'
         const blob = new Blob(audioChunks, { type: mimeType })
         const extension = mimeType.includes('ogg')
           ? 'ogg'
@@ -197,12 +206,15 @@ export function useMicrophoneRecorder() {
         )
 
         cleanup()
+        stopPromise = null
         resolve(file)
       }
 
-      mediaRecorder!.stop()
+      recorderToStop.stop()
       isRecording.value = false
     })
+
+    return stopPromise
   }
 
   function cleanup() {
@@ -217,8 +229,7 @@ export function useMicrophoneRecorder() {
       mediaStream = null
     }
 
-    isRecording.value = false
-    audioLevel.value = 0
+    resetRecordingState()
   }
 
   return {
