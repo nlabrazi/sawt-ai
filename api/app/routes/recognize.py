@@ -11,44 +11,24 @@ from tempfile import NamedTemporaryFile
 from fastapi import APIRouter, Form, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
 
+from app.core.upload_policy import (
+    MAX_AUDIO_DURATION_SECONDS,
+    MAX_FILE_SIZE_BYTES,
+    canonicalize_content_type,
+    resolve_temp_extension,
+)
 from app.schemas.recognize import RecognizeResponse
+from app.services.audio_metadata_service import (
+    AudioMetadataError,
+    get_audio_duration_seconds,
+)
 from app.services.inference_pipeline import run_inference_pipeline
 
 router = APIRouter()
 logger = logging.getLogger(__name__)
 
-MAX_FILE_SIZE_BYTES = 12 * 1024 * 1024
 HEADER_SNIFF_BYTES = 4096
 READ_CHUNK_SIZE_BYTES = 1024 * 1024
-CONTENT_TYPE_ALIASES = {
-    "audio/wav": "audio/wav",
-    "audio/x-wav": "audio/wav",
-    "audio/mpeg": "audio/mpeg",
-    "audio/mp3": "audio/mpeg",
-    "audio/mp4": "audio/mp4",
-    "audio/x-m4a": "audio/mp4",
-    "audio/ogg": "audio/ogg",
-    "audio/webm": "audio/webm",
-}
-CONTENT_TYPE_TO_EXTENSION = {
-    "audio/wav": ".wav",
-    "audio/mpeg": ".mp3",
-    "audio/mp4": ".m4a",
-    "audio/ogg": ".ogg",
-    "audio/webm": ".webm",
-}
-
-
-def canonicalize_content_type(content_type: str | None) -> str:
-    if not content_type:
-        return ""
-
-    normalized_content_type = content_type.strip().lower()
-    return CONTENT_TYPE_ALIASES.get(normalized_content_type, normalized_content_type)
-
-
-def resolve_temp_extension(content_type: str) -> str:
-    return CONTENT_TYPE_TO_EXTENSION.get(content_type, ".bin")
 
 
 def sniff_audio_content_type(header_bytes: bytes) -> str | None:
@@ -132,6 +112,24 @@ async def persist_upload_to_temp_file(file: UploadFile) -> tuple[Path, int, str]
     return temp_path, total_bytes, detected_content_type
 
 
+def enforce_audio_duration_limit(audio_path: Path) -> float:
+    try:
+        duration_seconds = get_audio_duration_seconds(audio_path)
+    except AudioMetadataError as exc:
+        raise HTTPException(
+            status_code=415,
+            detail="Impossible de lire la durée du fichier audio.",
+        ) from exc
+
+    if duration_seconds > MAX_AUDIO_DURATION_SECONDS:
+        raise HTTPException(
+            status_code=413,
+            detail=f"Audio trop long. Maximum {MAX_AUDIO_DURATION_SECONDS} secondes.",
+        )
+
+    return duration_seconds
+
+
 @router.post("/recognize", response_model=RecognizeResponse)
 async def recognize(
     file: UploadFile,
@@ -142,15 +140,17 @@ async def recognize(
 
     try:
         temp_file, file_size, detected_content_type = await persist_upload_to_temp_file(file)
+        audio_duration_seconds = enforce_audio_duration_limit(temp_file)
         declared_content_type = canonicalize_content_type(file.content_type)
 
         logger.info(
-            "Recognize request received: request_id=%s filename=%s declared_content_type=%s detected_content_type=%s size=%s detect_imam=%s temp_path=%s",
+            "Recognize request received: request_id=%s filename=%s declared_content_type=%s detected_content_type=%s size=%s duration_seconds=%.3f detect_imam=%s temp_path=%s",
             request_id,
             file.filename,
             declared_content_type or None,
             detected_content_type,
             file_size,
+            audio_duration_seconds,
             detect_imam,
             temp_file,
         )

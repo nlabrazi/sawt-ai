@@ -5,25 +5,22 @@ import { useMicrophoneRecorder } from '~/composables/useMicrophoneRecorder'
 
 export type RecognitionScreenState = 'idle' | 'loading' | 'result'
 
-const MAX_FILE_SIZE_MB = 12
-const MAX_AUDIO_DURATION_SECONDS = 90
-const ALLOWED_MIME_TYPES = [
-  'audio/wav',
-  'audio/x-wav',
-  'audio/mpeg',
-  'audio/mp3',
-  'audio/mp4',
-  'audio/x-m4a',
-  'audio/ogg',
-  'audio/webm',
-]
+function formatMegabytes(sizeInBytes: number) {
+  const megabytes = sizeInBytes / (1024 * 1024)
 
-function getFileSizeInMb(file: File) {
-  return file.size / (1024 * 1024)
+  if (Number.isInteger(megabytes)) {
+    return String(megabytes)
+  }
+
+  return megabytes.toFixed(1).replace(/\.0$/, '')
 }
 
-function isAllowedAudioType(file: File) {
-  return ALLOWED_MIME_TYPES.some(type =>
+function isAllowedAudioType(file: File, allowedMimeTypes: string[]) {
+  if (!allowedMimeTypes.length) {
+    return true
+  }
+
+  return allowedMimeTypes.some(type =>
     file.type === type || file.type.startsWith(`${type};`)
   )
 }
@@ -51,6 +48,48 @@ function getAudioDuration(file: File): Promise<number> {
 
 export function useRecognitionFlow() {
   const {
+    imamDetectionAvailable,
+    imamDetectionMessage,
+    uploadPolicy,
+    refreshHealth,
+    markImamDetectionUnavailable,
+  } = useApiHealth()
+
+  const maxAudioDurationSeconds = computed(() => uploadPolicy.value?.max_audio_duration_seconds ?? null)
+  const maxFileSizeBytes = computed(() => uploadPolicy.value?.max_file_size_bytes ?? null)
+  const acceptedMimeTypes = computed(() => uploadPolicy.value?.accepted_mime_types ?? [])
+  const acceptedFileExtensions = computed(() => uploadPolicy.value?.accepted_file_extensions ?? [])
+  const maxFileSizeLabel = computed(() => {
+    if (maxFileSizeBytes.value === null) {
+      return null
+    }
+
+    return formatMegabytes(maxFileSizeBytes.value)
+  })
+  const uploadAccept = computed(() => {
+    if (!acceptedFileExtensions.value.length) {
+      return 'audio/*'
+    }
+
+    return acceptedFileExtensions.value.join(',')
+  })
+  const uploadHint = computed(() => {
+    if (
+      !acceptedFileExtensions.value.length
+      || maxFileSizeLabel.value === null
+      || maxAudioDurationSeconds.value === null
+    ) {
+      return null
+    }
+
+    const formatsLabel = acceptedFileExtensions.value
+      .map(extension => extension.replace(/^\./, ''))
+      .join(', ')
+
+    return `Formats : ${formatsLabel} · max ${maxFileSizeLabel.value} Mo · max ${maxAudioDurationSeconds.value} sec`
+  })
+
+  const {
     loading,
     loadingStep,
     error,
@@ -69,14 +108,7 @@ export function useRecognitionFlow() {
     startRecording,
     stopRecording,
     cleanup,
-  } = useMicrophoneRecorder()
-
-  const {
-    imamDetectionAvailable,
-    imamDetectionMessage,
-    refreshHealth,
-    markImamDetectionUnavailable,
-  } = useApiHealth()
+  } = useMicrophoneRecorder(maxAudioDurationSeconds)
 
   const uploadError = ref<string | null>(null)
   const detectImam = ref(true)
@@ -109,13 +141,13 @@ export function useRecognitionFlow() {
 
     uploadError.value = null
 
-    if (!isAllowedAudioType(file)) {
+    if (!isAllowedAudioType(file, acceptedMimeTypes.value)) {
       uploadError.value = 'Format audio non pris en charge.'
       return
     }
 
-    if (getFileSizeInMb(file) > MAX_FILE_SIZE_MB) {
-      uploadError.value = `Fichier trop volumineux. Maximum ${MAX_FILE_SIZE_MB} Mo.`
+    if (maxFileSizeBytes.value !== null && file.size > maxFileSizeBytes.value) {
+      uploadError.value = `Fichier trop volumineux. Maximum ${maxFileSizeLabel.value} Mo.`
       return
     }
 
@@ -130,8 +162,8 @@ export function useRecognitionFlow() {
           return
         }
 
-        if (duration > MAX_AUDIO_DURATION_SECONDS) {
-          uploadError.value = `Audio trop long. Maximum ${MAX_AUDIO_DURATION_SECONDS} secondes.`
+        if (maxAudioDurationSeconds.value !== null && duration > maxAudioDurationSeconds.value) {
+          uploadError.value = `Audio trop long. Maximum ${maxAudioDurationSeconds.value} secondes.`
           return
         }
       } catch {
@@ -192,6 +224,8 @@ export function useRecognitionFlow() {
     maxDurationReached,
     maxRecordingSeconds,
     screenState,
+    uploadAccept,
+    uploadHint,
     submitAudio,
     onMicroClick,
     resetApp,

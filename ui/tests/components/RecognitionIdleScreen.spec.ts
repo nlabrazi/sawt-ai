@@ -7,6 +7,8 @@ describe('RecognitionIdleScreen', () => {
     const wrapper = mount(RecognitionIdleScreen, {
       props: {
         detectImam: true,
+        uploadAccept: '.wav,.mp3,.m4a,.ogg,.webm',
+        uploadHint: 'Formats : wav, mp3, m4a, ogg, webm · max 12 Mo · max 90 sec',
       },
     })
 

@@ -6,6 +6,7 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.core.upload_policy import build_upload_policy
 from app.routes.recognize import router as recognize_router
 from app.routes.tajwid import router as tajwid_router
 from app.routes.feedback import router as feedback_router
@@ -94,5 +95,6 @@ def health():
         "status": "ok",
         "services": {
             "imam_detection": get_imam_service_health(),
+            "upload_policy": build_upload_policy(),
         },
     }

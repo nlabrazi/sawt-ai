@@ -1,6 +1,7 @@
 import asyncio
 
 import app.main as main
+from app.core.upload_policy import build_upload_policy
 
 from app.main import app, build_cors_options, parse_allowed_origins
 
@@ -56,6 +57,7 @@ def test_health_reports_imam_detection_service_status(monkeypatch):
                 "status": "unavailable",
                 "message": "La reconnaissance de l’imam est temporairement indisponible.",
             },
+            "upload_policy": build_upload_policy(),
         },
     }
 

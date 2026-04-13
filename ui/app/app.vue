@@ -19,6 +19,8 @@ const {
   recordingSeconds,
   maxRecordingSeconds,
   audioLevel,
+  uploadAccept,
+  uploadHint,
   detectImam,
   imamDetectionAvailable,
   imamDetectionMessage,
@@ -33,6 +35,7 @@ const {
 
     <RecognitionIdleScreen v-if="screenState === 'idle'" :upload-error="uploadError" :mic-error="micError"
       :is-recording="isRecording" :recording-seconds="recordingSeconds" :max-recording-seconds="maxRecordingSeconds"
+      :upload-accept="uploadAccept" :upload-hint="uploadHint"
       :audio-level="audioLevel" :imam-detection-available="imamDetectionAvailable"
       :imam-detection-message="imamDetectionMessage" v-model:detect-imam="detectImam" @micro-click="onMicroClick"
       @select-file="submitAudio" />

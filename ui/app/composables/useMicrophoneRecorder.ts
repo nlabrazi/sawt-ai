@@ -3,20 +3,27 @@
 // Gère l'enregistrement micro V1.
 // - clic 1 : start
 // - clic 2 : stop
-// - auto stop à 90 secondes
+// - auto stop selon la policy serveur
 // - expose un compteur simple pour l'UI
 // - expose un niveau audio temps réel pour animer l'UI
 
-import { ref } from 'vue'
+import { computed, ref, type Ref } from 'vue'
 
-const MAX_RECORDING_SECONDS = 90
-
-export function useMicrophoneRecorder() {
+export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | null>) {
   const isRecording = ref(false)
   const micError = ref<string | null>(null)
   const recordingSeconds = ref(0)
   const maxDurationReached = ref(false)
   const audioLevel = ref(0)
+  const maxRecordingSeconds = computed(() => {
+    const nextLimit = maxRecordingSecondsLimit?.value
+
+    if (!Number.isFinite(nextLimit) || (nextLimit ?? 0) <= 0) {
+      return null
+    }
+
+    return Math.floor(nextLimit!)
+  })
 
   let mediaRecorder: MediaRecorder | null = null
   let mediaStream: MediaStream | null = null
@@ -49,7 +56,10 @@ export function useMicrophoneRecorder() {
     timerId = window.setInterval(async () => {
       recordingSeconds.value += 1
 
-      if (recordingSeconds.value >= MAX_RECORDING_SECONDS) {
+      if (
+        maxRecordingSeconds.value !== null
+        && recordingSeconds.value >= maxRecordingSeconds.value
+      ) {
         maxDurationReached.value = true
         await stopRecording()
       }
@@ -237,7 +247,7 @@ export function useMicrophoneRecorder() {
     micError,
     recordingSeconds,
     maxDurationReached,
-    maxRecordingSeconds: MAX_RECORDING_SECONDS,
+    maxRecordingSeconds,
     audioLevel,
     startRecording,
     stopRecording,

@@ -10,10 +10,18 @@ export type ImamDetectionHealth = {
   message: string | null
 }
 
+export type UploadPolicy = {
+  max_file_size_bytes: number
+  max_audio_duration_seconds: number
+  accepted_mime_types: string[]
+  accepted_file_extensions: string[]
+}
+
 export type ApiHealthResponse = {
   status: 'ok'
   services: {
     imam_detection: ImamDetectionHealth
+    upload_policy: UploadPolicy
   }
 }
 
@@ -22,11 +30,16 @@ const imamDetection = ref<ImamDetectionHealth>({
   status: 'available',
   message: null,
 })
+const uploadPolicy = ref<UploadPolicy | null>(null)
 
 let activeHealthRequest: Promise<void> | null = null
 
 function applyImamDetectionHealth(nextHealth: ImamDetectionHealth) {
   imamDetection.value = nextHealth
+}
+
+function applyUploadPolicy(nextPolicy: UploadPolicy | null) {
+  uploadPolicy.value = nextPolicy
 }
 
 export function resetApiHealthState() {
@@ -35,6 +48,7 @@ export function resetApiHealthState() {
     status: 'available',
     message: null,
   }
+  uploadPolicy.value = null
   activeHealthRequest = null
 }
 
@@ -55,6 +69,7 @@ export function useApiHealth() {
         })
 
         applyImamDetectionHealth(response.services.imam_detection)
+        applyUploadPolicy(response.services.upload_policy)
       } catch (error) {
         console.error(error)
       } finally {
@@ -77,6 +92,7 @@ export function useApiHealth() {
     imamDetection,
     imamDetectionAvailable,
     imamDetectionMessage,
+    uploadPolicy,
     refreshHealth,
     markImamDetectionUnavailable,
   }

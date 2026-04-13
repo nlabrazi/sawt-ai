@@ -1,3 +1,5 @@
+import { ref } from 'vue'
+
 import { useMicrophoneRecorder } from '~/composables/useMicrophoneRecorder'
 
 class FakeMediaRecorder {
@@ -90,7 +92,7 @@ describe('useMicrophoneRecorder', () => {
     vi.useFakeTimers()
 
     const { stopTrack } = setupRecorderEnvironment()
-    const recorder = useMicrophoneRecorder()
+    const recorder = useMicrophoneRecorder(ref(90))
 
     await recorder.startRecording()
 
@@ -116,7 +118,7 @@ describe('useMicrophoneRecorder', () => {
     vi.useFakeTimers()
 
     const { stopTrack } = setupRecorderEnvironment()
-    const recorder = useMicrophoneRecorder()
+    const recorder = useMicrophoneRecorder(ref(90))
 
     await recorder.startRecording()
     await vi.advanceTimersByTimeAsync(90_000)
@@ -125,6 +127,20 @@ describe('useMicrophoneRecorder', () => {
     expect(recorder.isRecording.value).toBe(false)
     expect(recorder.recordingSeconds.value).toBe(0)
     expect(recorder.maxDurationReached.value).toBe(false)
+    expect(stopTrack).toHaveBeenCalledTimes(1)
+  })
+
+  it('uses the server-provided max duration instead of a hardcoded value', async () => {
+    vi.useFakeTimers()
+
+    const { stopTrack } = setupRecorderEnvironment()
+    const recorder = useMicrophoneRecorder(ref(2))
+
+    await recorder.startRecording()
+    await vi.advanceTimersByTimeAsync(2_000)
+    await vi.runAllTimersAsync()
+
+    expect(recorder.isRecording.value).toBe(false)
     expect(stopTrack).toHaveBeenCalledTimes(1)
   })
 })

@@ -60,6 +60,7 @@ def test_recognize_runs_pipeline_in_threadpool_and_cleans_temp_file(monkeypatch)
 
     monkeypatch.setattr(recognize_route, "run_inference_pipeline", fake_pipeline)
     monkeypatch.setattr(recognize_route, "run_in_threadpool", fake_run_in_threadpool)
+    monkeypatch.setattr(recognize_route, "get_audio_duration_seconds", lambda _path: 12.5)
 
     upload = build_upload_file(
         "recitation.webm",
@@ -89,6 +90,24 @@ def test_recognize_rejects_invalid_audio_signature():
     except HTTPException as exc:
         assert exc.status_code == 415
         assert exc.detail == "Format audio invalide ou non pris en charge."
+    else:
+        raise AssertionError("Expected HTTPException")
+
+
+def test_recognize_rejects_audio_longer_than_the_server_policy(monkeypatch):
+    monkeypatch.setattr(recognize_route, "get_audio_duration_seconds", lambda _path: 91)
+
+    oversized_duration_upload = build_upload_file(
+        "too-long.wav",
+        build_wav_like_audio(),
+        "audio/wav",
+    )
+
+    try:
+        asyncio.run(recognize_route.recognize(file=oversized_duration_upload, detect_imam=True))
+    except HTTPException as exc:
+        assert exc.status_code == 413
+        assert exc.detail == "Audio trop long. Maximum 90 secondes."
     else:
         raise AssertionError("Expected HTTPException")
 

@@ -6,8 +6,10 @@ const props = defineProps<{
   micError?: string | null
   isRecording?: boolean
   recordingSeconds?: number
-  maxRecordingSeconds?: number
+  maxRecordingSeconds?: number | null
   audioLevel?: number
+  uploadAccept?: string
+  uploadHint?: string | null
   detectImam?: boolean
   imamDetectionAvailable?: boolean
   imamDetectionMessage?: string | null
@@ -87,8 +89,8 @@ function onFileChange(event: Event) {
             : 'Analyse du réciteur en plus du verset' }}
         </p>
 
-        <p class="upload-hint">
-          Formats : wav, mp3, m4a, ogg, webm · max 12 Mo · max 90 sec
+        <p v-if="uploadHint" class="upload-hint">
+          {{ uploadHint }}
         </p>
 
         <p v-if="uploadError" class="upload-error">
@@ -100,7 +102,7 @@ function onFileChange(event: Event) {
         </p>
       </div>
 
-      <input :id="fileInputId" class="hidden-input" type="file" accept=".wav,.mp3,.m4a,.ogg,.webm" @change="onFileChange" />
+      <input :id="fileInputId" class="hidden-input" type="file" :accept="uploadAccept ?? 'audio/*'" @change="onFileChange" />
     </div>
   </section>
 </template>
