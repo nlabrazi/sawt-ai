@@ -157,6 +157,7 @@ Example API variables are available in [`api/.env.example`](api/.env.example):
 ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 WHISPER_MODEL_NAME=base
 QURAN_VERSETS_PATH=/app/assets/quran_versets.json
+TAJWID_DATA_PATH=/app/assets/quran_tajwid.json
 IMAM_MODEL_PATH=/training/artifacts/models/imam_ecapa_v2/best_model.pt
 SUPABASE_URL=https://<project-ref>.supabase.co
 SUPABASE_API_KEY=<service_role_or_sb_secret>
@@ -166,6 +167,8 @@ SUPABASE_FEEDBACK_TABLE=feedbacks
 Set `ALLOWED_ORIGINS` with each trusted frontend origin explicitly.
 Example for production: `https://your-app.netlify.app`.
 Do not rely on wildcard Netlify preview domains when credentials are enabled.
+If `TAJWID_DATA_PATH` points to a local snapshot, the API serves tajwid from disk
+and avoids the initial remote corpus download.
 Use the Supabase Project URL, not the Postgres connection string, for `SUPABASE_URL`.
 Use a server-side key only for `SUPABASE_API_KEY`, not an `anon` or `sb_publishable` key.
 
