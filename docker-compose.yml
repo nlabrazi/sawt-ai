@@ -4,6 +4,10 @@ services:
   api:
     build: ./api
     container_name: sawt_api
+    env_file:
+      - ./api/.env
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     ports:
       - "8000:8000"
     volumes:
