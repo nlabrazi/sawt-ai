@@ -191,7 +191,7 @@ export function useRecognitionFlow() {
       return
     }
 
-    await recognizeAudio(recordedFile, detectImam.value)
+    await submitAudio(recordedFile)
   }
 
   watch(maxDurationReached, async (reached) => {
@@ -204,7 +204,7 @@ export function useRecognitionFlow() {
       return
     }
 
-    await recognizeAudio(recordedFile, detectImam.value)
+    await submitAudio(recordedFile)
   })
 
   function resetApp() {

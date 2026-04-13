@@ -57,6 +57,22 @@ function isAbortError(error: unknown) {
   return false
 }
 
+function getApiErrorDetail(error: unknown) {
+  if (!error || typeof error !== 'object' || !('data' in error)) {
+    return null
+  }
+
+  const data = (error as { data?: unknown }).data
+
+  if (!data || typeof data !== 'object' || !('detail' in data)) {
+    return null
+  }
+
+  return typeof (data as { detail?: unknown }).detail === 'string'
+    ? (data as { detail: string }).detail
+    : null
+}
+
 function wait(ms: number, signal?: AbortSignal) {
   if (signal?.aborted) {
     return Promise.reject(createAbortError())
@@ -153,7 +169,7 @@ export function useRecognition() {
         return
       }
 
-      error.value = 'Erreur pendant la reconnaissance audio.'
+      error.value = getApiErrorDetail(err) ?? 'Erreur pendant la reconnaissance audio.'
       console.error(err)
     } finally {
       if (!isActiveRequest(requestId)) {

@@ -64,6 +64,23 @@ describe('useRecognition', () => {
     expect(result.value).toBeNull()
   })
 
+  it('surfaces the backend detail when the API returns one', async () => {
+    vi.mocked($fetch).mockRejectedValueOnce({
+      data: {
+        detail: 'Format audio invalide ou non pris en charge.',
+      },
+    })
+
+    const { loading, error, result, recognizeAudio } = useRecognition()
+    const audioFile = new File(['audio'], 'recitation.webm', { type: 'audio/webm' })
+
+    await recognizeAudio(audioFile)
+
+    expect(loading.value).toBe(false)
+    expect(error.value).toBe('Format audio invalide ou non pris en charge.')
+    expect(result.value).toBeNull()
+  })
+
   it('aborts the in-flight request when reset is called', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
 
