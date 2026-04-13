@@ -1,3 +1,5 @@
+import app.main as main
+
 from app.main import app, build_cors_options, parse_allowed_origins
 
 
@@ -31,3 +33,26 @@ def test_openapi_documents_recognize_response_contract():
 
     assert recognize_response == {"$ref": "#/components/schemas/RecognizeResponse"}
     assert "imam_detection_enabled" in schema["components"]["schemas"]["RecognizeResponse"]["required"]
+
+
+def test_health_reports_imam_detection_service_status(monkeypatch):
+    monkeypatch.setattr(
+        main,
+        "get_imam_service_health",
+        lambda: {
+            "available": False,
+            "status": "unavailable",
+            "message": "La reconnaissance de l’imam est temporairement indisponible.",
+        },
+    )
+
+    assert main.health() == {
+        "status": "ok",
+        "services": {
+            "imam_detection": {
+                "available": False,
+                "status": "unavailable",
+                "message": "La reconnaissance de l’imam est temporairement indisponible.",
+            },
+        },
+    }

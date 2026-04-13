@@ -21,6 +21,8 @@ DEFAULT_MODEL_PATH = (
 MODEL_PATH = Path(os.getenv("IMAM_MODEL_PATH", str(DEFAULT_MODEL_PATH)))
 logger = logging.getLogger(__name__)
 
+IMAM_DETECTION_UNAVAILABLE_MESSAGE = "La reconnaissance de l’imam est temporairement indisponible."
+
 encoder: Any | None = None
 model: Any | None = None
 index_to_name: dict[int, str] | None = None
@@ -43,6 +45,28 @@ def _get_imam_resources_error_message(exc: Exception) -> str:
         return "Imam prediction dependencies are not installed."
 
     return "Imam prediction resources could not be initialized."
+
+
+def get_imam_service_health() -> dict[str, bool | str | None]:
+    if encoder is not None and model is not None and index_to_name is not None:
+        return {
+            "available": True,
+            "status": "available",
+            "message": None,
+        }
+
+    if imam_resources_error is not None:
+        return {
+            "available": False,
+            "status": "unavailable",
+            "message": IMAM_DETECTION_UNAVAILABLE_MESSAGE,
+        }
+
+    return {
+        "available": True,
+        "status": "available",
+        "message": None,
+    }
 
 
 def _remember_imam_resources_error(exc: Exception) -> ImamResourcesUnavailableError:
@@ -154,6 +178,17 @@ def load_imam_resources() -> tuple[Any, Any, dict[int, str]]:
         unavailable_error = _remember_imam_resources_error(exc)
         logger.exception("Imam prediction resources are unavailable")
         raise unavailable_error from exc
+
+
+def preflight_imam_resources() -> None:
+    try:
+        load_imam_resources()
+        logger.info("Imam prediction startup preflight succeeded")
+    except ImamResourcesUnavailableError as exc:
+        logger.warning(
+            "Imam prediction startup preflight marked the feature unavailable: %s",
+            exc,
+        )
 
 
 def load_audio(audio_path: str):

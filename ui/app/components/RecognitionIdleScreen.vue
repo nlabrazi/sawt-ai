@@ -9,6 +9,8 @@ const props = defineProps<{
   maxRecordingSeconds?: number
   audioLevel?: number
   detectImam?: boolean
+  imamDetectionAvailable?: boolean
+  imamDetectionMessage?: string | null
 }>()
 
 const emit = defineEmits<{
@@ -24,6 +26,8 @@ function onMicroButtonClick() {
 }
 
 function onDetectImamChange(event: Event) {
+  if (props.imamDetectionAvailable === false) return
+
   const input = event.target as HTMLInputElement
   emit('update:detect-imam', input.checked)
 }
@@ -60,15 +64,27 @@ function onFileChange(event: Event) {
           Choisir un fichier
         </label>
 
-        <label class="imam-toggle">
-          <input class="imam-toggle-checkbox" type="checkbox" :checked="detectImam" @change="onDetectImamChange">
+        <label
+          class="imam-toggle"
+          :class="{ 'is-disabled': imamDetectionAvailable === false }"
+          :title="imamDetectionAvailable === false ? (imamDetectionMessage ?? undefined) : undefined"
+        >
+          <input
+            class="imam-toggle-checkbox"
+            type="checkbox"
+            :checked="detectImam"
+            :disabled="imamDetectionAvailable === false"
+            @change="onDetectImamChange"
+          >
           <span class="imam-toggle-text">
             Reconnaître l’imam (récitateurs connus)
           </span>
         </label>
 
-        <p class="imam-toggle-hint">
-          Analyse du réciteur en plus du verset
+        <p class="imam-toggle-hint" :class="{ 'is-unavailable': imamDetectionAvailable === false }">
+          {{ imamDetectionAvailable === false
+            ? (imamDetectionMessage ?? 'La reconnaissance de l’imam est temporairement indisponible.')
+            : 'Analyse du réciteur en plus du verset' }}
         </p>
 
         <p class="upload-hint">
@@ -170,8 +186,21 @@ function onFileChange(event: Event) {
   background: rgba(147, 197, 253, 0.08);
 }
 
+.imam-toggle.is-disabled {
+  color: #64748b;
+  cursor: not-allowed;
+}
+
+.imam-toggle.is-disabled:hover {
+  background: transparent;
+}
+
 .imam-toggle:hover .imam-toggle-text {
   color: #bfdbfe;
+}
+
+.imam-toggle.is-disabled:hover .imam-toggle-text {
+  color: #64748b;
 }
 
 .imam-toggle-checkbox {
@@ -180,6 +209,11 @@ function onFileChange(event: Event) {
   accent-color: #60a5fa;
   cursor: pointer;
   opacity: 0.9;
+}
+
+.imam-toggle-checkbox:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .imam-toggle-text {
@@ -194,6 +228,11 @@ function onFileChange(event: Event) {
   font-size: 12px;
   line-height: 1.45;
   color: #64748b;
+}
+
+.imam-toggle-hint.is-unavailable {
+  color: #fca5a5;
+  font-weight: 600;
 }
 
 .secondary-link {

@@ -1,4 +1,5 @@
-import { computed, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useApiHealth } from '~/composables/useApiHealth'
 import { useRecognition } from '~/composables/useRecognition'
 import { useMicrophoneRecorder } from '~/composables/useMicrophoneRecorder'
 
@@ -70,6 +71,13 @@ export function useRecognitionFlow() {
     cleanup,
   } = useMicrophoneRecorder()
 
+  const {
+    imamDetectionAvailable,
+    imamDetectionMessage,
+    refreshHealth,
+    markImamDetectionUnavailable,
+  } = useApiHealth()
+
   const uploadError = ref<string | null>(null)
   const detectImam = ref(true)
 
@@ -77,6 +85,23 @@ export function useRecognitionFlow() {
     if (loading.value) return 'loading'
     if (result.value || error.value) return 'result'
     return 'idle'
+  })
+
+  onMounted(() => {
+    void refreshHealth()
+  })
+
+  watch(imamDetectionAvailable, (available) => {
+    if (!available) {
+      detectImam.value = false
+    }
+  }, { immediate: true })
+
+  watch(result, (nextResult) => {
+    if (nextResult?.imam_status === 'unavailable') {
+      markImamDetectionUnavailable()
+      detectImam.value = false
+    }
   })
 
   async function submitAudio(file: File) {
@@ -172,5 +197,7 @@ export function useRecognitionFlow() {
     resetApp,
     audioLevel,
     detectImam,
+    imamDetectionAvailable,
+    imamDetectionMessage,
   }
 }

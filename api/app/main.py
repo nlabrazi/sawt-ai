@@ -10,6 +10,11 @@ from app.routes.recognize import router as recognize_router
 from app.routes.tajwid import router as tajwid_router
 from app.routes.feedback import router as feedback_router
 from app.core.model_loader import load_all_models
+from app.schemas.health import HealthResponse
+from app.services.imam_prediction_service import (
+    get_imam_service_health,
+    preflight_imam_resources,
+)
 
 LOG_LEVEL_NAME = os.getenv("LOG_LEVEL", "INFO").upper()
 LOG_LEVEL = getattr(logging, LOG_LEVEL_NAME, logging.INFO)
@@ -55,6 +60,7 @@ CORS_OPTIONS = build_cors_options(",".join(ALLOWED_ORIGINS))
 @asynccontextmanager
 async def lifespan(_: FastAPI):
     load_all_models()
+    preflight_imam_resources()
     yield
 
 
@@ -71,6 +77,11 @@ app.include_router(feedback_router)
 app.include_router(tajwid_router)
 
 
-@app.get("/health")
+@app.get("/health", response_model=HealthResponse)
 def health():
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "services": {
+            "imam_detection": get_imam_service_health(),
+        },
+    }
