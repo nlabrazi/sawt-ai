@@ -14,10 +14,31 @@ type TajwidResponse = {
   text: string
 }
 
+const MAX_TAJWID_CACHE_ENTRIES = 32
 const tajwidCache = new Map<string, TajwidResponse>()
 
 function buildCacheKey(surahId: number, startVerse: number, endVerse: number) {
   return `${surahId}-${startVerse}-${endVerse}`
+}
+
+function touchCachedResponse(cacheKey: string, response: TajwidResponse) {
+  tajwidCache.delete(cacheKey)
+  tajwidCache.set(cacheKey, response)
+}
+
+function storeCachedResponse(cacheKey: string, response: TajwidResponse) {
+  touchCachedResponse(cacheKey, response)
+
+  // Garde un cache borné pour éviter qu'une session longue accumule indéfiniment.
+  if (tajwidCache.size <= MAX_TAJWID_CACHE_ENTRIES) {
+    return
+  }
+
+  const oldestCacheKey = tajwidCache.keys().next().value
+
+  if (oldestCacheKey) {
+    tajwidCache.delete(oldestCacheKey)
+  }
 }
 
 export function clearTajwidCache() {
@@ -31,9 +52,11 @@ export function useTajwid() {
 
   async function fetchTajwid(surahId: number, startVerse: number, endVerse: number) {
     const cacheKey = buildCacheKey(surahId, startVerse, endVerse)
+    const cachedResponse = tajwidCache.get(cacheKey)
 
-    if (tajwidCache.has(cacheKey)) {
-      return tajwidCache.get(cacheKey)!
+    if (cachedResponse) {
+      touchCachedResponse(cacheKey, cachedResponse)
+      return cachedResponse
     }
 
     loading.value = true
@@ -49,7 +72,7 @@ export function useTajwid() {
         },
       })
 
-      tajwidCache.set(cacheKey, response)
+      storeCachedResponse(cacheKey, response)
       return response
     } catch (err) {
       error.value = 'Impossible de charger le tajwid.'

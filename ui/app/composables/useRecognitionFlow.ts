@@ -2,6 +2,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useApiHealth } from '~/composables/useApiHealth'
 import { useRecognition } from '~/composables/useRecognition'
 import { useMicrophoneRecorder } from '~/composables/useMicrophoneRecorder'
+import { clearTajwidCache } from '~/composables/useTajwid'
 
 export type RecognitionScreenState = 'idle' | 'loading' | 'result'
 
@@ -208,6 +209,7 @@ export function useRecognitionFlow() {
 
   function resetApp() {
     uploadError.value = null
+    clearTajwidCache()
     cleanup()
     reset()
   }
