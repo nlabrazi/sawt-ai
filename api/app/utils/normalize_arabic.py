@@ -11,7 +11,7 @@ def normalize_arabic(text):
     - Remplace certaines lettres par une forme standard
     """
     text = ARABIC_DIACRITICS.sub("", text)
-    text = re.sub("[إأآا]", "ا", text)
+    text = re.sub("[إأآٱا]", "ا", text)
     text = re.sub("ى", "ي", text)
     text = re.sub("ؤ", "و", text)
     text = re.sub("ئ", "ي", text)
