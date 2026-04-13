@@ -6,7 +6,10 @@
 // - pouce rouge = ouverture du formulaire de correction
 // - envoi backend conservé
 
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
+
 import { useFeedback } from '~/composables/useFeedback'
+import { useSurahOptions } from '~/composables/useSurahOptions'
 import type { RecognizeResponse } from '~/composables/useRecognition'
 
 const props = defineProps<{
@@ -16,13 +19,95 @@ const props = defineProps<{
 const feedbackSent = ref(false)
 const showCorrectionForm = ref(false)
 const successBurst = ref(false)
-
-const correctedSourate = ref('')
-const correctedStartVerse = ref('')
-const correctedEndVerse = ref('')
+const selectedSurahId = ref<number | null>(null)
+const selectedStartVerse = ref<number | null>(null)
+const selectedEndVerse = ref<number | null>(null)
 const correctionComment = ref('')
+let successBurstTimeoutId: number | null = null
 
 const { sending, error, sendFeedback } = useFeedback()
+const {
+  surahs,
+  loading: surahsLoading,
+  error: surahsError,
+  fetchSurahOptions,
+} = useSurahOptions()
+
+const selectedSurah = computed(() => {
+  return surahs.value.find(surah => surah.id === selectedSurahId.value) ?? null
+})
+
+const availableVerseNumbers = computed(() => {
+  const totalVerses = selectedSurah.value?.total_verses ?? 0
+  return Array.from({ length: totalVerses }, (_unused, index) => index + 1)
+})
+
+const availableEndVerseNumbers = computed(() => {
+  return availableVerseNumbers.value.filter((value) => {
+    return selectedStartVerse.value === null || value >= selectedStartVerse.value
+  })
+})
+
+const formError = computed(() => error.value ?? surahsError.value)
+
+const canSubmitCorrection = computed(() => {
+  return !!selectedSurah.value
+    && selectedStartVerse.value !== null
+    && selectedEndVerse.value !== null
+    && selectedEndVerse.value >= selectedStartVerse.value
+    && !sending.value
+    && !surahsLoading.value
+})
+
+function clampVerse(value: number, min: number, max: number) {
+  return Math.min(Math.max(value, min), max)
+}
+
+function clearSuccessBurstTimeout() {
+  if (successBurstTimeoutId === null) {
+    return
+  }
+
+  window.clearTimeout(successBurstTimeoutId)
+  successBurstTimeoutId = null
+}
+
+function syncCorrectionSelection(force = false) {
+  if (!surahs.value.length) return
+
+  const detectedVerse = props.result.verse
+  const currentSurah = surahs.value.find(surah => surah.id === selectedSurahId.value)
+  const nextSurah = !force && currentSurah
+    ? currentSurah
+    : (surahs.value.find(surah => surah.id === detectedVerse?.sourate_id) ?? surahs.value[0])
+
+  selectedSurahId.value = nextSurah.id
+
+  const defaultStartVerse = detectedVerse?.sourate_id === nextSurah.id
+    ? detectedVerse.start_verse
+    : 1
+  const defaultEndVerse = detectedVerse?.sourate_id === nextSurah.id
+    ? detectedVerse.end_verse
+    : defaultStartVerse
+
+  const nextStartVerse = clampVerse(
+    selectedStartVerse.value ?? defaultStartVerse,
+    1,
+    nextSurah.total_verses,
+  )
+  const nextEndVerse = clampVerse(
+    selectedEndVerse.value ?? defaultEndVerse,
+    nextStartVerse,
+    nextSurah.total_verses,
+  )
+
+  selectedStartVerse.value = nextStartVerse
+  selectedEndVerse.value = nextEndVerse
+}
+
+function formatSurahOptionLabel(id: number, name: string, transliteration: string) {
+  return `${id} - ${name} - ${transliteration}`
+}
 
 async function submitPositiveFeedback() {
   try {
@@ -34,27 +119,32 @@ async function submitPositiveFeedback() {
       comment: null,
     })
 
+    clearSuccessBurstTimeout()
     successBurst.value = true
     feedbackSent.value = true
 
-    window.setTimeout(() => {
+    successBurstTimeoutId = window.setTimeout(() => {
       successBurst.value = false
+      successBurstTimeoutId = null
     }, 900)
   } catch {
     // erreur déjà gérée dans le composable
   }
 }
 
-function openCorrectionForm() {
+async function openCorrectionForm() {
   showCorrectionForm.value = true
+
+  try {
+    await fetchSurahOptions()
+    syncCorrectionSelection()
+  } catch {
+    // erreur déjà gérée dans le composable
+  }
 }
 
 async function submitCorrection() {
-  const startVerse = Number(correctedStartVerse.value)
-  const endVerse = Number(correctedEndVerse.value)
-
-  if (!correctedSourate.value.trim()) return
-  if (!Number.isInteger(startVerse) || !Number.isInteger(endVerse)) return
+  if (!selectedSurah.value || selectedStartVerse.value === null || selectedEndVerse.value === null) return
 
   try {
     await sendFeedback({
@@ -62,9 +152,11 @@ async function submitCorrection() {
       transcription_text: props.result.transcription_text,
       detected_verse: props.result.verse,
       correction: {
-        sourate_name: correctedSourate.value.trim(),
-        start_verse: startVerse,
-        end_verse: endVerse,
+        sourate_id: selectedSurah.value.id,
+        sourate_name: selectedSurah.value.name,
+        transliteration: selectedSurah.value.transliteration,
+        start_verse: selectedStartVerse.value,
+        end_verse: selectedEndVerse.value,
       },
       comment: correctionComment.value.trim() || null,
     })
@@ -74,6 +166,37 @@ async function submitCorrection() {
     // erreur déjà gérée dans le composable
   }
 }
+
+watch(selectedSurahId, (nextSurahId) => {
+  const nextSurah = surahs.value.find(surah => surah.id === nextSurahId)
+
+  if (!nextSurah) return
+
+  const nextStartVerse = clampVerse(selectedStartVerse.value ?? 1, 1, nextSurah.total_verses)
+
+  selectedStartVerse.value = nextStartVerse
+  selectedEndVerse.value = clampVerse(
+    selectedEndVerse.value ?? nextStartVerse,
+    nextStartVerse,
+    nextSurah.total_verses,
+  )
+})
+
+watch(selectedStartVerse, (nextStartVerse) => {
+  const totalVerses = selectedSurah.value?.total_verses
+
+  if (nextStartVerse === null || totalVerses === undefined) return
+
+  selectedEndVerse.value = clampVerse(
+    selectedEndVerse.value ?? nextStartVerse,
+    nextStartVerse,
+    totalVerses,
+  )
+})
+
+onBeforeUnmount(() => {
+  clearSuccessBurstTimeout()
+})
 </script>
 
 <template>
@@ -103,18 +226,31 @@ async function submitCorrection() {
       <div v-else class="correction-form">
         <div class="field">
           <label for="sourate">Sourate correcte</label>
-          <input id="sourate" v-model="correctedSourate" type="text" placeholder="Ex : Al-Ikhlas">
+          <select id="sourate" v-model.number="selectedSurahId" :disabled="sending || surahsLoading || !surahs.length">
+            <option v-for="surah in surahs" :key="surah.id" :value="surah.id">
+              {{ formatSurahOptionLabel(surah.id, surah.name, surah.transliteration) }}
+            </option>
+          </select>
+          <p v-if="surahsLoading" class="field-hint">Chargement des sourates...</p>
         </div>
 
         <div class="field-row">
           <div class="field">
             <label for="start-verse">Verset début</label>
-            <input id="start-verse" v-model="correctedStartVerse" type="number" min="1" placeholder="Ex : 1">
+            <select id="start-verse" v-model.number="selectedStartVerse" :disabled="sending || surahsLoading || !availableVerseNumbers.length">
+              <option v-for="verseNumber in availableVerseNumbers" :key="`start-${verseNumber}`" :value="verseNumber">
+                {{ verseNumber }}
+              </option>
+            </select>
           </div>
 
           <div class="field">
             <label for="end-verse">Verset fin</label>
-            <input id="end-verse" v-model="correctedEndVerse" type="number" min="1" placeholder="Ex : 4">
+            <select id="end-verse" v-model.number="selectedEndVerse" :disabled="sending || surahsLoading || !availableVerseNumbers.length">
+              <option v-for="verseNumber in availableEndVerseNumbers" :key="`end-${verseNumber}`" :value="verseNumber">
+                {{ verseNumber }}
+              </option>
+            </select>
           </div>
         </div>
 
@@ -129,14 +265,14 @@ async function submitCorrection() {
             Retour
           </button>
 
-          <button type="button" class="submit-btn" :disabled="sending" @click="submitCorrection">
-            {{ sending ? 'Envoi...' : 'Envoyer la correction' }}
+          <button type="button" class="submit-btn" :disabled="!canSubmitCorrection" @click="submitCorrection">
+            {{ sending ? 'Envoi...' : (surahsLoading ? 'Chargement...' : 'Envoyer la correction') }}
           </button>
         </div>
       </div>
 
-      <p v-if="error" class="error-message">
-        {{ error }}
+      <p v-if="formError" class="error-message">
+        {{ formError }}
       </p>
     </template>
 
@@ -292,6 +428,7 @@ label {
 }
 
 input,
+select,
 textarea {
   width: 100%;
   box-sizing: border-box;
@@ -308,6 +445,7 @@ textarea {
 }
 
 input:focus,
+select:focus,
 textarea:focus {
   outline: none;
   border-color: rgba(96, 165, 250, 0.45);
@@ -317,6 +455,12 @@ textarea:focus {
 
 textarea {
   resize: vertical;
+}
+
+.field-hint {
+  margin: 0;
+  font-size: 13px;
+  color: #94a3b8;
 }
 
 .correction-actions {

@@ -4,6 +4,30 @@ import app.routes.tajwid as tajwid_route
 from app.services.tajwid_service import TajwidServiceError
 
 
+def test_get_surahs_returns_metadata(monkeypatch):
+    monkeypatch.setattr(
+        tajwid_route,
+        "list_surah_metadata",
+        lambda: [
+            {
+                "id": 114,
+                "name": "الناس",
+                "transliteration": "An-Nas",
+                "total_verses": 6,
+            },
+        ],
+    )
+
+    response = tajwid_route.get_surahs()
+
+    assert response == [{
+        "id": 114,
+        "name": "الناس",
+        "transliteration": "An-Nas",
+        "total_verses": 6,
+    }]
+
+
 def test_get_tajwid_returns_payload(monkeypatch):
     def fake_fetch_tajwid_text(surah_id: int, start_verse: int, end_verse: int):
         return {

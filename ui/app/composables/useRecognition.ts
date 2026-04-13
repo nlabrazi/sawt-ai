@@ -6,6 +6,7 @@
 import { useRuntimeConfig } from '#app'
 import { $fetch } from 'ofetch'
 import { ref } from 'vue'
+import { isVerseConfident } from '~/utils/verseConfidence'
 
 export type ImamPrediction = {
   name: string
@@ -37,7 +38,6 @@ export type LoadingStep = 'detecting' | 'result-found' | 'retrying'
 const MIN_LOADING_MS = 1800
 const RESULT_FOUND_STEP_MS = 850
 const RETRY_STEP_MS = 1100
-const LOW_CONFIDENCE_THRESHOLD = 0.8
 
 function createAbortError() {
   const error = new Error('The operation was aborted.')
@@ -129,11 +129,7 @@ export function useRecognition() {
       }
 
       const hasVerse = !!response.verse
-      const similarity = response.verse?.similarity ?? 0
-
-      const isConfident = similarity <= 1
-        ? similarity >= LOW_CONFIDENCE_THRESHOLD
-        : similarity >= 80
+      const isConfident = isVerseConfident(response.verse?.similarity ?? 0)
 
       if (hasVerse && isConfident) {
         loadingStep.value = 'result-found'

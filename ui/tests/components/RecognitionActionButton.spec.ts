@@ -20,4 +20,17 @@ describe('RecognitionActionButton', () => {
 
     expect(wrapper.get('button').attributes('disabled')).toBeDefined()
   })
+
+  it('exposes an accessible label and recording state', () => {
+    const wrapper = mount(RecognitionActionButton, {
+      props: {
+        isRecording: true,
+        loading: true,
+      },
+    })
+
+    expect(wrapper.get('button').attributes('aria-label')).toBe('Arrêter l’enregistrement')
+    expect(wrapper.get('button').attributes('aria-pressed')).toBe('true')
+    expect(wrapper.get('button').attributes('aria-busy')).toBe('true')
+  })
 })

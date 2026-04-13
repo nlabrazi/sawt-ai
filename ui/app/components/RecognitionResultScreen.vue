@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 import FeedbackForm from '~/components/FeedbackForm.vue'
 import ResultCard from '~/components/ResultCard.vue'
 import type { RecognizeResponse } from '~/composables/useRecognition'
+import { isVerseConfident } from '~/utils/verseConfidence'
 
 const props = defineProps<{
   result: RecognizeResponse | null
@@ -11,8 +14,6 @@ const props = defineProps<{
 defineEmits<{
   reset: []
 }>()
-
-const LOW_CONFIDENCE_THRESHOLD = 0.8
 
 const banner = computed(() => {
   if (props.error) {
@@ -29,12 +30,7 @@ const banner = computed(() => {
     }
   }
 
-  const similarity = props.result.verse.similarity
-  const isLowConfidence = similarity <= 1
-    ? similarity < LOW_CONFIDENCE_THRESHOLD
-    : similarity < 80
-
-  if (isLowConfidence) {
+  if (!isVerseConfident(props.result.verse.similarity)) {
     return {
       text: 'Résultat à vérifier.',
       className: 'banner-warning',

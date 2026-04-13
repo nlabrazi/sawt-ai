@@ -4,9 +4,16 @@
 
 from fastapi import APIRouter, HTTPException, Query
 
+from app.schemas.quran import SurahMetadata
+from app.services.quran_catalog_service import list_surah_metadata
 from app.services.tajwid_service import fetch_tajwid_text, TajwidServiceError
 
 router = APIRouter()
+
+
+@router.get("/surahs", response_model=list[SurahMetadata])
+def get_surahs():
+    return list_surah_metadata()
 
 
 @router.get("/tajwid")

@@ -35,6 +35,12 @@ const waveScale = computed(() => {
   const level = Math.max(0, Math.min(1, props.audioLevel))
   return 1 + (level * 0.22)
 })
+
+const buttonLabel = computed(() => {
+  return props.isRecording
+    ? 'Arrêter l’enregistrement'
+    : 'Démarrer l’enregistrement'
+})
 </script>
 
 <template>
@@ -45,7 +51,8 @@ const waveScale = computed(() => {
     '--visual-scale': String(visualScale),
     '--halo-opacity': String(haloOpacity),
     '--wave-scale': String(waveScale),
-  }" :disabled="disabled" type="button" @click="handleClick">
+  }" :aria-busy="loading ? 'true' : 'false'" :aria-label="buttonLabel"
+    :aria-pressed="isRecording ? 'true' : 'false'" :disabled="disabled" type="button" @click="handleClick">
     <span v-if="isRecording" class="record-wave wave-1" />
     <span v-if="isRecording" class="record-wave wave-2" />
     <span v-if="isRecording" class="record-wave wave-3" />
