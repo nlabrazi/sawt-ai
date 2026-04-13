@@ -27,3 +27,4 @@ class RecognizeResponse(BaseModel):
     verse: VerseMatch | None
     imam_predictions: list[ImamPrediction]
     imam_status: str
+    imam_detection_enabled: bool

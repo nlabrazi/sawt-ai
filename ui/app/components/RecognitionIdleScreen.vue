@@ -72,7 +72,7 @@ function onFileChange(event: Event) {
         </p>
 
         <p class="upload-hint">
-          Formats : wav, mp3, m4a, ogg · max 12 Mo · max 90 sec
+          Formats : wav, mp3, m4a, ogg, webm · max 12 Mo · max 90 sec
         </p>
 
         <p v-if="uploadError" class="upload-error">
@@ -84,7 +84,7 @@ function onFileChange(event: Event) {
         </p>
       </div>
 
-      <input :id="fileInputId" class="hidden-input" type="file" accept=".wav,.mp3,.m4a,.ogg" @change="onFileChange" />
+      <input :id="fileInputId" class="hidden-input" type="file" accept=".wav,.mp3,.m4a,.ogg,.webm" @change="onFileChange" />
     </div>
   </section>
 </template>

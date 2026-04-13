@@ -55,8 +55,8 @@
 
 Sawt-AI is an AI-powered application designed to detect and classify Quranic verses from audio inputs. It leverages machine learning techniques to process and analyze audio data for accurate recognition.
 
-- 🎧 Audio Processing: Utilizes MFCC (Mel-Frequency Cepstral Coefficients) for feature extraction from audio files.
-- 🧠 Machine Learning Models: Implements trained models to classify and identify Quranic verses.
+- 🎧 Audio Processing: Transcribes recitations from recorded or uploaded audio files.
+- 🧠 Machine Learning Models: Combines Whisper transcription, verse matching, and optional imam prediction.
 - 📊 Dataset Management: Includes structured datasets for training and evaluation purposes.
 
 ---

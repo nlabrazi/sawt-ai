@@ -11,6 +11,7 @@ from tempfile import NamedTemporaryFile
 from fastapi import APIRouter, Form, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
 
+from app.schemas.recognize import RecognizeResponse
 from app.services.inference_pipeline import run_inference_pipeline
 
 router = APIRouter()
@@ -131,7 +132,7 @@ async def persist_upload_to_temp_file(file: UploadFile) -> tuple[Path, int, str]
     return temp_path, total_bytes, detected_content_type
 
 
-@router.post("/recognize")
+@router.post("/recognize", response_model=RecognizeResponse)
 async def recognize(
     file: UploadFile,
     detect_imam: bool = Form(True),

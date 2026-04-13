@@ -1,4 +1,4 @@
-from app.main import build_cors_options, parse_allowed_origins
+from app.main import app, build_cors_options, parse_allowed_origins
 
 
 def test_parse_allowed_origins_normalizes_and_deduplicates_values():
@@ -23,3 +23,11 @@ def test_build_cors_options_uses_explicit_origin_allowlist_without_regex():
     assert options["allow_methods"] == ["*"]
     assert options["allow_headers"] == ["*"]
     assert "allow_origin_regex" not in options
+
+
+def test_openapi_documents_recognize_response_contract():
+    schema = app.openapi()
+    recognize_response = schema["paths"]["/recognize"]["post"]["responses"]["200"]["content"]["application/json"]["schema"]
+
+    assert recognize_response == {"$ref": "#/components/schemas/RecognizeResponse"}
+    assert "imam_detection_enabled" in schema["components"]["schemas"]["RecognizeResponse"]["required"]
