@@ -5,6 +5,8 @@
 // avec option d'affichage/masquage du tajwid à la demande.
 // Gère aussi un fallback propre si l'imam n'a pas pu être reconnu.
 
+import { computed, ref } from 'vue'
+
 import { useTajwid } from '~/composables/useTajwid'
 import type { RecognizeResponse } from '~/composables/useRecognition'
 import { parseTajwidToHtml } from '~/utils/parseTajwid'
@@ -63,6 +65,12 @@ const imamStatusUi = computed(() => {
         className: 'imam-status-medium',
       }
 
+    case 'unavailable':
+      return {
+        label: 'Indisponible',
+        className: 'imam-status-unknown',
+      }
+
     case 'low':
       return {
         label: 'Incertain',
@@ -88,6 +96,9 @@ const imamFallbackText = computed(() => {
     case 'unknown':
       return 'Imam non reconnu pour cet extrait.'
 
+    case 'unavailable':
+      return 'Identification de l’imam temporairement indisponible.'
+
     default:
       return 'Identification de l’imam indisponible.'
   }
@@ -96,6 +107,10 @@ const imamFallbackText = computed(() => {
 const imamFallbackDescription = computed(() => {
   if (props.result.imam_status === 'disabled') {
     return 'Le verset reste analysé normalement, mais l’identification du récitateur a été volontairement désactivée.'
+  }
+
+  if (props.result.imam_status === 'unavailable') {
+    return 'Le verset reste analysé normalement, mais le service serveur de reconnaissance du récitateur n’a pas pu être chargé.'
   }
 
   if (props.result.verse) {

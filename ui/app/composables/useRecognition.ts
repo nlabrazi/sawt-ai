@@ -12,6 +12,8 @@ export type ImamPrediction = {
   score: number
 }
 
+export type ImamStatus = 'disabled' | 'unknown' | 'unavailable' | 'high' | 'medium' | 'low'
+
 export type VerseMatch = {
   sourate_id: number
   sourate_name: string
@@ -26,7 +28,7 @@ export type RecognizeResponse = {
   transcription_text: string
   verse: VerseMatch | null
   imam_predictions: ImamPrediction[]
-  imam_status: string
+  imam_status: ImamStatus
   imam_detection_enabled: boolean
 }
 
