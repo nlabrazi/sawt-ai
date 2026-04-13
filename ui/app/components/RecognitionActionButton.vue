@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+
 const props = withDefaults(defineProps<{
   disabled?: boolean
   loading?: boolean
@@ -15,49 +17,51 @@ const emit = defineEmits<{
   click: []
 }>()
 
-function handleClick() {
-  emit('click')
-}
-
 const visualScale = computed(() => {
   const level = Math.max(0, Math.min(1, props.audioLevel))
-  return 1 + (level * 0.12)
+  return 1 + (level * 0.1)
 })
 
 const haloOpacity = computed(() => {
   const level = Math.max(0, Math.min(1, props.audioLevel))
-  return 0.18 + (level * 0.42)
+  return 0.22 + (level * 0.36)
 })
 
 const waveScale = computed(() => {
   const level = Math.max(0, Math.min(1, props.audioLevel))
-  return 1 + (level * 0.22)
+  return 1 + (level * 0.2)
 })
 </script>
 
 <template>
-  <button class="shazam-button" :class="{
-    'is-loading': loading,
-    'is-recording': isRecording
-  }" :style="{
-    '--visual-scale': String(visualScale),
-    '--halo-opacity': String(haloOpacity),
-    '--wave-scale': String(waveScale),
-  }" :disabled="disabled" type="button" @click="handleClick">
-    <span v-if="isRecording" class="record-wave wave-1" />
-    <span v-if="isRecording" class="record-wave wave-2" />
-    <span v-if="isRecording" class="record-wave wave-3" />
+  <button
+    class="action-button"
+    :class="{
+      'is-loading': loading,
+      'is-recording': isRecording,
+    }"
+    :style="{
+      '--visual-scale': String(visualScale),
+      '--halo-opacity': String(haloOpacity),
+      '--wave-scale': String(waveScale),
+    }"
+    :disabled="disabled"
+    type="button"
+    @click="emit('click')"
+  >
+    <span v-if="isRecording" class="wave wave-1" />
+    <span v-if="isRecording" class="wave wave-2" />
+    <span v-if="isRecording" class="wave wave-3" />
 
-    <span class="shazam-button-outer" :class="{ 'pulse-ring': loading || isRecording }" />
-
-    <span class="shazam-button-inner">
-      <span class="micro-icon">🎙️</span>
+    <span class="button-halo" />
+    <span class="button-core">
+      <span class="button-icon">{{ isRecording ? '●' : '🎙️' }}</span>
     </span>
   </button>
 </template>
 
 <style scoped>
-.shazam-button {
+.action-button {
   position: relative;
   width: 210px;
   height: 210px;
@@ -69,15 +73,15 @@ const waveScale = computed(() => {
   transition: transform 0.2s ease;
 }
 
-.shazam-button:hover {
+.action-button:hover {
   transform: scale(1.02);
 }
 
-.shazam-button:disabled {
+.action-button:disabled {
   cursor: default;
 }
 
-.shazam-button-outer {
+.button-halo {
   position: absolute;
   inset: 0;
   z-index: 2;
@@ -85,118 +89,107 @@ const waveScale = computed(() => {
   opacity: var(--halo-opacity, 0.22);
   background:
     radial-gradient(circle,
-      rgba(96, 165, 250, 0.42) 0%,
-      rgba(37, 99, 235, 0.20) 42%,
-      rgba(37, 99, 235, 0.06) 68%,
+      rgba(96, 165, 250, 0.48) 0%,
+      rgba(37, 99, 235, 0.18) 45%,
+      rgba(37, 99, 235, 0.04) 68%,
       transparent 74%);
-  transition: opacity 0.08s linear, transform 0.08s linear;
+  animation: breathe 2.4s ease-in-out infinite;
 }
 
-.shazam-button-inner {
+.button-core {
   position: absolute;
   inset: 20px;
   z-index: 3;
-  border-radius: 999px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, #3b82f6 0%, #1d4ed8 100%);
+  border-radius: 999px;
+  background:
+    linear-gradient(180deg, rgba(96, 165, 250, 1) 0%, rgba(37, 99, 235, 1) 62%, rgba(29, 78, 216, 1) 100%);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    0 18px 50px rgba(37, 99, 235, 0.35);
+    0 22px 55px rgba(37, 99, 235, 0.35);
   transform: scale(var(--visual-scale, 1));
-  transition: box-shadow 0.08s linear, transform 0.08s linear;
+  transition: transform 0.08s linear, box-shadow 0.08s linear, background 0.2s ease;
 }
 
-.micro-icon {
-  font-size: 78px;
-  transform: translateY(3px);
+.is-recording .button-core {
+  background:
+    linear-gradient(180deg, rgba(96, 165, 250, 1) 0%, rgba(29, 78, 216, 1) 52%, rgba(2, 132, 199, 1) 100%);
 }
 
-.record-wave {
+.button-icon {
+  font-size: 76px;
+  transform: translateY(2px);
+  filter: drop-shadow(0 6px 18px rgba(255, 255, 255, 0.12));
+}
+
+.is-recording .button-icon {
+  color: #eff6ff;
+  font-size: 54px;
+  transform: translateY(-1px);
+}
+
+.wave {
   position: absolute;
-  inset: -14px;
+  inset: -12px;
   z-index: 1;
   border-radius: 999px;
-  border: 3px solid rgba(96, 165, 250, 0.55);
-  box-shadow:
-    0 0 0 6px rgba(59, 130, 246, 0.08),
-    0 0 34px rgba(59, 130, 246, 0.22);
+  border: 2px solid rgba(96, 165, 250, 0.48);
   opacity: 0;
-  pointer-events: none;
   animation: record-wave 2s linear infinite;
 }
 
-.wave-1 {
-  animation-delay: 0s;
-}
-
 .wave-2 {
-  animation-delay: 0.5s;
+  animation-delay: 0.45s;
 }
 
 .wave-3 {
-  animation-delay: 1s;
+  animation-delay: 0.9s;
 }
 
-.pulse-ring {
-  animation: pulse 1.6s ease-in-out infinite;
-}
-
-.is-recording .record-wave {
+.is-recording .wave {
   transform: scale(var(--wave-scale, 1));
 }
 
-@keyframes pulse {
-  0% {
-    transform: scale(0.98);
-    opacity: 0.82;
-  }
-
-  50% {
-    transform: scale(1.05);
-    opacity: 1;
-  }
-
-  100% {
-    transform: scale(0.98);
-    opacity: 0.82;
-  }
+@keyframes breathe {
+  0%, 100% { transform: scale(0.98); opacity: 0.76; }
+  50% { transform: scale(1.04); opacity: 1; }
 }
 
 @keyframes record-wave {
   0% {
     transform: scale(0.92);
-    opacity: 0.75;
+    opacity: 0.76;
   }
 
-  60% {
+  65% {
     transform: scale(1.18);
-    opacity: 0.24;
+    opacity: 0.18;
   }
 
   100% {
-    transform: scale(1.34);
+    transform: scale(1.32);
     opacity: 0;
   }
 }
 
 @media (max-width: 768px) {
-  .shazam-button {
-    width: 180px;
-    height: 180px;
+  .action-button {
+    width: 190px;
+    height: 190px;
   }
 
-  .shazam-button-inner {
+  .button-core {
     inset: 16px;
   }
 
-  .micro-icon {
-    font-size: 64px;
+  .button-icon {
+    font-size: 66px;
   }
 
-  .record-wave {
-    inset: -10px;
+  .is-recording .button-icon {
+    font-size: 48px;
   }
 }
 </style>

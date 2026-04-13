@@ -55,8 +55,8 @@
 
 Sawt-AI is an AI-powered application designed to detect and classify Quranic verses from audio inputs. It leverages machine learning techniques to process and analyze audio data for accurate recognition.
 
-- 🎧 Audio Processing: Utilizes MFCC (Mel-Frequency Cepstral Coefficients) for feature extraction from audio files.
-- 🧠 Machine Learning Models: Implements trained models to classify and identify Quranic verses.
+- 🎧 Audio Processing: Transcribes recitations from recorded or uploaded audio files.
+- 🧠 Machine Learning Models: Combines Whisper transcription, verse matching, and optional imam prediction.
 - 📊 Dataset Management: Includes structured datasets for training and evaluation purposes.
 
 ---
@@ -85,8 +85,10 @@ Sawt-AI is an AI-powered application designed to detect and classify Quranic ver
 <!-- GETTING STARTED -->
 # ✅ Getting Started
 
-This project runs on 🐍 Python. Ensure you have Python and Docker installed on your system before proceeding with the installation.
-Below are installation instructions for a Python-based project.
+This project is now split into two services:
+
+- `ui`: Nuxt application on `http://localhost:3000`
+- `api`: FastAPI service on `http://localhost:8000`
 
 ### 💻 Installation
 
@@ -95,21 +97,81 @@ Below are installation instructions for a Python-based project.
 git clone https://github.com/nlabrazi/sawt-ai.git
 cd sawt-ai
 
-# Create and activate a virtual environment
-python -m venv venv
-source venv/bin/activate  # On Windows use `venv\Scripts\activate`
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Set up environment variables
-cp .env.example .env
-# Update the .env file with your configuration
-
-# Run the application
-python main.py
-
+# Start both services
+docker compose up --build
 ```
+
+### ▶️ Usage
+
+1. Open `http://localhost:3000`
+2. Record audio with the microphone or upload an audio file
+3. The UI sends the audio to `POST /recognize` on the API
+4. The API returns:
+   - Arabic transcription
+   - Best matching Quran verse
+   - Imam predictions if enabled
+
+### 🔧 Local Notes
+
+- The API healthcheck is available at `http://localhost:8000/health`
+- Supported audio types include `wav`, `mp3`, `m4a`, `ogg`, `webm`
+- The uploaded file limit is `12 MB`
+- The maximum audio duration expected by the UI is `90 seconds`
+- Imam detection depends on the model mounted from `./training`
+
+### 🧪 Tests
+
+Backend API test runner with your `py=/usr/bin/python3` alias:
+
+```bash
+py test
+```
+
+Backend API tests:
+
+```bash
+python3 -m venv api/.venv
+api/.venv/bin/pip install -r api/requirements-test.txt
+api/.venv/bin/pytest -c api/pytest.ini
+```
+
+Frontend unit tests:
+
+```bash
+cd ui
+npm test
+```
+
+The current test suite covers:
+
+- FastAPI routes for `recognize`, `feedback`, and `tajwid`
+- Python utility and service logic
+- Frontend composables for recognition, feedback, and tajwid loading
+- Frontend utility parsing and a core UI button component
+
+### 🌍 Environment Variables
+
+Example API variables are available in [`api/.env.example`](api/.env.example):
+
+```env
+ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
+WHISPER_MODEL_NAME=base
+QURAN_VERSETS_PATH=/app/assets/quran_versets.json
+TAJWID_DATA_PATH=/app/assets/quran_tajwid.json
+TAJWID_BACKUP_URL=https://<project-ref>.supabase.co/storage/v1/object/public/assets/quran_tajwid.json
+IMAM_MODEL_PATH=/training/artifacts/models/imam_ecapa_v2/best_model.pt
+SUPABASE_URL=https://<project-ref>.supabase.co
+SUPABASE_API_KEY=<service_role_or_sb_secret>
+SUPABASE_FEEDBACK_TABLE=feedbacks
+```
+
+Set `ALLOWED_ORIGINS` with each trusted frontend origin explicitly.
+Example for production: `https://your-app.netlify.app`.
+Do not rely on wildcard Netlify preview domains when credentials are enabled.
+The tajwid loading order is: local snapshot, backup URL, then external API.
+`TAJWID_BACKUP_URL` works well with a public JSON file stored in Supabase Storage.
+Use the Supabase Project URL, not the Postgres connection string, for `SUPABASE_URL`.
+Use a server-side key only for `SUPABASE_API_KEY`, not an `anon` or `sb_publishable` key.
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

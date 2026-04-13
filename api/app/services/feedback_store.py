@@ -1,6 +1,6 @@
 # ROLE
 # ----
-# Stockage V2 du feedback utilisateur dans une table Supabase via l'API REST.
+# Stockage du feedback utilisateur dans une table Supabase via l'API REST.
 
 from __future__ import annotations
 
@@ -13,6 +13,7 @@ from urllib.request import Request, urlopen
 logger = logging.getLogger(__name__)
 
 DEFAULT_SUPABASE_TIMEOUT_SECONDS = 15
+PUBLISHABLE_KEY_PREFIX = "sb_publishable_"
 
 
 class FeedbackStoreError(Exception):
@@ -29,22 +30,46 @@ def _get_supabase_url() -> str:
     if not value:
         raise FeedbackStoreConfigError("SUPABASE_URL is not configured.")
 
-    return value
-
-
-def _get_supabase_secret() -> str:
-    value = (
-        os.getenv("SUPABASE_SECRET_KEY")
-        or os.getenv("SUPABASE_SERVICE_ROLE_KEY")
-        or ""
-    ).strip()
-
-    if not value:
+    if value.startswith("postgres://") or value.startswith("postgresql://"):
         raise FeedbackStoreConfigError(
-            "SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY is not configured."
+            "SUPABASE_URL must be the Supabase Project URL, not the Postgres connection string."
         )
 
     return value
+
+
+def _get_legacy_supabase_api_key() -> str:
+    return (
+        os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+        or os.getenv("SUPABASE_SECRET_KEY")
+        or ""
+    ).strip()
+
+
+def _get_supabase_api_key() -> str:
+    value = (
+        os.getenv("SUPABASE_API_KEY")
+        or _get_legacy_supabase_api_key()
+    ).strip()
+
+    if not value:
+        raise FeedbackStoreConfigError("SUPABASE_API_KEY is not configured.")
+
+    if value.startswith(PUBLISHABLE_KEY_PREFIX):
+        raise FeedbackStoreConfigError(
+            "SUPABASE_API_KEY must be a server-side key, not a publishable key."
+        )
+
+    return value
+
+
+def _build_supabase_headers(api_key: str) -> dict[str, str]:
+    return {
+        "apikey": api_key,
+        "Authorization": f"Bearer {api_key}",
+        "Content-Type": "application/json",
+        "Prefer": "return=minimal",
+    }
 
 
 def _get_feedback_table() -> str:
@@ -53,7 +78,7 @@ def _get_feedback_table() -> str:
 
 def save_feedback(payload: dict) -> None:
     supabase_url = _get_supabase_url()
-    supabase_secret = _get_supabase_secret()
+    supabase_api_key = _get_supabase_api_key()
     table_name = _get_feedback_table()
 
     endpoint = f"{supabase_url}/rest/v1/{table_name}"
@@ -63,12 +88,7 @@ def save_feedback(payload: dict) -> None:
         endpoint,
         data=body,
         method="POST",
-        headers={
-            "apikey": supabase_secret,
-            "Authorization": f"Bearer {supabase_secret}",
-            "Content-Type": "application/json",
-            "Prefer": "return=minimal",
-        },
+        headers=_build_supabase_headers(supabase_api_key),
     )
 
     try:
@@ -76,10 +96,12 @@ def save_feedback(payload: dict) -> None:
             return
     except HTTPError as exc:
         error_body = exc.read().decode("utf-8", errors="replace")
-        logger.exception("Supabase feedback insert failed with status %s", exc.code)
-        raise FeedbackStoreError(
-            f"Supabase feedback insert failed ({exc.code}): {error_body}"
-        ) from exc
+        logger.exception(
+            "Supabase feedback insert failed with status %s and body %s",
+            exc.code,
+            error_body,
+        )
+        raise FeedbackStoreError("Supabase feedback insert failed.") from exc
     except URLError as exc:
         logger.exception("Supabase feedback endpoint is unreachable")
         raise FeedbackStoreError("Supabase feedback endpoint is unreachable.") from exc

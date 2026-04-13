@@ -7,12 +7,7 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
-import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torchaudio
-
-from speechbrain.inference.classifiers import EncoderClassifier
+from typing import Any
 
 TARGET_SAMPLE_RATE = 16000
 DEFAULT_MODEL_PATH = (
@@ -26,9 +21,68 @@ DEFAULT_MODEL_PATH = (
 MODEL_PATH = Path(os.getenv("IMAM_MODEL_PATH", str(DEFAULT_MODEL_PATH)))
 logger = logging.getLogger(__name__)
 
-encoder: EncoderClassifier | None = None
-model: "ImamEmbeddingMLP" | None = None
+IMAM_DETECTION_UNAVAILABLE_MESSAGE = "La reconnaissance de l’imam est temporairement indisponible."
+
+encoder: Any | None = None
+model: Any | None = None
 index_to_name: dict[int, str] | None = None
+imam_resources_error: Exception | None = None
+
+
+class ImamPredictionError(Exception):
+    pass
+
+
+class ImamResourcesUnavailableError(ImamPredictionError):
+    pass
+
+
+def _get_imam_resources_error_message(exc: Exception) -> str:
+    if isinstance(exc, FileNotFoundError):
+        return f"Imam model not found: {MODEL_PATH}"
+
+    if isinstance(exc, ModuleNotFoundError):
+        return "Imam prediction dependencies are not installed."
+
+    return "Imam prediction resources could not be initialized."
+
+
+def get_imam_service_health() -> dict[str, bool | str | None]:
+    if encoder is not None and model is not None and index_to_name is not None:
+        return {
+            "available": True,
+            "status": "available",
+            "message": None,
+        }
+
+    if imam_resources_error is not None:
+        return {
+            "available": False,
+            "status": "unavailable",
+            "message": IMAM_DETECTION_UNAVAILABLE_MESSAGE,
+        }
+
+    return {
+        "available": True,
+        "status": "available",
+        "message": None,
+    }
+
+
+def _remember_imam_resources_error(exc: Exception) -> ImamResourcesUnavailableError:
+    global imam_resources_error
+
+    if isinstance(imam_resources_error, ImamResourcesUnavailableError):
+        return imam_resources_error
+
+    error = ImamResourcesUnavailableError(
+        _get_imam_resources_error_message(exc)
+    )
+
+    if isinstance(exc, (FileNotFoundError, ModuleNotFoundError)):
+        imam_resources_error = error
+
+    return error
 
 
 def build_index_to_name_map(label_map: object) -> dict[int, str]:
@@ -47,66 +101,98 @@ def build_index_to_name_map(label_map: object) -> dict[int, str]:
     return {}
 
 
-class ImamEmbeddingMLP(nn.Module):
-    def __init__(self, input_dim, hidden_dim, num_classes):
-        super().__init__()
+def _import_runtime_dependencies():
+    import torch
+    import torch.nn as nn
+    import torchaudio
+    import torch.nn.functional as F
+    from speechbrain.inference.classifiers import EncoderClassifier
 
-        self.net = nn.Sequential(
-            nn.Linear(input_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-
-            nn.Linear(hidden_dim, hidden_dim),
-            nn.ReLU(),
-            nn.Dropout(0.2),
-
-            nn.Linear(hidden_dim, num_classes),
-        )
-
-    def forward(self, x):
-        return self.net(x)
+    return torch, nn, torchaudio, F, EncoderClassifier
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+def _build_imam_model(nn_module):
+    class ImamEmbeddingMLP(nn_module.Module):
+        def __init__(self, input_dim, hidden_dim, num_classes):
+            super().__init__()
+
+            self.net = nn_module.Sequential(
+                nn_module.Linear(input_dim, hidden_dim),
+                nn_module.ReLU(),
+                nn_module.Dropout(0.2),
+                nn_module.Linear(hidden_dim, hidden_dim),
+                nn_module.ReLU(),
+                nn_module.Dropout(0.2),
+                nn_module.Linear(hidden_dim, num_classes),
+            )
+
+        def forward(self, x):
+            return self.net(x)
+
+    return ImamEmbeddingMLP
 
 
-def load_imam_resources() -> tuple[EncoderClassifier, ImamEmbeddingMLP, dict[int, str]]:
+def load_imam_resources() -> tuple[Any, Any, dict[int, str]]:
     global encoder, model, index_to_name
 
     if encoder is not None and model is not None and index_to_name is not None:
         return encoder, model, index_to_name
 
-    if not MODEL_PATH.exists():
-        raise FileNotFoundError(f"Imam model not found: {MODEL_PATH}")
+    if imam_resources_error is not None:
+        raise imam_resources_error
 
-    if encoder is None:
-        encoder = EncoderClassifier.from_hparams(
-            source="speechbrain/spkrec-ecapa-voxceleb",
-            run_opts={"device": device},
+    try:
+        if not MODEL_PATH.exists():
+            raise FileNotFoundError(f"Imam model not found: {MODEL_PATH}")
+
+        torch, nn, _torchaudio, _F, EncoderClassifier = _import_runtime_dependencies()
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        ImamEmbeddingMLP = _build_imam_model(nn)
+
+        if encoder is None:
+            encoder = EncoderClassifier.from_hparams(
+                source="speechbrain/spkrec-ecapa-voxceleb",
+                run_opts={"device": device},
+            )
+
+        checkpoint = torch.load(MODEL_PATH, map_location=device)
+
+        loaded_model = ImamEmbeddingMLP(
+            checkpoint["input_dim"],
+            checkpoint["hidden_dim"],
+            checkpoint["num_classes"],
+        )
+        loaded_model.load_state_dict(checkpoint["model_state_dict"])
+        loaded_model.to(device)
+        loaded_model.eval()
+
+        loaded_index_to_name = build_index_to_name_map(checkpoint.get("labels", {}))
+
+        model = loaded_model
+        index_to_name = loaded_index_to_name
+
+        logger.info("Imam prediction model loaded from %s", MODEL_PATH)
+
+        return encoder, model, index_to_name
+    except Exception as exc:
+        unavailable_error = _remember_imam_resources_error(exc)
+        logger.exception("Imam prediction resources are unavailable")
+        raise unavailable_error from exc
+
+
+def preflight_imam_resources() -> None:
+    try:
+        load_imam_resources()
+        logger.info("Imam prediction startup preflight succeeded")
+    except ImamResourcesUnavailableError as exc:
+        logger.warning(
+            "Imam prediction startup preflight marked the feature unavailable: %s",
+            exc,
         )
 
-    checkpoint = torch.load(MODEL_PATH, map_location=device)
 
-    loaded_model = ImamEmbeddingMLP(
-        checkpoint["input_dim"],
-        checkpoint["hidden_dim"],
-        checkpoint["num_classes"],
-    )
-    loaded_model.load_state_dict(checkpoint["model_state_dict"])
-    loaded_model.to(device)
-    loaded_model.eval()
-
-    loaded_index_to_name = build_index_to_name_map(checkpoint.get("labels", {}))
-
-    model = loaded_model
-    index_to_name = loaded_index_to_name
-
-    logger.info("Imam prediction model loaded from %s", MODEL_PATH)
-
-    return encoder, model, index_to_name
-
-
-def load_audio(audio_path: str) -> torch.Tensor:
+def load_audio(audio_path: str):
+    torch, _nn, torchaudio, _F, _EncoderClassifier = _import_runtime_dependencies()
     waveform, sr = torchaudio.load(audio_path)
 
     if waveform.shape[0] > 1:
@@ -120,9 +206,12 @@ def load_audio(audio_path: str) -> torch.Tensor:
 
 
 def extract_embedding(
-    audio: torch.Tensor,
-    loaded_encoder: EncoderClassifier,
-) -> torch.Tensor:
+    audio,
+    loaded_encoder,
+):
+    torch, _nn, _torchaudio, _F, _EncoderClassifier = _import_runtime_dependencies()
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
     with torch.no_grad():
         emb = loaded_encoder.encode_batch(audio.unsqueeze(0).to(device))
 
@@ -134,6 +223,8 @@ def extract_embedding(
 
 def predict_imam(audio_path: str) -> list[dict[str, str | float]]:
     try:
+        torch, _nn, _torchaudio, F, _EncoderClassifier = _import_runtime_dependencies()
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         loaded_encoder, loaded_model, loaded_index_to_name = load_imam_resources()
         audio = load_audio(audio_path)
         embedding = extract_embedding(audio, loaded_encoder)
@@ -156,7 +247,12 @@ def predict_imam(audio_path: str) -> list[dict[str, str | float]]:
             })
 
         return results
-
-    except Exception:
+    except ImamResourcesUnavailableError:
+        raise
+    except ModuleNotFoundError as exc:
+        unavailable_error = _remember_imam_resources_error(exc)
+        logger.exception("Imam prediction dependencies are unavailable")
+        raise unavailable_error from exc
+    except Exception as exc:
         logger.exception("Imam prediction failed")
-        return []
+        raise ImamPredictionError("Imam prediction failed.") from exc

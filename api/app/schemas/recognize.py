@@ -4,7 +4,11 @@
 # et déclenche le pipeline Sawt AI.
 # Schémas de réponse pour l'endpoint /recognize.
 
+from typing import Literal
+
 from pydantic import BaseModel
+
+ImamStatus = Literal["disabled", "unknown", "unavailable", "high", "medium", "low"]
 
 
 class ImamPrediction(BaseModel):
@@ -26,4 +30,5 @@ class RecognizeResponse(BaseModel):
     transcription_text: str
     verse: VerseMatch | None
     imam_predictions: list[ImamPrediction]
-    imam_status: str
+    imam_status: ImamStatus
+    imam_detection_enabled: bool
