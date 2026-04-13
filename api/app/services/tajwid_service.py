@@ -55,10 +55,6 @@ def _get_tajwid_backup_url() -> str | None:
     return value or None
 
 
-def _get_tajwid_backup_api_key() -> str:
-    return os.getenv("TAJWID_BACKUP_API_KEY", "").strip()
-
-
 def _load_tajwid_payload_from_file(data_path: Path) -> dict[str, Any]:
     try:
         with data_path.open("r", encoding="utf-8") as file:
@@ -71,14 +67,8 @@ def _load_tajwid_payload_from_file(data_path: Path) -> dict[str, Any]:
         raise TajwidServiceError("Impossible de lire le snapshot tajwid local.") from exc
 
 
-def _download_json_payload(url: str, *, source_name: str, api_key: str | None = None) -> dict[str, Any]:
-    headers: dict[str, str] = {}
-
-    if api_key:
-        headers["Authorization"] = f"Bearer {api_key}"
-        headers["apikey"] = api_key
-
-    request = Request(url, headers=headers)
+def _download_json_payload(url: str, *, source_name: str) -> dict[str, Any]:
+    request = Request(url)
 
     try:
         with urlopen(request, timeout=TAJWID_TIMEOUT_SECONDS) as response:
@@ -98,12 +88,7 @@ def _download_tajwid_payload() -> dict[str, Any]:
 
 
 def _download_tajwid_backup_payload(backup_url: str) -> dict[str, Any]:
-    backup_api_key = _get_tajwid_backup_api_key() or None
-    return _download_json_payload(
-        backup_url,
-        source_name="la sauvegarde tajwid",
-        api_key=backup_api_key,
-    )
+    return _download_json_payload(backup_url, source_name="la sauvegarde tajwid")
 
 
 def _build_tajwid_index(payload: dict[str, Any]) -> dict[int, dict[int, str]]:

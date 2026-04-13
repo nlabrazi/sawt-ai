@@ -159,7 +159,6 @@ WHISPER_MODEL_NAME=base
 QURAN_VERSETS_PATH=/app/assets/quran_versets.json
 TAJWID_DATA_PATH=/app/assets/quran_tajwid.json
 TAJWID_BACKUP_URL=https://<project-ref>.supabase.co/storage/v1/object/public/assets/quran_tajwid.json
-TAJWID_BACKUP_API_KEY=<optional-server-side-key-for-private-backup>
 IMAM_MODEL_PATH=/training/artifacts/models/imam_ecapa_v2/best_model.pt
 SUPABASE_URL=https://<project-ref>.supabase.co
 SUPABASE_API_KEY=<service_role_or_sb_secret>
@@ -170,8 +169,7 @@ Set `ALLOWED_ORIGINS` with each trusted frontend origin explicitly.
 Example for production: `https://your-app.netlify.app`.
 Do not rely on wildcard Netlify preview domains when credentials are enabled.
 The tajwid loading order is: local snapshot, backup URL, then external API.
-`TAJWID_BACKUP_URL` works well with a JSON file stored in Supabase Storage.
-If the backup URL is private, provide `TAJWID_BACKUP_API_KEY`.
+`TAJWID_BACKUP_URL` works well with a public JSON file stored in Supabase Storage.
 Use the Supabase Project URL, not the Postgres connection string, for `SUPABASE_URL`.
 Use a server-side key only for `SUPABASE_API_KEY`, not an `anon` or `sb_publishable` key.
 

@@ -43,6 +43,10 @@ def resolve_request_url(request_or_url):
     return getattr(request_or_url, "full_url", request_or_url)
 
 
+def resolve_request_headers(request_or_url):
+    return dict(getattr(request_or_url, "headers", {}))
+
+
 @pytest.fixture(autouse=True)
 def reset_tajwid_cache(monkeypatch, tmp_path):
     tajwid_service.clear_tajwid_cache()
@@ -93,7 +97,7 @@ def test_fetch_tajwid_text_falls_back_to_backup_url_when_local_snapshot_is_missi
     calls = []
 
     def fake_urlopen(request_or_url, timeout):
-        calls.append((resolve_request_url(request_or_url), timeout))
+        calls.append((resolve_request_url(request_or_url), resolve_request_headers(request_or_url), timeout))
         return FakeUrlOpenResponse(build_tajwid_payload())
 
     monkeypatch.setenv("TAJWID_DATA_PATH", str(missing_snapshot_path))
@@ -103,7 +107,7 @@ def test_fetch_tajwid_text_falls_back_to_backup_url_when_local_snapshot_is_missi
     response = fetch_tajwid_text(112, 1, 2)
 
     assert response["text"] == "[rule[قل]] [rule[هو]]"
-    assert calls == [("https://backup.example/tajwid.json", tajwid_service.TAJWID_TIMEOUT_SECONDS)]
+    assert calls == [("https://backup.example/tajwid.json", {}, tajwid_service.TAJWID_TIMEOUT_SECONDS)]
 
 
 def test_fetch_tajwid_text_falls_back_to_api_when_backup_is_unreachable(monkeypatch):
