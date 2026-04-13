@@ -1,3 +1,5 @@
+import asyncio
+
 import app.main as main
 
 from app.main import app, build_cors_options, parse_allowed_origins
@@ -56,3 +58,30 @@ def test_health_reports_imam_detection_service_status(monkeypatch):
             },
         },
     }
+
+
+def test_lifespan_warms_tajwid_cache_without_blocking_startup(monkeypatch):
+    calls = []
+    warnings = []
+
+    monkeypatch.setattr(main, "load_all_models", lambda: calls.append("models"))
+    monkeypatch.setattr(main, "preflight_imam_resources", lambda: calls.append("imam"))
+
+    def fail_warmup():
+        calls.append("tajwid")
+        raise main.TajwidServiceError("tajwid unavailable")
+
+    monkeypatch.setattr(main, "warm_tajwid_cache", fail_warmup)
+    monkeypatch.setattr(main.logger, "warning", lambda message, **kwargs: warnings.append((message, kwargs)))
+
+    async def run_lifespan():
+        async with main.lifespan(app):
+            calls.append("yield")
+
+    asyncio.run(run_lifespan())
+
+    assert calls == ["models", "imam", "tajwid", "yield"]
+    assert warnings == [(
+        "Tajwid warmup failed during startup; the API will retry on demand.",
+        {"exc_info": True},
+    )]

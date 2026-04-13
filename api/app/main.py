@@ -15,11 +15,13 @@ from app.services.imam_prediction_service import (
     get_imam_service_health,
     preflight_imam_resources,
 )
+from app.services.tajwid_service import TajwidServiceError, warm_tajwid_cache
 
 LOG_LEVEL_NAME = os.getenv("LOG_LEVEL", "INFO").upper()
 LOG_LEVEL = getattr(logging, LOG_LEVEL_NAME, logging.INFO)
 logging.getLogger().setLevel(LOG_LEVEL)
 logging.getLogger("app").setLevel(LOG_LEVEL)
+logger = logging.getLogger(__name__)
 
 DEFAULT_ALLOWED_ORIGINS = (
     "http://localhost:3000",
@@ -61,6 +63,15 @@ CORS_OPTIONS = build_cors_options(",".join(ALLOWED_ORIGINS))
 async def lifespan(_: FastAPI):
     load_all_models()
     preflight_imam_resources()
+
+    try:
+        warm_tajwid_cache()
+    except TajwidServiceError:
+        logger.warning(
+            "Tajwid warmup failed during startup; the API will retry on demand.",
+            exc_info=True,
+        )
+
     yield
 
 
