@@ -5,42 +5,44 @@
 import logging
 from difflib import SequenceMatcher
 
-from app.core.model_loader import get_quran_versets
+from app.core.model_loader import get_quran_verse_candidates
 from app.utils.normalize_arabic import normalize_arabic
 
 logger = logging.getLogger(__name__)
 
 
 def detect_versets(segments):
-    versets_data = get_quran_versets()
-
     transcription = normalize_arabic(
-        " ".join(segment["text"] for segment in segments).strip()
+        " ".join(segment.get("text", "") for segment in segments).strip()
     )
 
-    matches = []
+    if not transcription:
+        logger.info(
+            "Verse detection skipped: empty transcription after normalization."
+        )
+        return None
 
-    for sourate in versets_data:
-        verses = sourate["verses"]
+    best_match = None
+    best_similarity = -1.0
+    matcher = SequenceMatcher(None, "", transcription)
 
-        for window_size in [1, 2, 3, 4, 5]:
-            for i in range(len(verses) - window_size + 1):
-                chunk = verses[i:i + window_size]
-                combined_text = normalize_arabic(" ".join(v["text"] for v in chunk))
-                score = SequenceMatcher(None, transcription, combined_text).ratio()
+    for candidate in get_quran_verse_candidates():
+        matcher.set_seq1(candidate.normalized_text)
+        score = matcher.ratio()
 
-                matches.append({
-                    "sourate_id": sourate["id"],
-                    "sourate_name": sourate["name"],
-                    "transliteration": sourate.get("transliteration", ""),
-                    "start_verse": chunk[0]["id"],
-                    "end_verse": chunk[-1]["id"],
-                    "text": combined_text,
-                    "similarity": score,
-                })
+        if score <= best_similarity:
+            continue
 
-    matches.sort(key=lambda item: item["similarity"], reverse=True)
-    best_match = matches[0] if matches else None
+        best_similarity = score
+        best_match = {
+            "sourate_id": candidate.sourate_id,
+            "sourate_name": candidate.sourate_name,
+            "transliteration": candidate.transliteration,
+            "start_verse": candidate.start_verse,
+            "end_verse": candidate.end_verse,
+            "text": candidate.normalized_text,
+            "similarity": score,
+        }
 
     logger.info(
         "Verse detection complete: transcription_chars=%s best_sourate=%s best_similarity=%s",
