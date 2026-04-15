@@ -33,11 +33,10 @@ export function useSurahOptions() {
     error.value = null
 
     if (!surahOptionsPromise) {
-      surahOptionsPromise = $fetch<SurahOption[]>(`${apiBaseUrl}/surahs`)
-        .then((response) => {
-          surahOptionsCache = [...response].sort((left, right) => left.id - right.id)
-          return surahOptionsCache
-        })
+      surahOptionsPromise = $fetch<SurahOption[]>(`${apiBaseUrl}/surahs`).then((response) => {
+        surahOptionsCache = [...response].sort((left, right) => left.id - right.id)
+        return surahOptionsCache
+      })
     }
 
     try {

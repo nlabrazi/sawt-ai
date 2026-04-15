@@ -14,9 +14,7 @@ const WAV_MIME_TYPE = 'audio/wav'
 function clampPcm16Sample(sample: number) {
   const normalizedSample = Math.max(-1, Math.min(1, sample))
 
-  return normalizedSample < 0
-    ? normalizedSample * 0x8000
-    : normalizedSample * 0x7FFF
+  return normalizedSample < 0 ? normalizedSample * 0x8000 : normalizedSample * 0x7fff
 }
 
 function writeAsciiString(view: DataView, offset: number, value: string) {
@@ -32,7 +30,8 @@ function mixAudioBufferToMono(audioBuffer: AudioBuffer) {
     const channelData = audioBuffer.getChannelData(channelIndex)
 
     for (let sampleIndex = 0; sampleIndex < channelData.length; sampleIndex += 1) {
-      mixedChannelData[sampleIndex] += (channelData[sampleIndex] ?? 0) / audioBuffer.numberOfChannels
+      mixedChannelData[sampleIndex] +=
+        (channelData[sampleIndex] ?? 0) / audioBuffer.numberOfChannels
     }
   }
 
@@ -42,12 +41,12 @@ function mixAudioBufferToMono(audioBuffer: AudioBuffer) {
 function createWavBlob(audioBuffer: AudioBuffer) {
   const monoChannelData = mixAudioBufferToMono(audioBuffer)
   const bytesPerSample = 2
-  const wavBuffer = new ArrayBuffer(44 + (monoChannelData.length * bytesPerSample))
+  const wavBuffer = new ArrayBuffer(44 + monoChannelData.length * bytesPerSample)
   const view = new DataView(wavBuffer)
   const byteRate = audioBuffer.sampleRate * bytesPerSample
 
   writeAsciiString(view, 0, 'RIFF')
-  view.setUint32(4, 36 + (monoChannelData.length * bytesPerSample), true)
+  view.setUint32(4, 36 + monoChannelData.length * bytesPerSample, true)
   writeAsciiString(view, 8, 'WAVE')
   writeAsciiString(view, 12, 'fmt ')
   view.setUint32(16, 16, true)
@@ -132,7 +131,7 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
       'audio/mp4',
     ]
 
-    return candidates.find(type => MediaRecorder.isTypeSupported(type)) ?? ''
+    return candidates.find((type) => MediaRecorder.isTypeSupported(type)) ?? ''
   }
 
   function startTimer() {
@@ -144,8 +143,8 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
       recordingSeconds.value += 1
 
       if (
-        maxRecordingSeconds.value !== null
-        && recordingSeconds.value >= maxRecordingSeconds.value
+        maxRecordingSeconds.value !== null &&
+        recordingSeconds.value >= maxRecordingSeconds.value
       ) {
         maxDurationReached.value = true
         await stopRecording()
@@ -189,7 +188,7 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
       const normalized = Math.min(1, average / 70)
 
       // petit lissage pour éviter un effet trop nerveux
-      audioLevel.value = (audioLevel.value * 0.7) + (normalized * 0.3)
+      audioLevel.value = audioLevel.value * 0.7 + normalized * 0.3
 
       animationFrameId = window.requestAnimationFrame(updateLevel)
     }
@@ -298,13 +297,14 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
           // entre navigateurs/périphériques qui finissent en 415 côté API.
           file = await convertRecordedBlobToWavFile(blob, `${filenameBase}.wav`)
         } catch (error) {
-          console.warn('Unable to convert recorded audio to WAV, falling back to the original blob.', error)
-
-          file = new File(
-            [blob],
-            `${filenameBase}.${resolveRecordedExtension(mimeType)}`,
-            { type: mimeType }
+          console.warn(
+            'Unable to convert recorded audio to WAV, falling back to the original blob.',
+            error,
           )
+
+          file = new File([blob], `${filenameBase}.${resolveRecordedExtension(mimeType)}`, {
+            type: mimeType,
+          })
         }
 
         cleanup()
@@ -327,7 +327,7 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
     audioChunks = []
 
     if (mediaStream) {
-      mediaStream.getTracks().forEach(track => track.stop())
+      mediaStream.getTracks().forEach((track) => track.stop())
       mediaStream = null
     }
 
