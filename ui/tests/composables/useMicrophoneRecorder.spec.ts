@@ -82,7 +82,10 @@ function setupRecorderEnvironment() {
 
   vi.stubGlobal('MediaRecorder', FakeMediaRecorder)
   vi.stubGlobal('AudioContext', FakeAudioContext)
-  vi.stubGlobal('requestAnimationFrame', vi.fn(() => 1))
+  vi.stubGlobal(
+    'requestAnimationFrame',
+    vi.fn(() => 1),
+  )
   vi.stubGlobal('cancelAnimationFrame', vi.fn())
 
   return { stopTrack }
@@ -115,9 +118,7 @@ describe('useMicrophoneRecorder', () => {
     await vi.runAllTimersAsync()
 
     const [firstFile, secondFile] = await Promise.all([firstStop, secondStop])
-    const fileHeader = firstFile
-      ? new Uint8Array(await firstFile.arrayBuffer()).slice(0, 4)
-      : null
+    const fileHeader = firstFile ? new Uint8Array(await firstFile.arrayBuffer()).slice(0, 4) : null
 
     expect(firstFile).toBeInstanceOf(File)
     expect(secondFile).toBe(firstFile)

@@ -1,9 +1,9 @@
 <template>
   <footer class="app-footer">
     <div class="footer-inner">
-      <p class="footer-brand">© 2026 <a href="https://sawt-ai.netlify.app" target="_blank" rel="noreferrer"
-          style="text-decoration: none;">Sawt AI</a> Tous
-        droits réservés</p>
+      <p class="footer-brand">
+        © 2026 <a href="https://sawt-ai.netlify.app" target="_blank" rel="noreferrer">Sawt AI</a> Tous droits réservés
+      </p>
 
       <nav class="footer-links" aria-label="Liens utiles">
         <a href="https://github.com/nlabrazi/sawt-ai" target="_blank" rel="noreferrer">
@@ -30,9 +30,8 @@
 .footer-inner {
   max-width: 980px;
   margin: 0 auto;
-  padding: 16px 18px;
+  padding: 16px 4px 0;
   border-top: 1px solid rgba(148, 163, 184, 0.1);
-  backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -42,7 +41,12 @@
 .footer-brand {
   margin: 0;
   font-size: 13px;
-  color: #93c5fd;
+  color: #8fb5e5;
+}
+
+.footer-brand a {
+  color: inherit;
+  text-decoration: none;
 }
 
 .footer-links {

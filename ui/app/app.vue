@@ -29,48 +29,31 @@ const {
 </script>
 
 <template>
-  <main class="app-shell">
+  <main class="page">
+    <div class="background-glow background-glow-1" />
+    <div class="background-glow background-glow-2" />
+    <div class="background-glow background-glow-3" />
+    <div class="background-glow background-glow-4" />
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
 
-    <div class="backdrop-grid" />
-    <div class="backdrop-orb orb-1" />
-    <div class="backdrop-orb orb-2" />
-    <div class="backdrop-orb orb-3" />
+    <div class="page-grid" />
 
-    <div class="page-frame">
-      <RecognitionIdleScreen
-        v-if="screenState === 'idle'"
-        :upload-error="uploadError"
-        :mic-error="micError"
-        :is-recording="isRecording"
-        :recording-seconds="recordingSeconds"
-        :max-recording-seconds="maxRecordingSeconds"
-        :upload-accept="uploadAccept"
-        :upload-hint="uploadHint"
-        :audio-level="audioLevel"
-        :imam-detection-available="imamDetectionAvailable"
-        :imam-detection-message="imamDetectionMessage"
-        v-model:detect-imam="detectImam"
-        @micro-click="onMicroClick"
-        @select-file="submitAudio"
-      />
+    <div class="page-noise" aria-hidden="true" />
 
-      <RecognitionLoadingScreen
-        v-else-if="screenState === 'loading'"
-        :loading="loading"
-        :step="loadingStep"
-        @cancel="resetApp"
-      />
+    <div class="page-content">
+      <RecognitionIdleScreen v-if="screenState === 'idle'" :upload-error="uploadError" :mic-error="micError"
+        :is-recording="isRecording" :recording-seconds="recordingSeconds" :max-recording-seconds="maxRecordingSeconds"
+        :upload-accept="uploadAccept" :upload-hint="uploadHint" :audio-level="audioLevel"
+        :imam-detection-available="imamDetectionAvailable" :imam-detection-message="imamDetectionMessage"
+        v-model:detect-imam="detectImam" @micro-click="onMicroClick" @select-file="submitAudio" />
 
-      <RecognitionResultScreen
-        v-else
-        :error="error"
-        :result="result"
-        @reset="resetApp"
-      />
+      <RecognitionLoadingScreen v-else-if="screenState === 'loading'" :loading="loading" :step="loadingStep"
+        @cancel="resetApp" />
+
+      <RecognitionResultScreen v-else :error="error" :result="result" @reset="resetApp" />
+
+      <AppFooter />
     </div>
-
-    <AppFooter />
   </main>
 </template>
 
@@ -81,10 +64,8 @@ const {
 
 :global(body) {
   margin: 0;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background:
-    radial-gradient(circle at top, rgba(39, 99, 235, 0.22), transparent 20%),
-    linear-gradient(180deg, #010818 0%, #020617 52%, #010511 100%);
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #081120;
   color: #fff;
 }
 
@@ -92,81 +73,116 @@ const {
   box-sizing: border-box;
 }
 
-.app-shell {
+.page {
   position: relative;
   min-height: 100vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
+  overflow-x: hidden;
   color: #fff;
-  isolation: isolate;
+  background:
+    radial-gradient(circle at 50% 12%, rgba(59, 130, 246, 0.24), transparent 28%),
+    radial-gradient(circle at 78% 74%, rgba(14, 165, 233, 0.1), transparent 20%),
+    radial-gradient(circle at 14% 78%, rgba(59, 130, 246, 0.08), transparent 18%),
+    linear-gradient(180deg, #040b16 0%, #07101d 44%, #060d18 100%);
 }
 
-.page-frame {
+.page-content {
   position: relative;
   z-index: 1;
-  flex: 1;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
-.backdrop-grid {
+.page-grid {
   position: absolute;
   inset: 0;
   z-index: 0;
-  background-image:
-    linear-gradient(rgba(148, 163, 184, 0.028) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.028) 1px, transparent 1px);
-  background-size: 44px 44px;
-  mask-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.85), transparent 90%);
+  opacity: 0.18;
   pointer-events: none;
+  background-image:
+    linear-gradient(rgba(148, 163, 184, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.04) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(circle at center, rgba(0, 0, 0, 0.92), transparent 92%);
 }
 
-.backdrop-orb {
+.page-noise {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image:
+    radial-gradient(circle at 20% 20%, rgba(255, 255, 255, 0.12) 0 1px, transparent 1px),
+    radial-gradient(circle at 80% 40%, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px),
+    radial-gradient(circle at 40% 70%, rgba(255, 255, 255, 0.08) 0 1px, transparent 1px);
+  background-size: 180px 180px;
+}
+
+.background-glow {
   position: absolute;
   border-radius: 999px;
-  filter: blur(88px);
+  filter: blur(96px);
   pointer-events: none;
-  opacity: 0.9;
 }
 
-.orb-1 {
-  top: -120px;
+.background-glow-1 {
+  top: -90px;
   left: 50%;
+  width: 520px;
+  height: 520px;
+  transform: translateX(-50%);
+  background: rgba(59, 130, 246, 0.18);
+}
+
+.background-glow-2 {
+  right: -120px;
+  top: 24%;
+  width: 380px;
+  height: 380px;
+  background: rgba(14, 165, 233, 0.09);
+}
+
+.background-glow-3 {
+  left: -110px;
+  bottom: 10%;
+  width: 320px;
+  height: 320px;
+  background: rgba(96, 165, 250, 0.08);
+}
+
+.background-glow-4 {
+  left: 50%;
+  bottom: -120px;
   width: 420px;
   height: 420px;
   transform: translateX(-50%);
-  background: rgba(59, 130, 246, 0.14);
-}
-
-.orb-2 {
-  right: -80px;
-  top: 24%;
-  width: 260px;
-  height: 260px;
-  background: rgba(14, 165, 233, 0.08);
-}
-
-.orb-3 {
-  left: -60px;
-  bottom: 14%;
-  width: 220px;
-  height: 220px;
-  background: rgba(56, 189, 248, 0.06);
+  background: rgba(30, 64, 175, 0.08);
 }
 
 @media (max-width: 768px) {
-  .backdrop-grid {
-    background-size: 32px 32px;
+  .page {
+    background:
+      radial-gradient(circle at 50% 14%, rgba(59, 130, 246, 0.28), transparent 34%),
+      radial-gradient(circle at 82% 70%, rgba(14, 165, 233, 0.08), transparent 24%),
+      linear-gradient(180deg, #050c17 0%, #07101d 50%, #060d18 100%);
   }
 
-  .orb-1 {
-    width: 300px;
-    height: 300px;
-    top: -90px;
+  .page-grid {
+    opacity: 0.12;
+    background-size: 42px 42px;
   }
 
-  .orb-2,
-  .orb-3 {
-    filter: blur(68px);
+  .background-glow-1 {
+    width: 360px;
+    height: 360px;
+    top: -60px;
+  }
+
+  .background-glow-2,
+  .background-glow-3,
+  .background-glow-4 {
+    filter: blur(80px);
   }
 }
 </style>

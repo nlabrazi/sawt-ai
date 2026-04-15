@@ -12,69 +12,79 @@ defineEmits<{
   cancel: []
 }>()
 
-const steps = computed(() => {
-  return [
-    {
-      key: 'detecting',
-      label: 'Écoute et transcription',
-      active: props.step === 'detecting',
-      done: props.step !== 'detecting',
-    },
-    {
-      key: 'result-found',
-      label: 'Correspondance détectée',
-      active: props.step === 'result-found',
-      done: false,
-    },
-    {
-      key: 'retrying',
-      label: 'Vérification en cours',
-      active: props.step === 'retrying',
-      done: false,
-    },
-  ]
+const steps = computed(() => [
+  {
+    key: 'transcribing',
+    title: 'Écoute en cours',
+    text: 'Analyse audio',
+  },
+  {
+    key: 'matching',
+    title: 'Reconnaissance du passage',
+    text: 'Recherche du passage',
+  },
+  {
+    key: 'done',
+    title: 'Préparation du résultat',
+    text: 'Affichage imminent',
+  },
+])
+
+const activeLabel = computed(() => {
+  if (props.step === 'transcribing') return 'Transcription'
+  if (props.step === 'matching') return 'Détection'
+  return 'Finalisation'
 })
 
-const helperText = computed(() => {
-  if (props.step === 'result-found') return 'Une correspondance a été trouvée. Finalisation en cours.'
-  if (props.step === 'retrying') return 'Le système élargit la recherche pour confirmer le passage.'
-  return 'Analyse du passage récité, cela prend quelques secondes.'
-})
+function getState(stepKey: string) {
+  const order = ['transcribing', 'matching', 'done']
+  const currentIndex = order.indexOf(props.step)
+  const stepIndex = order.indexOf(stepKey)
+
+  if (stepIndex < currentIndex) return 'done'
+  if (stepIndex === currentIndex) return 'active'
+  return 'idle'
+}
 </script>
 
 <template>
   <section class="screen loading-screen">
-    <header class="loading-header">
-      <p class="brand-mark">SAWT AI</p>
-
-      <button class="cancel-btn" type="button" @click="$emit('cancel')">
+    <div class="top-bar">
+      <button class="top-action" type="button" @click="$emit('cancel')">
         Annuler
       </button>
-    </header>
+    </div>
 
-    <div class="loading-shell">
+    <div class="center-stack">
       <RecognitionActionButton disabled loading />
 
-      <div class="loading-copy">
-        <p class="eyebrow">Analyse en cours</p>
-        <h1 class="title">Patientez un instant</h1>
-        <p class="subtitle">
-          {{ helperText }}
-        </p>
+      <p class="eyebrow">Analyse en cours</p>
+      <h2 class="main-title">Détection du passage</h2>
+
+      <p class="main-subtitle">
+        <span>{{ activeLabel }}</span>
+        <span class="loading-dots" aria-hidden="true">
+          <span>.</span><span>.</span><span>.</span>
+        </span>
+      </p>
+
+      <div class="orbit-shell" aria-hidden="true">
+        <span class="orbit orbit-1" />
+        <span class="orbit orbit-2" />
+        <span class="orbit orbit-3" />
+        <span class="orbit-dot" />
       </div>
 
-      <div class="timeline">
-        <div
-          v-for="item in steps"
-          :key="item.key"
-          class="timeline-item"
-          :class="{
-            'is-active': item.active,
-            'is-done': item.done,
-          }"
-        >
-          <span class="timeline-dot" />
-          <span class="timeline-label">{{ item.label }}</span>
+      <div class="loading-steps">
+        <div v-for="item in steps" :key="item.key" class="loading-step" :class="`is-${getState(item.key)}`">
+          <span class="step-indicator" :class="`is-${getState(item.key)}`" aria-hidden="true">
+            <span v-if="getState(item.key) === 'active'" class="step-spinner" />
+            <span v-else class="step-dot" />
+          </span>
+          <div class="step-copy">
+            <p class="step-title">{{ item.title }}</p>
+            <p class="step-text">{{ item.text }}</p>
+          </div>
         </div>
       </div>
     </div>
@@ -85,8 +95,10 @@ const helperText = computed(() => {
 .screen {
   position: relative;
   z-index: 1;
-  min-height: calc(100vh - 76px);
-  padding: 24px 20px 32px;
+  flex: 1;
+  min-height: 0;
+  padding: 24px 16px 36px;
+  box-sizing: border-box;
 }
 
 .loading-screen {
@@ -94,145 +106,311 @@ const helperText = computed(() => {
   flex-direction: column;
 }
 
-.loading-header {
-  width: min(1040px, 100%);
-  margin: 0 auto;
+.top-bar {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
 }
 
-.brand-mark {
-  margin: 0;
+.top-action {
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(15, 23, 42, 0.52);
+  color: #e2e8f0;
+  border-radius: 999px;
+  min-height: 44px;
+  padding: 0 16px;
+  cursor: pointer;
+  font-weight: 700;
+  backdrop-filter: blur(10px);
+  transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.top-action:hover {
+  transform: translateY(-1px);
+  background: rgba(30, 41, 59, 0.74);
+  border-color: rgba(147, 197, 253, 0.26);
+}
+
+.center-stack {
+  flex: 1;
+  width: 100%;
+  max-width: 760px;
+  margin: 0 auto;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  text-align: center;
+}
+
+.eyebrow {
+  margin: 20px 0 0;
   font-size: 13px;
-  letter-spacing: 0.26em;
+  letter-spacing: 0.22em;
   text-transform: uppercase;
   color: #93c5fd;
 }
 
-.cancel-btn {
-  border: 1px solid rgba(148, 163, 184, 0.18);
-  background: rgba(15, 23, 42, 0.45);
-  color: #e2e8f0;
-  border-radius: 999px;
-  padding: 10px 16px;
-  cursor: pointer;
-  font-weight: 600;
-  backdrop-filter: blur(12px);
-  transition: transform 0.2s ease, background 0.2s ease;
-}
-
-.cancel-btn:hover {
-  transform: translateY(-1px);
-  background: rgba(15, 23, 42, 0.66);
-}
-
-.loading-shell {
-  width: min(760px, 100%);
-  margin: 0 auto;
-  flex: 1;
-  display: grid;
-  justify-items: center;
-  align-content: center;
-  gap: 26px;
-  text-align: center;
-}
-
-.loading-copy {
-  max-width: 520px;
-}
-
-.eyebrow {
-  margin: 0;
-  font-size: 13px;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: #60a5fa;
-}
-
-.title {
+.main-title {
   margin: 14px 0 0;
-  font-size: clamp(36px, 5vw, 54px);
-  line-height: 1;
+  font-size: clamp(34px, 5vw, 54px);
+  line-height: 1.02;
+  font-weight: 800;
   letter-spacing: -0.04em;
 }
 
-.subtitle {
+.main-subtitle {
   margin: 14px 0 0;
+  max-width: 480px;
+  min-height: 30px;
+  font-size: 18px;
+  line-height: 1.6;
   color: #cbd5e1;
-  line-height: 1.7;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
 }
 
-.timeline {
-  width: min(540px, 100%);
+.loading-dots {
+  display: inline-flex;
+  min-width: 24px;
+}
+
+.loading-dots span {
+  animation: dotBlink 1.4s infinite;
+  opacity: 0.25;
+}
+
+.loading-dots span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-dots span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.orbit-shell {
+  position: relative;
+  width: 132px;
+  height: 132px;
+  margin-top: 30px;
+  display: grid;
+  place-items: center;
+}
+
+.orbit {
+  position: absolute;
+  border-radius: 999px;
+  border: 1px solid rgba(147, 197, 253, 0.18);
+}
+
+.orbit-1 {
+  inset: 0;
+  animation: orbitPulse 2.1s ease-in-out infinite;
+}
+
+.orbit-2 {
+  inset: 14px;
+  border-color: rgba(96, 165, 250, 0.24);
+  animation: orbitPulse 2.1s ease-in-out infinite 0.35s;
+}
+
+.orbit-3 {
+  inset: 28px;
+  border-color: rgba(59, 130, 246, 0.3);
+  animation: orbitPulse 2.1s ease-in-out infinite 0.7s;
+}
+
+.orbit-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  background: #93c5fd;
+  box-shadow: 0 0 24px rgba(96, 165, 250, 0.6);
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+
+.loading-steps {
+  width: 100%;
+  max-width: 420px;
+  margin-top: 26px;
   display: grid;
   gap: 12px;
 }
 
-.timeline-item {
+.loading-step {
+  position: relative;
+  overflow: hidden;
   display: grid;
-  grid-template-columns: 18px 1fr;
-  gap: 14px;
+  grid-template-columns: auto 1fr;
   align-items: center;
+  gap: 14px;
   padding: 14px 16px;
   border-radius: 20px;
-  background: rgba(2, 8, 23, 0.44);
-  border: 1px solid rgba(148, 163, 184, 0.08);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  background: rgba(8, 17, 32, 0.52);
   text-align: left;
-  transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  transition: transform 0.22s ease, border-color 0.22s ease, background 0.22s ease, opacity 0.22s ease;
 }
 
-.timeline-item.is-active {
-  transform: translateY(-1px);
-  background: rgba(12, 74, 110, 0.26);
-  border-color: rgba(96, 165, 250, 0.24);
+.step-indicator {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 18px;
 }
 
-.timeline-item.is-done {
-  border-color: rgba(74, 222, 128, 0.18);
-}
-
-.timeline-dot {
-  width: 12px;
-  height: 12px;
+.step-dot {
+  width: 10px;
+  height: 10px;
   border-radius: 999px;
-  background: rgba(148, 163, 184, 0.42);
-  box-shadow: 0 0 0 6px rgba(148, 163, 184, 0.06);
+  background: rgba(148, 163, 184, 0.34);
+  transition: all 0.22s ease;
 }
 
-.timeline-item.is-active .timeline-dot {
-  background: #60a5fa;
-  box-shadow: 0 0 0 8px rgba(59, 130, 246, 0.14);
-  animation: pulse 1.4s ease-in-out infinite;
+.step-spinner {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 2px solid rgba(147, 197, 253, 0.18);
+  border-top-color: #93c5fd;
+  border-right-color: rgba(147, 197, 253, 0.7);
+  animation: stepSpin 0.85s linear infinite;
+  box-shadow: 0 0 0 4px rgba(147, 197, 253, 0.06);
 }
 
-.timeline-item.is-done .timeline-dot {
+.step-title,
+.step-text {
+  margin: 0;
+}
+
+.step-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #dbe6f3;
+}
+
+.step-text {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #8ea1b9;
+}
+
+.loading-step.is-idle .step-dot {
+  background: rgba(148, 163, 184, 0.32);
+  opacity: 0.7;
+}
+
+.loading-step.is-active .step-indicator {
+  border-color: rgba(147, 197, 253, 0.22);
+  background: rgba(15, 23, 42, 0.8);
+  transform: scale(1.02);
+  box-shadow: 0 14px 34px rgba(2, 6, 23, 0.14);
+  filter: drop-shadow(0 0 10px rgba(147, 197, 253, 0.24));
+}
+
+.loading-step.is-active::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg,
+      transparent 0%,
+      rgba(147, 197, 253, 0.06) 35%,
+      rgba(147, 197, 253, 0.18) 50%,
+      rgba(147, 197, 253, 0.06) 65%,
+      transparent 100%);
+  transform: translateX(-100%);
+  animation: shimmer 1.8s linear infinite;
+}
+
+.loading-step.is-done .step-dot {
   background: #4ade80;
-  box-shadow: 0 0 0 8px rgba(74, 222, 128, 0.08);
+  box-shadow: 0 0 0 6px rgba(74, 222, 128, 0.08);
 }
 
-.timeline-label {
-  color: #e2e8f0;
-  font-weight: 600;
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
 }
 
-@keyframes pulse {
-  0%, 100% { transform: scale(1); opacity: 0.9; }
-  50% { transform: scale(1.14); opacity: 1; }
+@keyframes bulletPulse {
+
+  0%,
+  100% {
+    transform: scale(0.92);
+  }
+
+  50% {
+    transform: scale(1.18);
+  }
+}
+
+@keyframes dotBlink {
+
+  0%,
+  80%,
+  100% {
+    opacity: 0.22;
+    transform: translateY(0);
+  }
+
+  40% {
+    opacity: 1;
+    transform: translateY(-1px);
+  }
+}
+
+@keyframes orbitPulse {
+
+  0%,
+  100% {
+    transform: scale(0.96);
+    opacity: 0.58;
+  }
+
+  50% {
+    transform: scale(1.04);
+    opacity: 1;
+  }
+}
+
+@keyframes dotPulse {
+
+  0%,
+  100% {
+    transform: scale(0.92);
+    opacity: 0.82;
+  }
+
+  50% {
+    transform: scale(1.15);
+    opacity: 1;
+  }
+}
+
+@keyframes stepSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @media (max-width: 768px) {
   .screen {
-    min-height: calc(100vh - 70px);
-    padding: 18px 16px 24px;
+    padding: 18px 14px 28px;
   }
 
-  .title {
+  .main-title {
     font-size: 40px;
   }
 
-  .loading-shell {
-    gap: 22px;
+  .main-subtitle {
+    font-size: 17px;
+    max-width: 320px;
+  }
+
+  .loading-steps {
+    max-width: 100%;
   }
 }
 </style>

@@ -21,9 +21,7 @@ function isAllowedAudioType(file: File, allowedMimeTypes: string[]) {
     return true
   }
 
-  return allowedMimeTypes.some(type =>
-    file.type === type || file.type.startsWith(`${type};`)
-  )
+  return allowedMimeTypes.some((type) => file.type === type || file.type.startsWith(`${type};`))
 }
 
 function getAudioDuration(file: File): Promise<number> {
@@ -56,7 +54,9 @@ export function useRecognitionFlow() {
     markImamDetectionUnavailable,
   } = useApiHealth()
 
-  const maxAudioDurationSeconds = computed(() => uploadPolicy.value?.max_audio_duration_seconds ?? null)
+  const maxAudioDurationSeconds = computed(
+    () => uploadPolicy.value?.max_audio_duration_seconds ?? null,
+  )
   const maxFileSizeBytes = computed(() => uploadPolicy.value?.max_file_size_bytes ?? null)
   const acceptedMimeTypes = computed(() => uploadPolicy.value?.accepted_mime_types ?? [])
   const acceptedFileExtensions = computed(() => uploadPolicy.value?.accepted_file_extensions ?? [])
@@ -76,28 +76,21 @@ export function useRecognitionFlow() {
   })
   const uploadHint = computed(() => {
     if (
-      !acceptedFileExtensions.value.length
-      || maxFileSizeLabel.value === null
-      || maxAudioDurationSeconds.value === null
+      !acceptedFileExtensions.value.length ||
+      maxFileSizeLabel.value === null ||
+      maxAudioDurationSeconds.value === null
     ) {
       return null
     }
 
     const formatsLabel = acceptedFileExtensions.value
-      .map(extension => extension.replace(/^\./, ''))
+      .map((extension) => extension.replace(/^\./, ''))
       .join(', ')
 
     return `Formats : ${formatsLabel} · max ${maxFileSizeLabel.value} Mo · max ${maxAudioDurationSeconds.value} sec`
   })
 
-  const {
-    loading,
-    loadingStep,
-    error,
-    result,
-    recognizeAudio,
-    reset,
-  } = useRecognition()
+  const { loading, loadingStep, error, result, recognizeAudio, reset } = useRecognition()
 
   const {
     isRecording,
@@ -124,11 +117,15 @@ export function useRecognitionFlow() {
     void refreshHealth()
   })
 
-  watch(imamDetectionAvailable, (available) => {
-    if (!available) {
-      detectImam.value = false
-    }
-  }, { immediate: true })
+  watch(
+    imamDetectionAvailable,
+    (available) => {
+      if (!available) {
+        detectImam.value = false
+      }
+    },
+    { immediate: true },
+  )
 
   watch(result, (nextResult) => {
     if (nextResult?.imam_status === 'unavailable') {

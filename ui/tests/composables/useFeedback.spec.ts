@@ -38,13 +38,15 @@ describe('useFeedback', () => {
 
     const { error, sendFeedback } = useFeedback()
 
-    await expect(sendFeedback({
-      is_correct: false,
-      transcription_text: 'text',
-      detected_verse: null,
-      correction: null,
-      comment: null,
-    })).rejects.toThrow('network')
+    await expect(
+      sendFeedback({
+        is_correct: false,
+        transcription_text: 'text',
+        detected_verse: null,
+        correction: null,
+        comment: null,
+      }),
+    ).rejects.toThrow('network')
 
     expect(error.value).toBe('Erreur pendant l’envoi du feedback.')
   })

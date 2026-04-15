@@ -14,10 +14,16 @@ function escapeHtml(value: string) {
 }
 
 function sanitizeRuleName(rule: string) {
-  return rule.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-')
+  return rule
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]/g, '-')
 }
 
-function readTaggedSegment(input: string, startIndex: number): {
+function readTaggedSegment(
+  input: string,
+  startIndex: number,
+): {
   html: string
   nextIndex: number
 } | null {

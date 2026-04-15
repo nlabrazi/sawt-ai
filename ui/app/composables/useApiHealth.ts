@@ -2,7 +2,8 @@ import { useRuntimeConfig } from '#app'
 import { $fetch } from 'ofetch'
 import { computed, ref } from 'vue'
 
-const DEFAULT_IMAM_UNAVAILABLE_MESSAGE = 'La reconnaissance de l’imam est temporairement indisponible.'
+const DEFAULT_IMAM_UNAVAILABLE_MESSAGE =
+  'La reconnaissance de l’imam est temporairement indisponible.'
 
 export type ImamDetectionHealth = {
   available: boolean

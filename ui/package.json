@@ -5,7 +5,10 @@
   "scripts": {
     "build": "nuxt build",
     "dev": "nuxt dev",
+    "format": "biome format . --write",
+    "format:check": "biome check . --formatter-enabled=true --linter-enabled=false --assist-enabled=false --max-diagnostics=none",
     "generate": "nuxt generate",
+    "lint": "biome lint . --max-diagnostics=none --error-on-warnings",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",
     "test": "vitest run",
@@ -17,6 +20,7 @@
     "vue-router": "^4.6.4"
   },
   "devDependencies": {
+    "@biomejs/biome": "^2.4.12",
     "@vitejs/plugin-vue": "^6.0.5",
     "@vue/test-utils": "^2.4.6",
     "happy-dom": "^20.8.9",

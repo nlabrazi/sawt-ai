@@ -29,12 +29,8 @@ describe('useApiHealth', () => {
       },
     })
 
-    const {
-      imamDetectionAvailable,
-      imamDetectionMessage,
-      uploadPolicy,
-      refreshHealth,
-    } = useApiHealth()
+    const { imamDetectionAvailable, imamDetectionMessage, uploadPolicy, refreshHealth } =
+      useApiHealth()
 
     await refreshHealth()
 
@@ -42,7 +38,9 @@ describe('useApiHealth', () => {
       method: 'GET',
     })
     expect(imamDetectionAvailable.value).toBe(false)
-    expect(imamDetectionMessage.value).toBe('La reconnaissance de l’imam est temporairement indisponible.')
+    expect(imamDetectionMessage.value).toBe(
+      'La reconnaissance de l’imam est temporairement indisponible.',
+    )
     expect(uploadPolicy.value).toEqual({
       max_file_size_bytes: 12 * 1024 * 1024,
       max_audio_duration_seconds: 90,
@@ -52,11 +50,8 @@ describe('useApiHealth', () => {
   })
 
   it('can mark imam detection as unavailable after a runtime failure', () => {
-    const {
-      imamDetectionAvailable,
-      imamDetectionMessage,
-      markImamDetectionUnavailable,
-    } = useApiHealth()
+    const { imamDetectionAvailable, imamDetectionMessage, markImamDetectionUnavailable } =
+      useApiHealth()
 
     markImamDetectionUnavailable('Service imam indisponible.')
 
