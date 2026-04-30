@@ -43,7 +43,7 @@
 # 🧠 About The Project
 
 <p align="center">
-  <a href="https://nabil-labrazi.fr">
+  <a href="https://nabster.dev">
     <img src="ui/public/assets/images/screenshot.png" alt="Screenshot" width="100%" height="400" />
   </a>
 </p>
@@ -166,8 +166,8 @@ SUPABASE_FEEDBACK_TABLE=feedbacks
 ```
 
 Set `ALLOWED_ORIGINS` with each trusted frontend origin explicitly.
-Example for production: `https://your-app.netlify.app`.
-Do not rely on wildcard Netlify preview domains when credentials are enabled.
+Example for production: `https://sawt-ai.nabster.dev`.
+Do not rely on wildcard preview domains when credentials are enabled.
 The tajwid loading order is: local snapshot, backup URL, then external API.
 `TAJWID_BACKUP_URL` works well with a public JSON file stored in Supabase Storage.
 Use the Supabase Project URL, not the Postgres connection string, for `SUPABASE_URL`.
@@ -213,7 +213,7 @@ See the full license in [`LICENSE.txt`](https://en.wikipedia.org/wiki/MIT_Licens
 - 👤 [Linkedin][linkedin-url]
 - 🐦 [@Nabil](https://twitter.com/Nabil71405502)
 - 📧 na.labrazi@gmail.com
-- 🔗 [Portfolio](https://nabil-labrazi.fr)
+- 🔗 [Portfolio](https://nabster.dev)
 - 📁 [Project Repository](https://github.com/nlabrazi/sawt-ai)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

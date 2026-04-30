@@ -2,14 +2,14 @@
   <footer class="app-footer">
     <div class="footer-inner">
       <p class="footer-brand">
-        © 2026 <a href="https://sawt-ai.netlify.app" target="_blank" rel="noreferrer">Sawt AI</a> Tous droits réservés
+        © 2026 <a href="/" aria-label="Accueil Sawt AI">Sawt AI</a> Tous droits réservés
       </p>
 
       <nav class="footer-links" aria-label="Liens utiles">
         <a href="https://github.com/nlabrazi/sawt-ai" target="_blank" rel="noreferrer">
           GitHub
         </a>
-        <a href="https://portfolio-nlabrazi.netlify.app/" target="_blank" rel="noreferrer">
+        <a href="https://nabster.dev" target="_blank" rel="noreferrer">
           Portfolio
         </a>
         <a href="mailto:na.labrazi@gmail.com">
