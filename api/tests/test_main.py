@@ -64,7 +64,7 @@ def test_health_reports_imam_detection_service_status(monkeypatch):
 
 def test_lifespan_warms_tajwid_cache_without_blocking_startup(monkeypatch):
     calls = []
-    warnings = []
+    logs = []
 
     monkeypatch.setattr(main, "load_all_models", lambda: calls.append("models"))
     monkeypatch.setattr(main, "preflight_imam_resources", lambda: calls.append("imam"))
@@ -74,7 +74,7 @@ def test_lifespan_warms_tajwid_cache_without_blocking_startup(monkeypatch):
         raise main.TajwidServiceError("tajwid unavailable")
 
     monkeypatch.setattr(main, "warm_tajwid_cache", fail_warmup)
-    monkeypatch.setattr(main.logger, "warning", lambda message, **kwargs: warnings.append((message, kwargs)))
+    monkeypatch.setattr(main, "log_api_error", lambda **kwargs: logs.append(kwargs))
 
     async def run_lifespan():
         async with main.lifespan(app):
@@ -83,7 +83,9 @@ def test_lifespan_warms_tajwid_cache_without_blocking_startup(monkeypatch):
     asyncio.run(run_lifespan())
 
     assert calls == ["models", "imam", "tajwid", "yield"]
-    assert warnings == [(
-        "Tajwid warmup failed during startup; the API will retry on demand.",
-        {"exc_info": True},
-    )]
+    assert len(logs) == 1
+    assert isinstance(logs[0]["error"], main.TajwidServiceError)
+    assert str(logs[0]["error"]) == "tajwid unavailable"
+    assert logs[0]["level"] == "warning"
+    assert logs[0]["message"] == "Tajwid warmup failed during startup; the API will retry on demand."
+    assert logs[0]["route"] == "startup"

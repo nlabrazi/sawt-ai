@@ -3,7 +3,6 @@
 # Endpoint API qui reçoit un fichier audio
 # et déclenche le pipeline Sawt AI.
 
-import logging
 import uuid
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -11,6 +10,7 @@ from tempfile import NamedTemporaryFile
 from fastapi import APIRouter, Form, HTTPException, UploadFile
 from fastapi.concurrency import run_in_threadpool
 
+from app.core.api_logger import log_api_event
 from app.core.upload_policy import (
     MAX_AUDIO_DURATION_SECONDS,
     MAX_FILE_SIZE_BYTES,
@@ -25,7 +25,6 @@ from app.services.audio_metadata_service import (
 from app.services.inference_pipeline import run_inference_pipeline
 
 router = APIRouter()
-logger = logging.getLogger(__name__)
 
 HEADER_SNIFF_BYTES = 4096
 READ_CHUNK_SIZE_BYTES = 1024 * 1024
@@ -143,25 +142,31 @@ async def recognize(
         audio_duration_seconds = enforce_audio_duration_limit(temp_file)
         declared_content_type = canonicalize_content_type(file.content_type)
 
-        logger.info(
-            "Recognize request received: request_id=%s filename=%s declared_content_type=%s detected_content_type=%s size=%s duration_seconds=%.3f detect_imam=%s temp_path=%s",
-            request_id,
-            file.filename,
-            declared_content_type or None,
-            detected_content_type,
-            file_size,
-            audio_duration_seconds,
-            detect_imam,
-            temp_file,
+        log_api_event(
+            message="Recognize request received",
+            route="/recognize",
+            extra={
+                "requestId": str(request_id),
+                "filename": file.filename,
+                "declaredContentType": declared_content_type,
+                "detectedContentType": detected_content_type,
+                "size": file_size,
+                "durationSeconds": round(audio_duration_seconds, 3),
+                "detectImam": detect_imam,
+            },
         )
 
         if declared_content_type and declared_content_type != detected_content_type:
-            logger.warning(
-                "Recognize content type mismatch: request_id=%s filename=%s declared=%s detected=%s",
-                request_id,
-                file.filename,
-                declared_content_type,
-                detected_content_type,
+            log_api_event(
+                level="warning",
+                message="Recognize content type mismatch",
+                route="/recognize",
+                extra={
+                    "requestId": str(request_id),
+                    "filename": file.filename,
+                    "declaredContentType": declared_content_type,
+                    "detectedContentType": detected_content_type,
+                },
             )
 
         return await run_in_threadpool(
