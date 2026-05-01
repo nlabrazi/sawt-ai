@@ -3,9 +3,13 @@ import os
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from app.core.api_logger import log_api_error
 from app.core.upload_policy import build_upload_policy
 from app.routes.recognize import router as recognize_router
 from app.routes.tajwid import router as tajwid_router
@@ -22,7 +26,6 @@ LOG_LEVEL_NAME = os.getenv("LOG_LEVEL", "INFO").upper()
 LOG_LEVEL = getattr(logging, LOG_LEVEL_NAME, logging.INFO)
 logging.getLogger().setLevel(LOG_LEVEL)
 logging.getLogger("app").setLevel(LOG_LEVEL)
-logger = logging.getLogger(__name__)
 
 DEFAULT_ALLOWED_ORIGINS = (
     "http://localhost:3000",
@@ -67,10 +70,12 @@ async def lifespan(_: FastAPI):
 
     try:
         warm_tajwid_cache()
-    except TajwidServiceError:
-        logger.warning(
-            "Tajwid warmup failed during startup; the API will retry on demand.",
-            exc_info=True,
+    except TajwidServiceError as exc:
+        log_api_error(
+            error=exc,
+            level="warning",
+            message="Tajwid warmup failed during startup; the API will retry on demand.",
+            route="startup",
         )
 
     yield
@@ -87,6 +92,34 @@ app.add_middleware(
 app.include_router(recognize_router)
 app.include_router(feedback_router)
 app.include_router(tajwid_router)
+
+
+@app.exception_handler(StarletteHTTPException)
+async def api_http_exception_handler(request: Request, exc: StarletteHTTPException):
+    if exc.status_code >= 500:
+        log_api_error(
+            error=exc.__cause__ or exc,
+            event=request,
+            message=str(exc.detail),
+            status_code=exc.status_code,
+        )
+
+    return await http_exception_handler(request, exc)
+
+
+@app.exception_handler(Exception)
+async def api_unhandled_exception_handler(request: Request, exc: Exception):
+    log_api_error(
+        error=exc,
+        event=request,
+        message="Unhandled API error",
+        status_code=500,
+    )
+
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "Erreur interne du serveur."},
+    )
 
 
 @app.get("/health", response_model=HealthResponse)
