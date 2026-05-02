@@ -53,14 +53,14 @@ describe('FeedbackForm', () => {
       },
     })
 
-    await wrapper.get('.feedback-btn.negative').trigger('click')
+    await wrapper.get('.feedback-action-secondary').trigger('click')
     await flushPromises()
 
     const surahSelect = wrapper.get('#sourate')
     const surahOptions = surahSelect.findAll('option')
 
     expect(surahOptions).toHaveLength(2)
-    expect(surahOptions[1]?.text()).toBe('114 - الناس - An-Nas')
+    expect(surahOptions[1]?.text()).toBe('114 · الناس · An-Nas')
 
     await surahSelect.setValue('114')
     await flushPromises()

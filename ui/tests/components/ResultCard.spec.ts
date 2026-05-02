@@ -24,7 +24,7 @@ describe('ResultCard', () => {
       },
     })
 
-    expect(wrapper.text()).toContain('Indisponible')
+    expect(wrapper.text()).toContain('Imam indisponible')
     expect(wrapper.text()).toContain('Identification de l’imam temporairement indisponible.')
     expect(wrapper.text()).not.toContain('Imam non reconnu pour cet extrait.')
   })
