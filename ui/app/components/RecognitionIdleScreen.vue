@@ -114,9 +114,8 @@ function onFileChange(event: Event) {
 
       <label class="imam-toggle" :class="{ 'is-disabled': imamDetectionAvailable === false }"
         :title="imamDetectionAvailable === false ? (imamDetectionMessage ?? undefined) : undefined">
-        <input class="imam-toggle-checkbox" type="checkbox" :checked="detectImam"
-          :disabled="imamDetectionAvailable === false" @change="onDetectImamChange">
-        <span class="imam-toggle-box" aria-hidden="true" />
+        <input type="checkbox" class="imam-toggle-checkbox" :checked="detectImam"
+          :disabled="imamDetectionAvailable === false" @change="onDetectImamChange" />
         <span class="imam-toggle-text">Reconnaître l’imam</span>
       </label>
 
@@ -325,37 +324,36 @@ function onFileChange(event: Event) {
   opacity: 0.62;
 }
 
+.imam-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 48px;
+  margin: 0 auto;
+  cursor: pointer;
+  user-select: none;
+}
+
+.imam-toggle.is-disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
 .imam-toggle-checkbox {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
+  width: 18px;
+  height: 18px;
+  accent-color: #3b82f6;
+  cursor: pointer;
 }
 
-.imam-toggle-box {
-  width: 22px;
-  height: 22px;
-  border-radius: 7px;
-  border: 1px solid rgba(148, 163, 184, 0.2);
-  background: rgba(15, 23, 42, 0.82);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
-  transition: all 0.2s ease;
+.imam-toggle-checkbox:disabled {
+  cursor: not-allowed;
 }
 
-.imam-toggle-checkbox:checked+.imam-toggle-box {
-  border-color: rgba(96, 165, 250, 0.5);
-  background:
-    linear-gradient(180deg, rgba(96, 165, 250, 0.92) 0%, rgba(59, 130, 246, 1) 100%);
-  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.12);
-}
-
-.imam-toggle-checkbox:checked+.imam-toggle-box::after {
-  content: '';
-  position: absolute;
-  width: 6px;
-  height: 10px;
-  border-right: 2px solid #eff6ff;
-  border-bottom: 2px solid #eff6ff;
-  transform: translate(7px, 3px) rotate(45deg);
+.imam-toggle-text {
+  font-size: 16px;
+  font-weight: 700;
+  color: #e6edf7;
 }
 
 .imam-toggle-text {

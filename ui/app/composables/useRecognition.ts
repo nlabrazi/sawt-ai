@@ -172,12 +172,10 @@ export function useRecognition() {
       error.value = getApiErrorDetail(err) ?? 'Erreur pendant la reconnaissance audio.'
       console.error(err)
     } finally {
-      if (!isActiveRequest(requestId)) {
-        return
+      if (isActiveRequest(requestId)) {
+        loading.value = false
+        activeController = null
       }
-
-      loading.value = false
-      activeController = null
     }
   }
 

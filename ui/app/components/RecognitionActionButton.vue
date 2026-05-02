@@ -44,6 +44,10 @@ const auraOpacity = computed(() => {
   return 0.16
 })
 
+const actionLabel = computed(() => {
+  return props.isRecording ? 'Arrêter l’enregistrement' : 'Démarrer l’enregistrement'
+})
+
 function handleClick() {
   if (props.disabled) return
   emit('click')
@@ -68,9 +72,9 @@ function handlePressEnd() {
       '--core-scale': String(coreScale),
       '--halo-opacity': String(haloOpacity),
       '--aura-opacity': String(auraOpacity),
-    }" :disabled="disabled" type="button" @click="handleClick" @mousedown="handlePressStart" @mouseup="handlePressEnd"
-    @mouseleave="handlePressEnd" @touchstart="handlePressStart" @touchend="handlePressEnd"
-    @touchcancel="handlePressEnd">
+    }" :aria-busy="loading" :aria-label="actionLabel" :aria-pressed="isRecording" :disabled="disabled" type="button"
+    @click="handleClick" @mousedown="handlePressStart" @mouseup="handlePressEnd" @mouseleave="handlePressEnd"
+    @touchstart="handlePressStart" @touchend="handlePressEnd" @touchcancel="handlePressEnd">
     <span class="button-aura" aria-hidden="true" />
     <span class="button-halo" aria-hidden="true" />
     <span class="button-ring ring-1" aria-hidden="true" />

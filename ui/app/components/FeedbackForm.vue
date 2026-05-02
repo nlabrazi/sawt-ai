@@ -62,7 +62,9 @@ function syncCorrectionSelection(force = false) {
   const nextSurah =
     !force && currentSurah
       ? currentSurah
-      : (surahs.value.find((surah) => surah.id === detectedVerse?.sourate_id) ?? surahs.value[0]!)
+      : (surahs.value.find((surah) => surah.id === detectedVerse?.sourate_id) ?? surahs.value[0])
+
+  if (!nextSurah) return
 
   selectedSurahId.value = nextSurah.id
 

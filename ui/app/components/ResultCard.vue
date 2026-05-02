@@ -45,6 +45,23 @@ const imamName = computed(() => {
   return topImam.value.name.replace(/_/g, ' ').trim()
 })
 
+const imamStatusText = computed(() => {
+  if (topImam.value?.name) return ''
+
+  switch (props.result.imam_status) {
+    case 'disabled':
+      return 'Identification de l’imam désactivée.'
+    case 'unavailable':
+      return 'Identification de l’imam temporairement indisponible.'
+    case 'unknown':
+      return 'Imam non reconnu pour cet extrait.'
+    case 'low':
+      return 'Identification de l’imam à confirmer.'
+    default:
+      return ''
+  }
+})
+
 async function copyVerse() {
   if (!props.result.verse) return
 
@@ -95,6 +112,10 @@ async function copyVerse() {
             {{ imamName }}
           </div>
         </div>
+
+        <p v-if="imamStatusText" class="imam-status-text">
+          {{ imamStatusText }}
+        </p>
 
         <div class="action-row">
           <button class="primary-btn" type="button" @click="isDetailsOpen = true">
@@ -216,6 +237,14 @@ async function copyVerse() {
 
 .imam-pill {
   color: #dbeafe;
+}
+
+.imam-status-text {
+  margin: 12px 0 0;
+  text-align: center;
+  color: #8ea1b9;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .action-row {

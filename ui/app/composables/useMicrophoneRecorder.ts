@@ -104,11 +104,11 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
   const maxRecordingSeconds = computed(() => {
     const nextLimit = maxRecordingSecondsLimit?.value
 
-    if (!Number.isFinite(nextLimit) || (nextLimit ?? 0) <= 0) {
+    if (typeof nextLimit !== 'number' || !Number.isFinite(nextLimit) || nextLimit <= 0) {
       return null
     }
 
-    return Math.floor(nextLimit!)
+    return Math.floor(nextLimit)
   })
 
   let mediaRecorder: MediaRecorder | null = null
@@ -327,7 +327,9 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
     audioChunks = []
 
     if (mediaStream) {
-      mediaStream.getTracks().forEach((track) => track.stop())
+      mediaStream.getTracks().forEach((track) => {
+        track.stop()
+      })
       mediaStream = null
     }
 
