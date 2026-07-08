@@ -46,7 +46,7 @@ describe('useRecognition', () => {
       signal: expect.any(AbortSignal),
     })
     expect(loading.value).toBe(false)
-    expect(loadingStep.value).toBe('result-found')
+    expect(loadingStep.value).toBe('done')
     expect(error.value).toBeNull()
     expect(result.value?.transcription_text).toBe('قل هو الله احد')
   })
@@ -103,7 +103,7 @@ describe('useRecognition', () => {
     await pending
 
     expect(loading.value).toBe(false)
-    expect(loadingStep.value).toBe('detecting')
+    expect(loadingStep.value).toBe('transcribing')
     expect(error.value).toBeNull()
     expect(result.value).toBeNull()
     expect(consoleErrorSpy).not.toHaveBeenCalled()
@@ -124,7 +124,7 @@ describe('useRecognition', () => {
     await pending
 
     expect(loading.value).toBe(false)
-    expect(loadingStep.value).toBe('detecting')
+    expect(loadingStep.value).toBe('transcribing')
     expect(error.value).toBeNull()
     expect(result.value).toBeNull()
   })

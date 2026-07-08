@@ -33,11 +33,12 @@ export type RecognizeResponse = {
   imam_detection_enabled: boolean
 }
 
-export type LoadingStep = 'detecting' | 'result-found' | 'retrying'
+export type LoadingStep = 'transcribing' | 'matching' | 'done'
 
 const MIN_LOADING_MS = 1800
-const RESULT_FOUND_STEP_MS = 850
-const RETRY_STEP_MS = 1100
+const MATCHING_STEP_MS = 850
+const LOW_CONFIDENCE_MATCHING_STEP_MS = 1100
+const DONE_STEP_MS = 250
 
 function createAbortError() {
   const error = new Error('The operation was aborted.')
@@ -99,7 +100,7 @@ export function useRecognition() {
   const loading = ref(false)
   const error = ref<string | null>(null)
   const result = ref<RecognizeResponse | null>(null)
-  const loadingStep = ref<LoadingStep>('detecting')
+  const loadingStep = ref<LoadingStep>('transcribing')
   let activeController: AbortController | null = null
   let activeRequestId = 0
 
@@ -122,7 +123,7 @@ export function useRecognition() {
     loading.value = true
     error.value = null
     result.value = null
-    loadingStep.value = 'detecting'
+    loadingStep.value = 'transcribing'
 
     const startedAt = Date.now()
 
@@ -147,13 +148,14 @@ export function useRecognition() {
       const hasVerse = !!response.verse
       const isConfident = isVerseConfident(response.verse?.similarity ?? 0)
 
-      if (hasVerse && isConfident) {
-        loadingStep.value = 'result-found'
-        await wait(RESULT_FOUND_STEP_MS, controller.signal)
-      } else {
-        loadingStep.value = 'retrying'
-        await wait(RETRY_STEP_MS, controller.signal)
-      }
+      loadingStep.value = 'matching'
+      await wait(
+        hasVerse && isConfident ? MATCHING_STEP_MS : LOW_CONFIDENCE_MATCHING_STEP_MS,
+        controller.signal,
+      )
+
+      loadingStep.value = 'done'
+      await wait(DONE_STEP_MS, controller.signal)
 
       if (!isActiveRequest(requestId)) {
         return
@@ -185,7 +187,7 @@ export function useRecognition() {
     loading.value = false
     error.value = null
     result.value = null
-    loadingStep.value = 'detecting'
+    loadingStep.value = 'transcribing'
   }
 
   return {
