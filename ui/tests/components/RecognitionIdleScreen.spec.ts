@@ -29,6 +29,39 @@ describe('RecognitionIdleScreen', () => {
     expect(wrapper.emitted('micro-click')).toHaveLength(1)
   })
 
+  it('shows recording progress while recording', () => {
+    const wrapper = mount(RecognitionIdleScreen, {
+      props: {
+        detectImam: true,
+        isRecording: true,
+        recordingSeconds: 30,
+        maxRecordingSeconds: 90,
+      },
+    })
+
+    const progress = wrapper.get('[role="progressbar"]')
+    const progressFill = wrapper.get('.recording-progress-fill')
+
+    expect(wrapper.text()).toContain('30s / 90s')
+    expect(progress.attributes('aria-valuenow')).toBe('30')
+    expect(progress.attributes('aria-valuemax')).toBe('90')
+    expect(progressFill.attributes('style')).toContain('width: 33.3333')
+  })
+
+  it('hides recording progress before recording starts', () => {
+    const wrapper = mount(RecognitionIdleScreen, {
+      props: {
+        detectImam: true,
+        isRecording: false,
+        recordingSeconds: 0,
+        maxRecordingSeconds: 90,
+      },
+    })
+
+    expect(wrapper.find('[role="progressbar"]').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('/ 90s')
+  })
+
   it('allows webm uploads and documents the supported format', () => {
     const wrapper = mount(RecognitionIdleScreen, {
       props: {

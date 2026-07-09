@@ -43,6 +43,27 @@ const recordingTime = computed(() => {
   return `${props.recordingSeconds ?? 0}s`
 })
 
+const recordingProgressPercent = computed(() => {
+  const maxSeconds = props.maxRecordingSeconds
+
+  if (!props.isRecording || !maxSeconds || maxSeconds <= 0) {
+    return 0
+  }
+
+  const seconds = Math.max(0, props.recordingSeconds ?? 0)
+  return Math.min(100, (seconds / maxSeconds) * 100)
+})
+
+const recordingProgressLabel = computed(() => {
+  const maxSeconds = props.maxRecordingSeconds
+
+  if (!props.isRecording || !maxSeconds || maxSeconds <= 0) {
+    return ''
+  }
+
+  return `${props.recordingSeconds ?? 0}s / ${maxSeconds}s`
+})
+
 function onMicroButtonClick() {
   emit('micro-click')
 }
@@ -85,6 +106,23 @@ function onFileChange(event: Event) {
           <span>{{ recordingTime }}</span>
         </div>
 
+        <div v-if="isRecording && maxRecordingSeconds" class="recording-progress">
+          <div
+            class="recording-progress-track"
+            role="progressbar"
+            aria-label="Progression de l’enregistrement"
+            :aria-valuenow="recordingSeconds ?? 0"
+            aria-valuemin="0"
+            :aria-valuemax="maxRecordingSeconds"
+          >
+            <span
+              class="recording-progress-fill"
+              :style="{ width: `${recordingProgressPercent}%` }"
+            />
+          </div>
+
+          <p class="recording-progress-label">{{ recordingProgressLabel }}</p>
+        </div>
       </div>
 
       <div class="action-panel">
@@ -220,6 +258,38 @@ function onFileChange(event: Event) {
   background: #93c5fd;
   box-shadow: 0 0 0 0 rgba(147, 197, 253, 0.54);
   animation: pulseDot 1.4s ease-in-out infinite;
+}
+
+.recording-progress {
+  width: min(100%, 320px);
+  margin-top: 16px;
+  display: grid;
+  gap: 8px;
+}
+
+.recording-progress-track {
+  width: 100%;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+.recording-progress-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #60a5fa 0%, #38bdf8 100%);
+  box-shadow: 0 0 18px rgba(56, 189, 248, 0.38);
+  transition: width 0.24s ease;
+}
+
+.recording-progress-label {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+  color: #93c5fd;
 }
 
 .action-panel {
