@@ -101,6 +101,10 @@ async function copyVerse() {
           <p class="verse-range">
             {{ verseLabel }}
           </p>
+
+          <p class="detected-verse-text">
+            {{ result.verse.text }}
+          </p>
         </div>
 
         <div class="meta-row">
@@ -197,6 +201,17 @@ async function copyVerse() {
   margin: 10px 0 0;
   color: #b8c6d8;
   font-size: 18px;
+}
+
+.detected-verse-text {
+  margin: 24px auto 0;
+  max-width: 760px;
+  font-size: 34px;
+  line-height: 1.9;
+  direction: rtl;
+  text-align: center;
+  font-family: 'Amiri', serif;
+  color: #f8fafc;
 }
 
 .meta-row {
@@ -316,6 +331,12 @@ async function copyVerse() {
 
   .verse-range {
     font-size: 17px;
+  }
+
+  .detected-verse-text {
+    margin-top: 20px;
+    font-size: 28px;
+    line-height: 1.9;
   }
 
   .action-row {

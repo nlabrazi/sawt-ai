@@ -3,6 +3,30 @@ import { mount } from '@vue/test-utils'
 import ResultCard from '~/components/ResultCard.vue'
 
 describe('ResultCard', () => {
+  it('shows the detected verse text in the result card', () => {
+    const wrapper = mount(ResultCard, {
+      props: {
+        result: {
+          transcription_text: 'قل هو الله احد',
+          verse: {
+            sourate_id: 112,
+            sourate_name: 'الإخلاص',
+            transliteration: 'Al-Ikhlas',
+            start_verse: 1,
+            end_verse: 4,
+            text: 'قل هو الله احد',
+            similarity: 0.93,
+          },
+          imam_predictions: [],
+          imam_status: 'unknown',
+          imam_detection_enabled: true,
+        },
+      },
+    })
+
+    expect(wrapper.get('.detected-verse-text').text()).toBe('قل هو الله احد')
+  })
+
   it('distinguishes an unavailable imam service from an unknown imam result', () => {
     const wrapper = mount(ResultCard, {
       props: {
