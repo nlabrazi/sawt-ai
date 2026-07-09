@@ -238,7 +238,7 @@ function onFileChange(event: Event) {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 24px 16px 36px;
+  padding: 22px 16px 30px;
   box-sizing: border-box;
 }
 
@@ -267,8 +267,8 @@ function onFileChange(event: Event) {
   display: grid;
   align-content: center;
   justify-items: center;
-  gap: 24px;
-  padding: 28px 0 20px;
+  gap: 22px;
+  padding: 24px 0 18px;
   text-align: center;
 }
 
@@ -288,7 +288,7 @@ function onFileChange(event: Event) {
 }
 
 .main-subtitle {
-  margin: 18px 0 0;
+  margin: 16px 0 0;
   max-width: 560px;
   font-size: 20px;
   line-height: 1.55;
@@ -297,7 +297,7 @@ function onFileChange(event: Event) {
 }
 
 .recording-time {
-  margin-top: 20px;
+  margin-top: 18px;
   display: inline-flex;
   align-items: center;
   gap: 12px;
@@ -323,7 +323,7 @@ function onFileChange(event: Event) {
 
 .recording-progress {
   width: min(100%, 320px);
-  margin-top: 16px;
+  margin-top: 14px;
   display: grid;
   gap: 8px;
 }
@@ -357,14 +357,14 @@ function onFileChange(event: Event) {
   width: min(100%, 440px);
   display: grid;
   justify-items: center;
-  gap: 18px;
+  gap: 16px;
 }
 
 .hero-action {
   display: grid;
   place-items: center;
   gap: 14px;
-  min-height: 220px;
+  min-height: 214px;
 }
 
 .upload-action {
@@ -377,8 +377,8 @@ function onFileChange(event: Event) {
 .options-shell {
   width: min(100%, 520px);
   margin: 0 auto;
-  padding: 18px;
-  border-radius: 24px;
+  padding: 16px 18px;
+  border-radius: 22px;
   border: 1px solid rgba(148, 163, 184, 0.12);
   background:
     linear-gradient(180deg, rgba(9, 18, 34, 0.62) 0%, rgba(7, 15, 29, 0.54) 100%);
@@ -428,7 +428,7 @@ function onFileChange(event: Event) {
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  min-height: 48px;
+  min-height: 44px;
   margin: 0 auto;
   cursor: pointer;
   user-select: none;
@@ -527,12 +527,12 @@ function onFileChange(event: Event) {
 
 @media (max-width: 768px) {
   .screen {
-    padding: 18px 14px 28px;
+    padding: 16px 14px 24px;
   }
 
   .hero-shell {
-    gap: 22px;
-    padding: 18px 0 18px;
+    gap: 18px;
+    padding: 16px 0 16px;
   }
 
   .main-title {
@@ -541,6 +541,7 @@ function onFileChange(event: Event) {
   }
 
   .main-subtitle {
+    margin-top: 14px;
     font-size: 17px;
     max-width: 330px;
   }
@@ -552,7 +553,7 @@ function onFileChange(event: Event) {
 
   .options-shell {
     width: 100%;
-    padding: 16px;
+    padding: 14px 16px;
   }
 }
 
@@ -562,7 +563,46 @@ function onFileChange(event: Event) {
   }
 
   .hero-action {
-    min-height: 200px;
+    min-height: 204px;
+  }
+}
+
+@media (max-width: 430px) {
+  .screen {
+    padding-inline: 12px;
+  }
+
+  .main-title {
+    font-size: 40px;
+  }
+
+  .hero-action {
+    min-height: 198px;
+  }
+
+  .file-button {
+    min-height: 52px;
+    font-size: 17px;
+  }
+
+  .upload-hint,
+  .imam-toggle-hint {
+    font-size: 13px;
+  }
+}
+
+@media (min-width: 1040px) {
+  .idle-screen {
+    max-width: 1040px;
+  }
+
+  .hero-shell {
+    gap: 26px;
+    padding-top: 32px;
+  }
+
+  .options-shell {
+    width: min(100%, 560px);
   }
 }
 </style>
