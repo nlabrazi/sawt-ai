@@ -62,6 +62,34 @@ describe('RecognitionIdleScreen', () => {
     expect(wrapper.text()).not.toContain('/ 90s')
   })
 
+  it('shows microphone error guidance near the primary action', () => {
+    const wrapper = mount(RecognitionIdleScreen, {
+      props: {
+        detectImam: true,
+        micError: 'Impossible d’accéder au microphone.',
+      },
+    })
+
+    const alert = wrapper.get('.hero-action [role="alert"]')
+
+    expect(alert.text()).toContain('Impossible d’accéder au microphone.')
+    expect(alert.text()).toContain('Autorisez le micro dans votre navigateur.')
+  })
+
+  it('shows upload error guidance near the import action', () => {
+    const wrapper = mount(RecognitionIdleScreen, {
+      props: {
+        detectImam: true,
+        uploadError: 'Format audio non pris en charge.',
+      },
+    })
+
+    const alert = wrapper.get('.upload-action [role="alert"]')
+
+    expect(alert.text()).toContain('Format audio non pris en charge.')
+    expect(alert.text()).toContain('Utilisez wav, mp3, m4a, ogg ou webm.')
+  })
+
   it('allows webm uploads and documents the supported format', () => {
     const wrapper = mount(RecognitionIdleScreen, {
       props: {

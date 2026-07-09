@@ -64,6 +64,64 @@ const recordingProgressLabel = computed(() => {
   return `${props.recordingSeconds ?? 0}s / ${maxSeconds}s`
 })
 
+const recordingError = computed(() => {
+  if (!props.uploadError?.toLowerCase().includes('enregistrement')) {
+    return null
+  }
+
+  return props.uploadError
+})
+
+const fileError = computed(() => {
+  if (recordingError.value) {
+    return null
+  }
+
+  return props.uploadError ?? null
+})
+
+const micErrorHint = computed(() => {
+  if (!props.micError) return ''
+
+  const normalizedError = props.micError.toLowerCase()
+
+  if (normalizedError.includes('https')) {
+    return 'Ouvrez Sawt AI en HTTPS.'
+  }
+
+  if (normalizedError.includes('navigateur')) {
+    return 'Essayez un navigateur récent.'
+  }
+
+  return 'Autorisez le micro dans votre navigateur.'
+})
+
+const recordingErrorHint = computed(() => {
+  if (!recordingError.value) return ''
+
+  return 'Relancez une prise courte.'
+})
+
+const fileErrorHint = computed(() => {
+  if (!fileError.value) return ''
+
+  const normalizedError = fileError.value.toLowerCase()
+
+  if (normalizedError.includes('format')) {
+    return 'Utilisez wav, mp3, m4a, ogg ou webm.'
+  }
+
+  if (normalizedError.includes('volumineux')) {
+    return 'Choisissez un extrait plus léger.'
+  }
+
+  if (normalizedError.includes('trop long')) {
+    return 'Gardez un extrait plus court.'
+  }
+
+  return 'Essayez un autre fichier audio.'
+})
+
 function onMicroButtonClick() {
   emit('micro-click')
 }
@@ -128,6 +186,11 @@ function onFileChange(event: Event) {
       <div class="action-panel">
         <div class="hero-action">
           <RecognitionActionButton :is-recording="isRecording" :audio-level="audioLevel" @click="onMicroButtonClick" />
+
+          <div v-if="micError || recordingError" class="status-message is-error action-error" role="alert">
+            <p class="status-title">{{ micError ?? recordingError }}</p>
+            <p class="status-hint">{{ micError ? micErrorHint : recordingErrorHint }}</p>
+          </div>
         </div>
 
         <div class="upload-action">
@@ -138,6 +201,11 @@ function onFileChange(event: Event) {
           <p class="upload-hint">
             {{ uploadHint ?? 'Formats : wav, mp3, m4a, ogg, webm · max 12 Mo · max 90 sec' }}
           </p>
+
+          <div v-if="fileError" class="status-message is-error action-error" role="alert">
+            <p class="status-title">{{ fileError }}</p>
+            <p class="status-hint">{{ fileErrorHint }}</p>
+          </div>
         </div>
       </div>
     </div>
@@ -156,13 +224,6 @@ function onFileChange(event: Event) {
           : 'Analyse du réciteur en plus du verset détecté.' }}
       </p>
 
-      <p v-if="uploadError" class="status-message is-error">
-        {{ uploadError }}
-      </p>
-
-      <p v-if="micError" class="status-message is-error">
-        {{ micError }}
-      </p>
     </div>
 
     <input :id="fileInputId" class="hidden-input" type="file" :accept="uploadAccept ?? 'audio/*'"
@@ -302,6 +363,7 @@ function onFileChange(event: Event) {
 .hero-action {
   display: grid;
   place-items: center;
+  gap: 14px;
   min-height: 220px;
 }
 
@@ -414,10 +476,30 @@ function onFileChange(event: Event) {
   line-height: 1.55;
 }
 
+.action-error {
+  width: min(100%, 360px);
+  margin-top: 0;
+  text-align: left;
+}
+
 .status-message.is-error {
   background: rgba(127, 29, 29, 0.22);
   border: 1px solid rgba(248, 113, 113, 0.16);
   color: #fecaca;
+}
+
+.status-title,
+.status-hint {
+  margin: 0;
+}
+
+.status-title {
+  font-weight: 700;
+}
+
+.status-hint {
+  margin-top: 4px;
+  color: #fee2e2;
 }
 
 .hidden-input {
