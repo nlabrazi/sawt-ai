@@ -357,7 +357,7 @@ function onFileChange(event: Event) {
   width: min(100%, 440px);
   display: grid;
   justify-items: center;
-  gap: 16px;
+  gap: 24px;
 }
 
 .hero-action {
@@ -560,6 +560,7 @@ function onFileChange(event: Event) {
 @media (min-width: 860px) {
   .action-panel {
     width: min(100%, 500px);
+    gap: 28px;
   }
 
   .hero-action {
