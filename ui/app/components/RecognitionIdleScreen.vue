@@ -38,10 +38,6 @@ const subtitle = computed(() => {
     : 'Récitez quelques secondes. Sawt AI reconnaît le passage.'
 })
 
-const helperText = computed(() => {
-  return props.isRecording ? 'Nous écoutons en direct.' : 'Une seule action, un seul geste.'
-})
-
 const recordingTime = computed(() => {
   if (!props.isRecording) return ''
   return `${props.recordingSeconds ?? 0}s`
@@ -89,29 +85,26 @@ function onFileChange(event: Event) {
           <span>{{ recordingTime }}</span>
         </div>
 
-        <p class="helper-line">
-          {{ helperText }}
-        </p>
       </div>
 
-      <div class="hero-action">
-        <RecognitionActionButton :is-recording="isRecording" :audio-level="audioLevel" @click="onMicroButtonClick" />
+      <div class="action-panel">
+        <div class="hero-action">
+          <RecognitionActionButton :is-recording="isRecording" :audio-level="audioLevel" @click="onMicroButtonClick" />
+        </div>
+
+        <div class="upload-action">
+          <label class="file-button" :for="fileInputId">
+            Importer un audio
+          </label>
+
+          <p class="upload-hint">
+            {{ uploadHint ?? 'Formats : wav, mp3, m4a, ogg, webm · max 12 Mo · max 90 sec' }}
+          </p>
+        </div>
       </div>
     </div>
 
-    <div class="secondary-shell">
-      <div class="secondary-top">
-        <label class="file-button" :for="fileInputId">
-          Choisir un fichier
-        </label>
-
-        <p class="upload-hint">
-          {{ uploadHint ?? 'Formats : wav, mp3, m4a, ogg, webm · max 12 Mo · max 90 sec' }}
-        </p>
-      </div>
-
-      <div class="secondary-divider" />
-
+    <div class="options-shell">
       <label class="imam-toggle" :class="{ 'is-disabled': imamDetectionAvailable === false }"
         :title="imamDetectionAvailable === false ? (imamDetectionMessage ?? undefined) : undefined">
         <input type="checkbox" class="imam-toggle-checkbox" :checked="detectImam"
@@ -175,7 +168,7 @@ function onFileChange(event: Event) {
   display: grid;
   align-content: center;
   justify-items: center;
-  gap: 28px;
+  gap: 24px;
   padding: 28px 0 20px;
   text-align: center;
 }
@@ -229,11 +222,11 @@ function onFileChange(event: Event) {
   animation: pulseDot 1.4s ease-in-out infinite;
 }
 
-.helper-line {
-  margin: 14px 0 0;
-  font-size: 14px;
-  color: #8ba0bb;
-  letter-spacing: 0.01em;
+.action-panel {
+  width: min(100%, 440px);
+  display: grid;
+  justify-items: center;
+  gap: 18px;
 }
 
 .hero-action {
@@ -242,32 +235,30 @@ function onFileChange(event: Event) {
   min-height: 220px;
 }
 
-.secondary-shell {
-  width: min(100%, 440px);
-  margin: 0 auto;
-  padding: 24px;
-  border-radius: 30px;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  background:
-    linear-gradient(180deg, rgba(9, 18, 34, 0.76) 0%, rgba(7, 15, 29, 0.66) 100%);
-  backdrop-filter: blur(14px);
-  box-shadow:
-    0 24px 70px rgba(2, 6, 23, 0.16),
-    inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  text-align: center;
+.upload-action {
+  width: 100%;
+  display: grid;
+  gap: 12px;
+  justify-items: center;
 }
 
-.secondary-top {
-  display: grid;
-  gap: 14px;
-  justify-items: center;
+.options-shell {
+  width: min(100%, 520px);
+  margin: 0 auto;
+  padding: 18px;
+  border-radius: 24px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  background:
+    linear-gradient(180deg, rgba(9, 18, 34, 0.62) 0%, rgba(7, 15, 29, 0.54) 100%);
+  backdrop-filter: blur(14px);
+  text-align: center;
 }
 
 .file-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 220px;
+  width: 100%;
   min-height: 56px;
   padding: 0 24px;
   border-radius: 999px;
@@ -301,29 +292,6 @@ function onFileChange(event: Event) {
   color: #8ea1b9;
 }
 
-.secondary-divider {
-  width: 100%;
-  height: 1px;
-  margin: 18px 0;
-  background: linear-gradient(90deg, transparent 0%, rgba(148, 163, 184, 0.14) 15%, rgba(148, 163, 184, 0.14) 85%, transparent 100%);
-}
-
-.imam-toggle {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 48px;
-  margin: 0 auto;
-  cursor: pointer;
-  user-select: none;
-}
-
-.imam-toggle.is-disabled {
-  cursor: not-allowed;
-  opacity: 0.62;
-}
-
 .imam-toggle {
   display: inline-flex;
   align-items: center;
@@ -348,12 +316,6 @@ function onFileChange(event: Event) {
 
 .imam-toggle-checkbox:disabled {
   cursor: not-allowed;
-}
-
-.imam-toggle-text {
-  font-size: 16px;
-  font-weight: 700;
-  color: #e6edf7;
 }
 
 .imam-toggle-text {
@@ -436,19 +398,19 @@ function onFileChange(event: Event) {
     min-height: 42px;
   }
 
-  .helper-line {
-    font-size: 13px;
-  }
-
-  .secondary-shell {
+  .options-shell {
     width: 100%;
-    padding: 20px 18px;
-    border-radius: 26px;
+    padding: 16px;
+  }
+}
+
+@media (min-width: 860px) {
+  .action-panel {
+    width: min(100%, 500px);
   }
 
-  .file-button {
-    min-width: 100%;
-    font-size: 17px;
+  .hero-action {
+    min-height: 200px;
   }
 }
 </style>

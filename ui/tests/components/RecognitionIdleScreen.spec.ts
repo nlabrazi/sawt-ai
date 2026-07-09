@@ -3,6 +3,32 @@ import { mount } from '@vue/test-utils'
 import RecognitionIdleScreen from '~/components/RecognitionIdleScreen.vue'
 
 describe('RecognitionIdleScreen', () => {
+  it('keeps the idle copy short and action-led', () => {
+    const wrapper = mount(RecognitionIdleScreen, {
+      props: {
+        detectImam: true,
+      },
+    })
+
+    expect(wrapper.text()).toContain('Touchez pour réciter')
+    expect(wrapper.text()).toContain('Récitez quelques secondes. Sawt AI reconnaît le passage.')
+    expect(wrapper.text()).toContain('Importer un audio')
+    expect(wrapper.text()).not.toContain('Lancez le micro')
+    expect(wrapper.find('.record-action').exists()).toBe(false)
+  })
+
+  it('emits a microphone action from the primary action button', async () => {
+    const wrapper = mount(RecognitionIdleScreen, {
+      props: {
+        detectImam: true,
+      },
+    })
+
+    await wrapper.get('.hero-action button').trigger('click')
+
+    expect(wrapper.emitted('micro-click')).toHaveLength(1)
+  })
+
   it('allows webm uploads and documents the supported format', () => {
     const wrapper = mount(RecognitionIdleScreen, {
       props: {
