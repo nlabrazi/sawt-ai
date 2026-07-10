@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 
 import VerseDetailsSheet from '~/components/VerseDetailsSheet.vue'
 
@@ -39,6 +39,68 @@ describe('VerseDetailsSheet', () => {
     await wrapper.get('.close-btn').trigger('click')
 
     expect(wrapper.emitted('close')).toHaveLength(1)
+    wrapper.unmount()
+  })
+
+  it('manages focus and closes with Escape', async () => {
+    const trigger = document.createElement('button')
+    document.body.append(trigger)
+    trigger.focus()
+
+    const wrapper = mount(VerseDetailsSheet, {
+      attachTo: document.body,
+      props: {
+        open: true,
+        result,
+      },
+      global: {
+        stubs: {
+          teleport: true,
+        },
+      },
+    })
+
+    await flushPromises()
+
+    expect(document.activeElement).toBe(wrapper.get('.close-btn').element)
+
+    await wrapper.get('.sheet').trigger('keydown', { key: 'Escape' })
+
+    expect(wrapper.emitted('close')).toHaveLength(1)
+
+    wrapper.unmount()
+    expect(document.activeElement).toBe(trigger)
+    trigger.remove()
+  })
+
+  it('keeps keyboard focus inside the dialog', async () => {
+    const wrapper = mount(VerseDetailsSheet, {
+      attachTo: document.body,
+      props: {
+        open: true,
+        result,
+      },
+      global: {
+        stubs: {
+          teleport: true,
+        },
+      },
+    })
+
+    await flushPromises()
+
+    const closeButton = wrapper.get('.close-btn')
+    const actionButtons = wrapper.findAll('.sheet-btn')
+    const lastAction = actionButtons.at(-1)
+
+    lastAction?.element.focus()
+    await wrapper.get('.sheet').trigger('keydown', { key: 'Tab' })
+    expect(document.activeElement).toBe(closeButton.element)
+
+    closeButton.element.focus()
+    await wrapper.get('.sheet').trigger('keydown', { key: 'Tab', shiftKey: true })
+    expect(document.activeElement).toBe(lastAction?.element)
+
     wrapper.unmount()
   })
 })

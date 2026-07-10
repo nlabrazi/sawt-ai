@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
 import { useTajwid } from '~/composables/useTajwid'
 import type { RecognizeResponse } from '~/composables/useRecognition'
@@ -16,6 +16,18 @@ const emit = defineEmits<{
 
 const { loading, fetchTajwid, error } = useTajwid()
 const tajwidText = ref<string | null>(null)
+const sheetRef = ref<HTMLElement | null>(null)
+const closeButtonRef = ref<HTMLButtonElement | null>(null)
+let previouslyFocusedElement: HTMLElement | null = null
+
+const focusableSelector = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(',')
 
 const verseLabel = computed(() => {
   if (!props.result.verse) return ''
@@ -35,18 +47,76 @@ const tajwidHtml = computed(() => {
 
 watch(
   () => props.open,
-  (isOpen) => {
+  async (isOpen) => {
     document.body.style.overflow = isOpen ? 'hidden' : ''
-    if (!isOpen) {
-      tajwidText.value = null
+
+    if (isOpen) {
+      previouslyFocusedElement =
+        document.activeElement instanceof HTMLElement ? document.activeElement : null
+      await nextTick()
+
+      if (props.open) {
+        closeButtonRef.value?.focus()
+      }
+
+      return
     }
+
+    restorePreviousFocus()
+    tajwidText.value = null
   },
   { immediate: true },
 )
 
 onBeforeUnmount(() => {
   document.body.style.overflow = ''
+  restorePreviousFocus()
 })
+
+function restorePreviousFocus() {
+  previouslyFocusedElement?.focus()
+  previouslyFocusedElement = null
+}
+
+function onSheetKeydown(event: KeyboardEvent) {
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    emit('close')
+    return
+  }
+
+  if (event.key !== 'Tab' || !sheetRef.value) return
+
+  const focusableElements = Array.from(
+    sheetRef.value.querySelectorAll<HTMLElement>(focusableSelector),
+  )
+  const firstElement = focusableElements[0]
+  const lastElement = focusableElements.at(-1)
+
+  if (!firstElement || !lastElement) {
+    event.preventDefault()
+    sheetRef.value.focus()
+    return
+  }
+
+  if (!sheetRef.value.contains(document.activeElement)) {
+    event.preventDefault()
+    const nextElement = event.shiftKey ? lastElement : firstElement
+    nextElement.focus()
+    return
+  }
+
+  if (event.shiftKey && document.activeElement === firstElement) {
+    event.preventDefault()
+    lastElement.focus()
+    return
+  }
+
+  if (!event.shiftKey && document.activeElement === lastElement) {
+    event.preventDefault()
+    firstElement.focus()
+  }
+}
 
 async function toggleTajwid() {
   if (!props.result.verse) return
@@ -85,7 +155,15 @@ async function copyVerse() {
 <template>
   <teleport to="body">
     <div v-if="open" class="sheet-overlay" @click.self="$emit('close')">
-      <section class="sheet" role="dialog" aria-modal="true" aria-label="Passage détecté">
+      <section
+        ref="sheetRef"
+        class="sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Passage détecté"
+        tabindex="-1"
+        @keydown="onSheetKeydown"
+      >
         <div class="sheet-handle" />
         <div class="sheet-header">
           <div>
@@ -96,7 +174,13 @@ async function copyVerse() {
             </p>
           </div>
 
-          <button class="close-btn" type="button" aria-label="Fermer" @click="$emit('close')">
+          <button
+            ref="closeButtonRef"
+            class="close-btn"
+            type="button"
+            aria-label="Fermer"
+            @click="$emit('close')"
+          >
             <svg class="close-icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M18 6 6 18" />
               <path d="m6 6 12 12" />
