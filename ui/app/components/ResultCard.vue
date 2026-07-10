@@ -1,11 +1,7 @@
 <script setup lang="ts">
-import Check from '@lucide/vue/dist/esm/icons/check.mjs'
-import Copy from '@lucide/vue/dist/esm/icons/copy.mjs'
 import Eye from '@lucide/vue/dist/esm/icons/eye.mjs'
 import { computed, defineAsyncComponent, ref } from 'vue'
 
-import MiniToast from '~/components/MiniToast.vue'
-import { useMiniToast } from '~/composables/useMiniToast'
 import type { RecognizeResponse } from '~/composables/useRecognition'
 import { getVerseConfidenceUi } from '~/utils/verseConfidence'
 
@@ -17,7 +13,6 @@ const props = defineProps<{
 }>()
 
 const isDetailsOpen = ref(false)
-const { message: toastMessage, visible: copied, show: showToast } = useMiniToast()
 
 const verseLabel = computed(() => {
   if (!props.result.verse) return ''
@@ -78,23 +73,6 @@ const imamStatusText = computed(() => {
       return ''
   }
 })
-
-async function copyVerse() {
-  if (!props.result.verse) return
-
-  const payload = [
-    `${props.result.verse.sourate_name} — ${props.result.verse.transliteration}`,
-    verseLabel.value,
-    props.result.verse.text,
-  ].join('\n')
-
-  try {
-    await navigator.clipboard.writeText(payload)
-    showToast('Verset copié')
-  } catch (error) {
-    console.error(error)
-  }
-}
 </script>
 
 <template>
@@ -115,27 +93,6 @@ async function copyVerse() {
           <p class="verse-range">
             {{ verseLabel }}
           </p>
-
-          <div class="detected-verse-block">
-            <p class="detected-verse-text">
-              {{ result.verse.text }}
-            </p>
-
-            <button
-              class="copy-verse-btn"
-              type="button"
-              :aria-label="copied ? 'Verset copié' : 'Copier le verset'"
-              @click="copyVerse"
-            >
-              <Check
-                v-if="copied"
-                class="copy-icon"
-                :stroke-width="2"
-                aria-hidden="true"
-              />
-              <Copy v-else class="copy-icon" :stroke-width="2" aria-hidden="true" />
-            </button>
-          </div>
         </div>
 
         <div class="result-meta">
@@ -188,8 +145,6 @@ async function copyVerse() {
       </section>
     </template>
   </article>
-
-  <MiniToast :open="copied" :message="toastMessage" />
 </template>
 
 <style scoped>
@@ -244,49 +199,6 @@ async function copyVerse() {
   font-size: 18px;
 }
 
-.detected-verse-text {
-  margin: 0;
-  max-width: 760px;
-  font-size: 32px;
-  line-height: 1.85;
-  direction: rtl;
-  text-align: center;
-  font-family: 'Amiri', serif;
-  color: #f8fafc;
-}
-
-.detected-verse-block {
-  margin: 22px auto 0;
-  max-width: 760px;
-  display: grid;
-  justify-items: center;
-  gap: 12px;
-}
-
-.copy-verse-btn {
-  width: 42px;
-  height: 42px;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  background: rgba(255, 255, 255, 0.06);
-  color: #dbeafe;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.copy-verse-btn:hover {
-  transform: translateY(-1px);
-  background: rgba(59, 130, 246, 0.14);
-  border-color: rgba(147, 197, 253, 0.26);
-}
-
-.copy-icon,
 .action-icon {
   width: 19px;
   height: 19px;
@@ -444,18 +356,6 @@ async function copyVerse() {
 
   .verse-range {
     font-size: 15px;
-  }
-
-  .detected-verse-block {
-    margin-top: 16px;
-    gap: 10px;
-  }
-
-  .detected-verse-text {
-    max-height: 34svh;
-    overflow: auto;
-    font-size: 25px;
-    line-height: 1.75;
   }
 
   .result-meta {
