@@ -1,6 +1,6 @@
 import { onBeforeUnmount, ref } from 'vue'
 
-export function useMiniToast(duration = 1800) {
+export function useMiniToast(duration = 2000) {
   const message = ref('')
   const visible = ref(false)
   let dismissTimer: ReturnType<typeof setTimeout> | null = null
