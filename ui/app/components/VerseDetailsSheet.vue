@@ -5,6 +5,7 @@ import X from '@lucide/vue/dist/esm/icons/x.mjs'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
 import MiniToast from '~/components/MiniToast.vue'
+import TajwidLegend from '~/components/TajwidLegend.vue'
 import TajwidText from '~/components/TajwidText.vue'
 import { useMiniToast } from '~/composables/useMiniToast'
 import { useTajwid } from '~/composables/useTajwid'
@@ -217,6 +218,7 @@ async function copyVerse() {
           <section v-if="tajwidText" class="content-card tajwid-reading-card">
             <p class="content-label">Affichage tajwid</p>
             <TajwidText :tokens="tajwidTokens" />
+            <TajwidLegend :tokens="tajwidTokens" />
           </section>
 
           <p v-if="error" class="error-text">

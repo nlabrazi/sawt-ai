@@ -134,6 +134,9 @@ describe('VerseDetailsSheet', () => {
     expect(wrapper.get('.tajwid-text').element.textContent).toBe('وَلَقَدْ عَهِدْنَآ')
     expect(wrapper.findAll('.tajwid-rule--qalaqah')).toHaveLength(2)
     expect(wrapper.find('.tajwid-rule--madda-obligatory').exists()).toBe(true)
+    expect(wrapper.get('.tajwid-legend-summary').text()).toContain('2 règles')
+    expect(wrapper.findAll('.tajwid-legend-item')).toHaveLength(2)
+    expect(wrapper.get('.tajwid-legend').attributes('open')).toBeUndefined()
     expect(
       (wrapper.get('.sheet').element as HTMLElement).style.getPropertyValue(
         '--tajwid-reading-surface',
