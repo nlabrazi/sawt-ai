@@ -87,7 +87,7 @@ const imamStatusText = computed(() => {
           </p>
 
           <p class="surah-transliteration">
-            {{ result.verse.transliteration }}
+            Sourate {{ result.verse.transliteration }}
           </p>
 
           <p class="verse-range">
@@ -190,6 +190,7 @@ const imamStatusText = computed(() => {
   margin: 12px 0 0;
   font-size: 28px;
   font-weight: 800;
+  text-align: center;
   color: #eff6ff;
 }
 

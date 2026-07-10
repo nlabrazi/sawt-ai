@@ -25,7 +25,7 @@ describe('ResultCard', () => {
     })
 
     expect(wrapper.get('.surah-arabic').text()).toBe('الإخلاص')
-    expect(wrapper.get('.surah-transliteration').text()).toBe('Al-Ikhlas')
+    expect(wrapper.get('.surah-transliteration').text()).toBe('Sourate Al-Ikhlas')
     expect(wrapper.get('.verse-range').text()).toBe('Versets 1 à 4')
     expect(wrapper.find('.detected-verse-text').exists()).toBe(false)
     expect(wrapper.text()).not.toContain('قل هو الله احد')
