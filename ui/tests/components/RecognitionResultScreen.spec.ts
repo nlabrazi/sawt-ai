@@ -44,6 +44,7 @@ describe('RecognitionResultScreen', () => {
     expect(wrapper.find('.banner').exists()).toBe(false)
     expect(orderedSections).toEqual(['result-card-stub', 'feedback-stub', 'reset-action'])
     expect(wrapper.get('.reset-action').text()).toBe('Recommencer')
+    expect(wrapper.find('.lucide-rotate-ccw').exists()).toBe(true)
   })
 
   it('emits reset from the bottom action', async () => {

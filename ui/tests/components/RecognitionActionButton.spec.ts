@@ -33,4 +33,16 @@ describe('RecognitionActionButton', () => {
     expect(wrapper.get('button').attributes('aria-pressed')).toBe('true')
     expect(wrapper.get('button').attributes('aria-busy')).toBe('true')
   })
+
+  it('uses Lucide icons for microphone and stop states', async () => {
+    const wrapper = mount(RecognitionActionButton)
+
+    expect(wrapper.find('.lucide-mic').exists()).toBe(true)
+    expect(wrapper.find('.lucide-square').exists()).toBe(false)
+
+    await wrapper.setProps({ isRecording: true })
+
+    expect(wrapper.find('.lucide-mic').exists()).toBe(false)
+    expect(wrapper.find('.lucide-square').exists()).toBe(true)
+  })
 })

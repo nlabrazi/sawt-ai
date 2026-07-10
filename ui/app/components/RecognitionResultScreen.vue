@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import RotateCcw from '@lucide/vue/dist/esm/icons/rotate-ccw.mjs'
 import { computed } from 'vue'
 
 import FeedbackForm from '~/components/FeedbackForm.vue'
@@ -46,10 +47,7 @@ const statusPanel = computed(() => {
     </div>
 
     <button class="reset-action" type="button" aria-label="Recommencer la détection" @click="$emit('reset')">
-      <svg class="reset-icon" viewBox="0 0 24 24" aria-hidden="true">
-        <path d="M21 12a9 9 0 1 1-2.64-6.36" />
-        <path d="M21 3v6h-6" />
-      </svg>
+      <RotateCcw class="reset-icon" :stroke-width="2" aria-hidden="true" />
       Recommencer
     </button>
   </section>
@@ -133,11 +131,6 @@ const statusPanel = computed(() => {
 .reset-icon {
   width: 18px;
   height: 18px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 @media (max-width: 768px) {

@@ -34,6 +34,9 @@ describe('VerseDetailsSheet', () => {
 
     expect(wrapper.get('.close-btn').attributes('aria-label')).toBe('Fermer')
     expect(wrapper.get('.sheet-btn').text()).toBe('Copier')
+    expect(wrapper.find('.lucide-x').exists()).toBe(true)
+    expect(wrapper.find('.lucide-copy').exists()).toBe(true)
+    expect(wrapper.find('.lucide-book-open').exists()).toBe(true)
     expect(wrapper.text()).not.toContain('Fermer')
 
     await wrapper.get('.close-btn').trigger('click')

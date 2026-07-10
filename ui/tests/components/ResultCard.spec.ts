@@ -77,6 +77,8 @@ describe('ResultCard', () => {
     })
 
     expect(wrapper.get('.copy-verse-btn').attributes('aria-label')).toBe('Copier le verset')
+    expect(wrapper.find('.lucide-copy').exists()).toBe(true)
+    expect(wrapper.find('.lucide-eye').exists()).toBe(true)
     expect(wrapper.find('.secondary-btn').exists()).toBe(false)
   })
 

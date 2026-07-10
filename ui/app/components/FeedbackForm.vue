@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import Check from '@lucide/vue/dist/esm/icons/check.mjs'
+import CircleCheck from '@lucide/vue/dist/esm/icons/circle-check.mjs'
+import Pencil from '@lucide/vue/dist/esm/icons/pencil.mjs'
 import { computed, ref, watch } from 'vue'
 import { useFeedback } from '~/composables/useFeedback'
 import { useSurahOptions } from '~/composables/useSurahOptions'
@@ -183,9 +186,7 @@ watch(selectedStartVerse, (nextStartVerse) => {
         <button class="feedback-action feedback-action-primary" type="button" :disabled="sending"
           @click="submitPositiveFeedback">
           <span class="feedback-action-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <path d="M20 6 9 17l-5-5" />
-            </svg>
+            <Check :stroke-width="2" />
           </span>
           <span class="feedback-action-title">Valider</span>
         </button>
@@ -193,10 +194,7 @@ watch(selectedStartVerse, (nextStartVerse) => {
         <button class="feedback-action feedback-action-secondary" type="button" :disabled="sending"
           @click="openCorrectionForm">
           <span class="feedback-action-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
-            </svg>
+            <Pencil :stroke-width="2" />
           </span>
           <span class="feedback-action-title">Corriger</span>
         </button>
@@ -264,7 +262,7 @@ watch(selectedStartVerse, (nextStartVerse) => {
 
     <template v-else>
       <div class="feedback-done">
-        <span class="done-mark" aria-hidden="true" />
+        <CircleCheck class="done-mark" :stroke-width="2" aria-hidden="true" />
         <div class="done-copy">
           <p class="done-title">Retour enregistré</p>
           <p class="done-text">Merci, votre retour a bien été pris en compte.</p>
@@ -544,12 +542,11 @@ textarea {
 }
 
 .done-mark {
-  width: 14px;
-  height: 14px;
+  width: 28px;
+  height: 28px;
   flex: 0 0 auto;
-  border-radius: 999px;
-  background: #4ade80;
-  box-shadow: 0 0 0 8px rgba(74, 222, 128, 0.08);
+  color: #4ade80;
+  filter: drop-shadow(0 0 8px rgba(74, 222, 128, 0.2));
 }
 
 .done-copy {

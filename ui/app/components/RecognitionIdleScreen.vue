@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import FlaskConical from '@lucide/vue/dist/esm/icons/flask-conical.mjs'
 import { computed } from 'vue'
 import RecognitionActionButton from '~/components/RecognitionActionButton.vue'
 
@@ -217,13 +218,7 @@ function onFileChange(event: Event) {
           :disabled="imamDetectionAvailable === false" @change="onDetectImamChange" />
         <span class="imam-toggle-text">Reconnaître l’imam</span>
         <span class="imam-beta-badge">
-          <svg class="imam-beta-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M9 3h6" />
-            <path d="M10 9V3" />
-            <path d="M14 9V3" />
-            <path d="m8 9-4 8a3 3 0 0 0 2.7 4h10.6a3 3 0 0 0 2.7-4l-4-8" />
-            <path d="M7 15h10" />
-          </svg>
+          <FlaskConical class="imam-beta-icon" :stroke-width="1.9" aria-hidden="true" />
           Bêta
         </span>
       </label>
@@ -486,11 +481,6 @@ function onFileChange(event: Event) {
 .imam-beta-icon {
   width: 12px;
   height: 12px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.9;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .imam-toggle-hint {

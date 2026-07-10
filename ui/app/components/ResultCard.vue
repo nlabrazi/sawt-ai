@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import Check from '@lucide/vue/dist/esm/icons/check.mjs'
+import Copy from '@lucide/vue/dist/esm/icons/copy.mjs'
+import Eye from '@lucide/vue/dist/esm/icons/eye.mjs'
 import { computed, defineAsyncComponent, ref } from 'vue'
 
 import type { RecognizeResponse } from '~/composables/useRecognition'
@@ -125,18 +128,13 @@ async function copyVerse() {
               :aria-label="copied ? 'Verset copié' : 'Copier le verset'"
               @click="copyVerse"
             >
-              <svg
+              <Check
                 v-if="copied"
                 class="copy-icon"
-                viewBox="0 0 24 24"
+                :stroke-width="2"
                 aria-hidden="true"
-              >
-                <path d="M20 6 9 17l-5-5" />
-              </svg>
-              <svg v-else class="copy-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="9" y="9" width="11" height="11" rx="2" />
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-              </svg>
+              />
+              <Copy v-else class="copy-icon" :stroke-width="2" aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -167,10 +165,7 @@ async function copyVerse() {
             @touchstart.passive="loadVerseDetailsSheet"
             @click="isDetailsOpen = true"
           >
-            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
+            <Eye class="action-icon" :stroke-width="2" aria-hidden="true" />
             Voir le verset
           </button>
         </div>
@@ -294,11 +289,6 @@ async function copyVerse() {
 .action-icon {
   width: 19px;
   height: 19px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .result-meta {

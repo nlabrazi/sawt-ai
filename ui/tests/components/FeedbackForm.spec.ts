@@ -42,7 +42,24 @@ describe('FeedbackForm', () => {
       'Corriger',
     ])
     expect(wrapper.findAll('.feedback-action-icon')).toHaveLength(2)
+    expect(wrapper.find('.lucide-check').exists()).toBe(true)
+    expect(wrapper.find('.lucide-pencil').exists()).toBe(true)
     expect(wrapper.find('.feedback-action-text').exists()).toBe(false)
+  })
+
+  it('uses a Lucide confirmation icon after feedback is sent', async () => {
+    vi.mocked($fetch).mockResolvedValueOnce({ success: true })
+
+    const wrapper = mount(FeedbackForm, {
+      props: {
+        result,
+      },
+    })
+
+    await wrapper.get('.feedback-action-primary').trigger('click')
+    await flushPromises()
+
+    expect(wrapper.find('.lucide-circle-check').exists()).toBe(true)
   })
 
   it('loads canonical surah options and sends a bounded correction payload', async () => {

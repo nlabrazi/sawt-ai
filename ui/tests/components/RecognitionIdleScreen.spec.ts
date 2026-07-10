@@ -9,7 +9,7 @@ describe('RecognitionIdleScreen', () => {
 
     expect(checkbox.checked).toBe(false)
     expect(wrapper.get('.imam-beta-badge').text()).toBe('Bêta')
-    expect(wrapper.find('.imam-beta-icon').exists()).toBe(true)
+    expect(wrapper.find('.lucide-flask-conical').exists()).toBe(true)
   })
 
   it('keeps the idle copy short and action-led', () => {

@@ -1,4 +1,7 @@
 <script setup lang="ts">
+import BookOpen from '@lucide/vue/dist/esm/icons/book-open.mjs'
+import Copy from '@lucide/vue/dist/esm/icons/copy.mjs'
+import X from '@lucide/vue/dist/esm/icons/x.mjs'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
 import { useTajwid } from '~/composables/useTajwid'
@@ -181,10 +184,7 @@ async function copyVerse() {
             aria-label="Fermer"
             @click="$emit('close')"
           >
-            <svg class="close-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M18 6 6 18" />
-              <path d="m6 6 12 12" />
-            </svg>
+            <X class="close-icon" :stroke-width="2" aria-hidden="true" />
           </button>
         </div>
 
@@ -196,18 +196,12 @@ async function copyVerse() {
 
           <section class="action-card">
             <button class="sheet-btn" type="button" @click="copyVerse">
-              <svg class="sheet-btn-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="9" y="9" width="11" height="11" rx="2" />
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-              </svg>
+              <Copy class="sheet-btn-icon" :stroke-width="2" aria-hidden="true" />
               Copier
             </button>
 
             <button class="sheet-btn" type="button" :disabled="loading" @click="toggleTajwid">
-              <svg class="sheet-btn-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-                <path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z" />
-              </svg>
+              <BookOpen class="sheet-btn-icon" :stroke-width="2" aria-hidden="true" />
               <span v-if="loading">Chargement du tajwid…</span>
               <span v-else-if="tajwidText">Masquer le tajwid</span>
               <span v-else>Afficher le tajwid</span>
