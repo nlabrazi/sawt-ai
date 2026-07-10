@@ -29,6 +29,22 @@ describe('FeedbackForm', () => {
     clearSurahOptionsCache()
   })
 
+  it('shows compact validation actions before correction', () => {
+    const wrapper = mount(FeedbackForm, {
+      props: {
+        result,
+      },
+    })
+
+    expect(wrapper.get('.feedback-label').text()).toBe('Validation')
+    expect(wrapper.findAll('.feedback-action-title').map((action) => action.text())).toEqual([
+      'Valider',
+      'Corriger',
+    ])
+    expect(wrapper.findAll('.feedback-action-icon')).toHaveLength(2)
+    expect(wrapper.find('.feedback-action-text').exists()).toBe(false)
+  })
+
   it('loads canonical surah options and sends a bounded correction payload', async () => {
     vi.mocked($fetch)
       .mockResolvedValueOnce([

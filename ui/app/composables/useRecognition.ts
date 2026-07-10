@@ -33,11 +33,13 @@ export type RecognizeResponse = {
   imam_detection_enabled: boolean
 }
 
-export type LoadingStep = 'detecting' | 'result-found' | 'retrying'
+export type LoadingStep = 'transcribing' | 'matching' | 'done'
 
-const MIN_LOADING_MS = 1800
-const RESULT_FOUND_STEP_MS = 850
-const RETRY_STEP_MS = 1100
+const MIN_TRANSCRIBING_STEP_MS = 350
+const CONFIDENT_LOADING_TARGET_MS = 1200
+const UNCERTAIN_LOADING_TARGET_MS = 1500
+const COMPACT_MATCHING_STEP_MS = 160
+const DONE_STEP_MS = 160
 
 function createAbortError() {
   const error = new Error('The operation was aborted.')
@@ -94,12 +96,37 @@ function wait(ms: number, signal?: AbortSignal) {
   })
 }
 
+function getElapsedMs(startedAt: number) {
+  return Math.max(0, Date.now() - startedAt)
+}
+
+function resolveLoadingTargetMs(hasConfidentVerse: boolean) {
+  return hasConfidentVerse ? CONFIDENT_LOADING_TARGET_MS : UNCERTAIN_LOADING_TARGET_MS
+}
+
+function resolveTranscribingDelayMs(startedAt: number, targetMs: number) {
+  const elapsed = getElapsedMs(startedAt)
+  const minimumDelay = Math.max(0, MIN_TRANSCRIBING_STEP_MS - elapsed)
+  const remainingBeforeCompactSteps = Math.max(
+    0,
+    targetMs - elapsed - COMPACT_MATCHING_STEP_MS - DONE_STEP_MS,
+  )
+
+  return Math.min(minimumDelay, remainingBeforeCompactSteps)
+}
+
+function resolveMatchingDelayMs(startedAt: number, targetMs: number) {
+  const remainingBeforeDone = Math.max(0, targetMs - getElapsedMs(startedAt) - DONE_STEP_MS)
+
+  return Math.max(COMPACT_MATCHING_STEP_MS, remainingBeforeDone)
+}
+
 export function useRecognition() {
   const apiBaseUrl = useRuntimeConfig().public.apiBaseUrl.replace(/\/$/, '')
   const loading = ref(false)
   const error = ref<string | null>(null)
   const result = ref<RecognizeResponse | null>(null)
-  const loadingStep = ref<LoadingStep>('detecting')
+  const loadingStep = ref<LoadingStep>('transcribing')
   let activeController: AbortController | null = null
   let activeRequestId = 0
 
@@ -122,7 +149,7 @@ export function useRecognition() {
     loading.value = true
     error.value = null
     result.value = null
-    loadingStep.value = 'detecting'
+    loadingStep.value = 'transcribing'
 
     const startedAt = Date.now()
 
@@ -137,23 +164,20 @@ export function useRecognition() {
         signal: controller.signal,
       })
 
-      const elapsed = Date.now() - startedAt
-      const remaining = Math.max(0, MIN_LOADING_MS - elapsed)
-
-      if (remaining > 0) {
-        await wait(remaining, controller.signal)
-      }
-
       const hasVerse = !!response.verse
       const isConfident = isVerseConfident(response.verse?.similarity ?? 0)
+      const loadingTargetMs = resolveLoadingTargetMs(hasVerse && isConfident)
+      const transcribingDelayMs = resolveTranscribingDelayMs(startedAt, loadingTargetMs)
 
-      if (hasVerse && isConfident) {
-        loadingStep.value = 'result-found'
-        await wait(RESULT_FOUND_STEP_MS, controller.signal)
-      } else {
-        loadingStep.value = 'retrying'
-        await wait(RETRY_STEP_MS, controller.signal)
+      if (transcribingDelayMs > 0) {
+        await wait(transcribingDelayMs, controller.signal)
       }
+
+      loadingStep.value = 'matching'
+      await wait(resolveMatchingDelayMs(startedAt, loadingTargetMs), controller.signal)
+
+      loadingStep.value = 'done'
+      await wait(DONE_STEP_MS, controller.signal)
 
       if (!isActiveRequest(requestId)) {
         return
@@ -185,7 +209,7 @@ export function useRecognition() {
     loading.value = false
     error.value = null
     result.value = null
-    loadingStep.value = 'detecting'
+    loadingStep.value = 'transcribing'
   }
 
   return {

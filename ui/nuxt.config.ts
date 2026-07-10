@@ -1,11 +1,14 @@
+import { defineNuxtConfig } from 'nuxt/config'
+
 // https://nuxt.com/docs/api/configuration/nuxt-config
 const hmrClientPort = process.env.NUXT_HMR_CLIENT_PORT
 const hmrHost = process.env.NUXT_HMR_HOST
+const isDevelopment = process.env.NODE_ENV === 'development'
 const usePolling = process.env.CHOKIDAR_USEPOLLING === 'true'
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
-  devtools: { enabled: true },
+  devtools: { enabled: isDevelopment },
   devServer: {
     host: '0.0.0.0',
     port: 3000,
@@ -42,7 +45,7 @@ export default defineNuxtConfig({
         },
         {
           rel: 'stylesheet',
-          href: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap',
+          href: 'https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;500;600;700;800&display=swap',
         },
       ],
       script: [

@@ -46,8 +46,63 @@ describe('useRecognition', () => {
       signal: expect.any(AbortSignal),
     })
     expect(loading.value).toBe(false)
-    expect(loadingStep.value).toBe('result-found')
+    expect(loadingStep.value).toBe('done')
     expect(error.value).toBeNull()
+    expect(result.value?.transcription_text).toBe('قل هو الله احد')
+  })
+
+  it('keeps a fast confident response close to the loading target duration', async () => {
+    vi.useFakeTimers()
+    vi.mocked($fetch).mockResolvedValueOnce(successfulResponse)
+
+    const { loading, result, recognizeAudio } = useRecognition()
+    const audioFile = new File(['audio'], 'recitation.webm', { type: 'audio/webm' })
+
+    const pending = recognizeAudio(audioFile, true)
+
+    await vi.advanceTimersByTimeAsync(1199)
+
+    expect(loading.value).toBe(true)
+    expect(result.value).toBeNull()
+
+    await vi.advanceTimersByTimeAsync(1)
+    await pending
+
+    expect(loading.value).toBe(false)
+    expect(result.value?.transcription_text).toBe('قل هو الله احد')
+  })
+
+  it('uses compact post-response steps when the API response is already slow', async () => {
+    vi.useFakeTimers()
+    vi.mocked($fetch).mockImplementationOnce(() => {
+      return new Promise((resolve) => {
+        setTimeout(() => {
+          resolve(successfulResponse)
+        }, 2500)
+      })
+    })
+
+    const { loading, loadingStep, result, recognizeAudio } = useRecognition()
+    const audioFile = new File(['audio'], 'recitation.webm', { type: 'audio/webm' })
+
+    const pending = recognizeAudio(audioFile, true)
+
+    await vi.advanceTimersByTimeAsync(2500)
+
+    expect(loading.value).toBe(true)
+    expect(loadingStep.value).toBe('matching')
+    expect(result.value).toBeNull()
+
+    await vi.advanceTimersByTimeAsync(319)
+
+    expect(loading.value).toBe(true)
+    expect(result.value).toBeNull()
+
+    await vi.advanceTimersByTimeAsync(1)
+    await pending
+
+    expect(loading.value).toBe(false)
+    expect(loadingStep.value).toBe('done')
     expect(result.value?.transcription_text).toBe('قل هو الله احد')
   })
 
@@ -103,7 +158,7 @@ describe('useRecognition', () => {
     await pending
 
     expect(loading.value).toBe(false)
-    expect(loadingStep.value).toBe('detecting')
+    expect(loadingStep.value).toBe('transcribing')
     expect(error.value).toBeNull()
     expect(result.value).toBeNull()
     expect(consoleErrorSpy).not.toHaveBeenCalled()
@@ -124,7 +179,7 @@ describe('useRecognition', () => {
     await pending
 
     expect(loading.value).toBe(false)
-    expect(loadingStep.value).toBe('detecting')
+    expect(loadingStep.value).toBe('transcribing')
     expect(error.value).toBeNull()
     expect(result.value).toBeNull()
   })

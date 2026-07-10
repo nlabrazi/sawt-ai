@@ -96,8 +96,11 @@ async function copyVerse() {
             </p>
           </div>
 
-          <button class="close-btn" type="button" @click="$emit('close')">
-            Fermer
+          <button class="close-btn" type="button" aria-label="Fermer" @click="$emit('close')">
+            <svg class="close-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M18 6 6 18" />
+              <path d="m6 6 12 12" />
+            </svg>
           </button>
         </div>
 
@@ -109,10 +112,18 @@ async function copyVerse() {
 
           <section class="action-card">
             <button class="sheet-btn" type="button" @click="copyVerse">
-              Copier le verset
+              <svg class="sheet-btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="9" y="9" width="11" height="11" rx="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              Copier
             </button>
 
             <button class="sheet-btn" type="button" :disabled="loading" @click="toggleTajwid">
+              <svg class="sheet-btn-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                <path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5z" />
+              </svg>
               <span v-if="loading">Chargement du tajwid…</span>
               <span v-else-if="tajwidText">Masquer le tajwid</span>
               <span v-else>Afficher le tajwid</span>
@@ -161,7 +172,7 @@ async function copyVerse() {
   background: rgba(2, 6, 23, 0.72);
   backdrop-filter: blur(12px);
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   padding: 18px;
   box-sizing: border-box;
@@ -229,14 +240,35 @@ async function copyVerse() {
   transition: transform 0.2s ease, background 0.2s ease, opacity 0.2s ease;
 }
 
+.close-btn,
+.sheet-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
 .close-btn:hover,
 .sheet-btn:hover {
   transform: translateY(-1px);
 }
 
 .close-btn {
+  width: 46px;
+  padding: 0;
   background: rgba(255, 255, 255, 0.08);
   color: #e2e8f0;
+}
+
+.close-icon,
+.sheet-btn-icon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .sheet-scroll {
@@ -358,6 +390,7 @@ async function copyVerse() {
 
 @media (max-width: 768px) {
   .sheet-overlay {
+    align-items: flex-end;
     padding: 0;
   }
 
