@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import Check from '@lucide/vue/dist/esm/icons/check.mjs'
-import Pencil from '@lucide/vue/dist/esm/icons/pencil.mjs'
+import ThumbsDown from '@lucide/vue/dist/esm/icons/thumbs-down.mjs'
+import ThumbsUp from '@lucide/vue/dist/esm/icons/thumbs-up.mjs'
 import { computed, ref, watch } from 'vue'
 
 import MiniToast from '~/components/MiniToast.vue'
@@ -109,7 +109,7 @@ async function submitPositiveFeedback() {
     })
 
     feedbackSent.value = true
-    showToast('Retour envoyé')
+    showToast('Retour envoyé, merci de votre contribution !')
     emit('completed')
   } catch {
     // handled in composable
@@ -147,7 +147,7 @@ async function submitCorrection() {
     })
 
     feedbackSent.value = true
-    showToast('Retour envoyé')
+    showToast('Retour envoyé, merci de votre contribution !')
     emit('completed')
   } catch {
     // handled in composable
@@ -187,20 +187,16 @@ watch(selectedStartVerse, (nextStartVerse) => {
       </div>
 
       <div v-if="!showCorrectionForm" class="feedback-actions">
-        <button class="feedback-action feedback-action-primary" type="button" :disabled="sending"
+        <button class="feedback-action feedback-action-primary" type="button"
+          aria-label="Le résultat est correct" title="Résultat correct" :disabled="sending"
           @click="submitPositiveFeedback">
-          <span class="feedback-action-icon" aria-hidden="true">
-            <Check :stroke-width="2" />
-          </span>
-          <span class="feedback-action-title">Valider</span>
+          <ThumbsUp :stroke-width="2" aria-hidden="true" />
         </button>
 
-        <button class="feedback-action feedback-action-secondary" type="button" :disabled="sending"
+        <button class="feedback-action feedback-action-secondary" type="button"
+          aria-label="Le résultat est incorrect" title="Résultat incorrect" :disabled="sending"
           @click="openCorrectionForm">
-          <span class="feedback-action-icon" aria-hidden="true">
-            <Pencil :stroke-width="2" />
-          </span>
-          <span class="feedback-action-title">Corriger</span>
+          <ThumbsDown :stroke-width="2" aria-hidden="true" />
         </button>
       </div>
 
@@ -306,22 +302,22 @@ watch(selectedStartVerse, (nextStartVerse) => {
 
 .feedback-actions {
   margin-top: 14px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 10px;
 }
 
 .feedback-action {
-  min-height: 64px;
-  border-radius: 18px;
+  width: 46px;
+  height: 42px;
+  border-radius: 14px;
   border: 1px solid rgba(148, 163, 184, 0.12);
-  padding: 16px;
-  text-align: center;
+  padding: 0;
   cursor: pointer;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  color: #bfdbfe;
   transition:
     transform 0.2s ease,
     border-color 0.2s ease,
@@ -343,67 +339,41 @@ watch(selectedStartVerse, (nextStartVerse) => {
 }
 
 .feedback-action-primary {
-  background: rgba(6, 78, 59, 0.42);
-  border-color: rgba(110, 231, 183, 0.24);
+  background: rgba(37, 99, 235, 0.16);
+  border-color: rgba(147, 197, 253, 0.22);
 }
 
 .feedback-action-primary:hover {
-  border-color: rgba(110, 231, 183, 0.38);
-  background: rgba(6, 95, 70, 0.5);
-  box-shadow: 0 14px 32px rgba(6, 78, 59, 0.18);
+  border-color: rgba(147, 197, 253, 0.42);
+  background: rgba(37, 99, 235, 0.28);
+  box-shadow: 0 10px 24px rgba(37, 99, 235, 0.14);
 }
 
 .feedback-action-secondary {
-  background: rgba(120, 53, 15, 0.34);
-  border-color: rgba(251, 191, 36, 0.2);
+  background: rgba(51, 65, 85, 0.42);
+  border-color: rgba(148, 163, 184, 0.2);
 }
 
 .feedback-action-secondary:hover {
-  border-color: rgba(251, 191, 36, 0.34);
-  background: rgba(146, 64, 14, 0.42);
-  box-shadow: 0 14px 32px rgba(120, 53, 15, 0.16);
+  border-color: rgba(248, 113, 113, 0.34);
+  background: rgba(127, 29, 29, 0.24);
+  color: #fecaca;
+  box-shadow: 0 10px 24px rgba(127, 29, 29, 0.12);
 }
 
 .feedback-action-primary:focus-visible {
-  outline: 3px solid rgba(110, 231, 183, 0.22);
+  outline: 3px solid rgba(96, 165, 250, 0.28);
   outline-offset: 3px;
 }
 
 .feedback-action-secondary:focus-visible {
-  outline: 3px solid rgba(251, 191, 36, 0.2);
+  outline: 3px solid rgba(148, 163, 184, 0.24);
   outline-offset: 3px;
 }
 
-.feedback-action-title {
-  font-size: 16px;
-  font-weight: 800;
-  color: #eff6ff;
-}
-
-.feedback-action-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #dbeafe;
-}
-
-.feedback-action-primary .feedback-action-icon {
-  background: rgba(16, 185, 129, 0.14);
-  color: #a7f3d0;
-}
-
-.feedback-action-secondary .feedback-action-icon {
-  background: rgba(245, 158, 11, 0.12);
-  color: #fde68a;
-}
-
-.feedback-action-icon svg {
-  width: 18px;
-  height: 18px;
+.feedback-action svg {
+  width: 19px;
+  height: 19px;
   fill: none;
   stroke: currentColor;
   stroke-width: 2;
@@ -565,9 +535,4 @@ textarea {
   }
 }
 
-@media (max-width: 420px) {
-  .feedback-actions {
-    grid-template-columns: 1fr;
-  }
-}
 </style>

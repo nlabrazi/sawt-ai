@@ -37,14 +37,14 @@ describe('FeedbackForm', () => {
     })
 
     expect(wrapper.get('.feedback-label').text()).toBe('Validation')
-    expect(wrapper.findAll('.feedback-action-title').map((action) => action.text())).toEqual([
-      'Valider',
-      'Corriger',
-    ])
-    expect(wrapper.findAll('.feedback-action-icon')).toHaveLength(2)
-    expect(wrapper.find('.lucide-check').exists()).toBe(true)
-    expect(wrapper.find('.lucide-pencil').exists()).toBe(true)
-    expect(wrapper.find('.feedback-action-text').exists()).toBe(false)
+    expect(wrapper.get('.feedback-action-primary').attributes('aria-label')).toBe(
+      'Le résultat est correct',
+    )
+    expect(wrapper.get('.feedback-action-secondary').attributes('aria-label')).toBe(
+      'Le résultat est incorrect',
+    )
+    expect(wrapper.find('.lucide-thumbs-up').exists()).toBe(true)
+    expect(wrapper.find('.lucide-thumbs-down').exists()).toBe(true)
   })
 
   it('replaces the form with a toast after positive feedback is sent', async () => {
@@ -65,7 +65,7 @@ describe('FeedbackForm', () => {
     await flushPromises()
 
     expect(wrapper.find('.feedback').exists()).toBe(false)
-    expect(wrapper.get('.mini-toast').text()).toBe('Retour envoyé')
+    expect(wrapper.get('.mini-toast').text()).toBe('Retour envoyé, merci de votre contribution !')
     expect(wrapper.get('.mini-toast').attributes('role')).toBe('status')
   })
 
@@ -140,6 +140,6 @@ describe('FeedbackForm', () => {
       },
     })
     expect(wrapper.find('.feedback').exists()).toBe(false)
-    expect(wrapper.get('.mini-toast').text()).toBe('Retour envoyé')
+    expect(wrapper.get('.mini-toast').text()).toBe('Retour envoyé, merci de votre contribution !')
   })
 })
