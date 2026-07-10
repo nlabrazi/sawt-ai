@@ -41,16 +41,19 @@ const {
     <div class="page-noise" aria-hidden="true" />
 
     <div class="page-content">
-      <RecognitionIdleScreen v-if="screenState === 'idle'" :upload-error="uploadError" :mic-error="micError"
-        :is-recording="isRecording" :recording-seconds="recordingSeconds" :max-recording-seconds="maxRecordingSeconds"
-        :upload-accept="uploadAccept" :upload-hint="uploadHint" :audio-level="audioLevel"
-        :imam-detection-available="imamDetectionAvailable" :imam-detection-message="imamDetectionMessage"
-        v-model:detect-imam="detectImam" @micro-click="onMicroClick" @select-file="submitAudio" />
+      <Transition name="screen-transition" mode="out-in">
+        <RecognitionIdleScreen v-if="screenState === 'idle'" key="idle" :upload-error="uploadError"
+          :mic-error="micError" :is-recording="isRecording" :recording-seconds="recordingSeconds"
+          :max-recording-seconds="maxRecordingSeconds" :upload-accept="uploadAccept" :upload-hint="uploadHint"
+          :audio-level="audioLevel" :imam-detection-available="imamDetectionAvailable"
+          :imam-detection-message="imamDetectionMessage" v-model:detect-imam="detectImam"
+          @micro-click="onMicroClick" @select-file="submitAudio" />
 
-      <RecognitionLoadingScreen v-else-if="screenState === 'loading'" :loading="loading" :step="loadingStep"
-        @cancel="resetApp" />
+        <RecognitionLoadingScreen v-else-if="screenState === 'loading'" key="loading" :loading="loading"
+          :step="loadingStep" @cancel="resetApp" />
 
-      <RecognitionResultScreen v-else :error="error" :result="result" @reset="resetApp" />
+        <RecognitionResultScreen v-else key="result" :error="error" :result="result" @reset="resetApp" />
+      </Transition>
 
       <AppFooter />
     </div>
@@ -91,6 +94,28 @@ const {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+.screen-transition-enter-active {
+  transition:
+    opacity 180ms ease-out,
+    transform 180ms ease-out;
+}
+
+.screen-transition-leave-active {
+  transition:
+    opacity 120ms ease-in,
+    transform 120ms ease-in;
+}
+
+.screen-transition-enter-from {
+  opacity: 0;
+  transform: translateY(8px) scale(0.995);
+}
+
+.screen-transition-leave-to {
+  opacity: 0;
+  transform: translateY(-6px) scale(0.995);
 }
 
 .page-grid {
@@ -183,6 +208,18 @@ const {
   .background-glow-3,
   .background-glow-4 {
     filter: blur(80px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .screen-transition-enter-active,
+  .screen-transition-leave-active {
+    transition: none;
+  }
+
+  .screen-transition-enter-from,
+  .screen-transition-leave-to {
+    transform: none;
   }
 }
 </style>
