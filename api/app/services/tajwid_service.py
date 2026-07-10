@@ -177,7 +177,7 @@ def fetch_tajwid_text(surah_id: int, start_verse: int, end_verse: int) -> dict[s
     if not surah_verses:
         raise TajwidServiceError("Sourate introuvable dans les données tajwid.")
 
-    selected_ayahs: list[str] = []
+    selected_ayahs: list[dict[str, Any]] = []
 
     for verse_number in range(start_verse, end_verse + 1):
         verse_text = surah_verses.get(verse_number)
@@ -185,13 +185,17 @@ def fetch_tajwid_text(surah_id: int, start_verse: int, end_verse: int) -> dict[s
         if not verse_text:
             raise TajwidServiceError("Aucun verset tajwid trouvé pour cette plage.")
 
-        selected_ayahs.append(verse_text)
+        selected_ayahs.append({
+            "number": verse_number,
+            "tajwid_text": verse_text,
+        })
 
-    text = " ".join(selected_ayahs).strip()
+    text = " ".join(ayah["tajwid_text"] for ayah in selected_ayahs).strip()
 
     return {
         "surah_id": surah_id,
         "start_verse": start_verse,
         "end_verse": end_verse,
         "text": text,
+        "ayahs": selected_ayahs,
     }

@@ -8,8 +8,8 @@ import MiniToast from '~/components/MiniToast.vue'
 import TajwidLegend from '~/components/TajwidLegend.vue'
 import TajwidText from '~/components/TajwidText.vue'
 import { useMiniToast } from '~/composables/useMiniToast'
-import { useTajwid } from '~/composables/useTajwid'
 import type { RecognizeResponse } from '~/composables/useRecognition'
+import { type TajwidResponse, useTajwid } from '~/composables/useTajwid'
 import { parseTajwidToTokens } from '~/utils/parseTajwid'
 import { TAJWID_READING_SURFACE_COLOR } from '~/utils/tajwidRules'
 
@@ -23,7 +23,7 @@ const emit = defineEmits<{
 }>()
 
 const { loading, fetchTajwid, error } = useTajwid()
-const tajwidText = ref<string | null>(null)
+const tajwidResponse = ref<TajwidResponse | null>(null)
 const sheetRef = ref<HTMLElement | null>(null)
 const closeButtonRef = ref<HTMLButtonElement | null>(null)
 const { message: toastMessage, visible: toastVisible, show: showToast } = useMiniToast()
@@ -49,9 +49,13 @@ const verseLabel = computed(() => {
 
 const topImam = computed(() => props.result.imam_predictions?.[0] ?? null)
 const otherImams = computed(() => props.result.imam_predictions?.slice(1) ?? [])
-const tajwidTokens = computed(() => {
-  return tajwidText.value ? parseTajwidToTokens(tajwidText.value) : []
-})
+const tajwidAyahs = computed(() =>
+  (tajwidResponse.value?.ayahs ?? []).map((ayah) => ({
+    number: ayah.number,
+    tokens: parseTajwidToTokens(ayah.tajwid_text),
+  })),
+)
+const tajwidTokens = computed(() => tajwidAyahs.value.flatMap((ayah) => ayah.tokens))
 
 watch(
   () => props.open,
@@ -71,7 +75,7 @@ watch(
     }
 
     restorePreviousFocus()
-    tajwidText.value = null
+    tajwidResponse.value = null
   },
   { immediate: true },
 )
@@ -129,8 +133,8 @@ function onSheetKeydown(event: KeyboardEvent) {
 async function toggleTajwid() {
   if (!props.result.verse) return
 
-  if (tajwidText.value) {
-    tajwidText.value = null
+  if (tajwidResponse.value) {
+    tajwidResponse.value = null
     return
   }
 
@@ -140,7 +144,7 @@ async function toggleTajwid() {
     props.result.verse.end_verse,
   )
 
-  tajwidText.value = response.text
+  tajwidResponse.value = response
 }
 
 async function copyVerse() {
@@ -210,14 +214,30 @@ async function copyVerse() {
             <button class="sheet-btn" type="button" :disabled="loading" @click="toggleTajwid">
               <BookOpen class="sheet-btn-icon" :stroke-width="2" aria-hidden="true" />
               <span v-if="loading">Chargement du tajwid…</span>
-              <span v-else-if="tajwidText">Masquer le tajwid</span>
+              <span v-else-if="tajwidResponse">Masquer le tajwid</span>
               <span v-else>Afficher le tajwid</span>
             </button>
           </section>
 
-          <section v-if="tajwidText" class="content-card tajwid-reading-card">
-            <p class="content-label">Affichage tajwid</p>
-            <TajwidText :tokens="tajwidTokens" />
+          <section v-if="tajwidResponse" class="content-card tajwid-reading-card">
+            <header class="tajwid-reading-header">
+              <p class="content-label">Affichage tajwid</p>
+              <div class="surah-cartouche">
+                <span class="cartouche-line" aria-hidden="true" />
+                <h3 class="surah-cartouche-title" lang="ar" dir="rtl">
+                  {{ result.verse?.sourate_name }}
+                </h3>
+                <span class="cartouche-line" aria-hidden="true" />
+              </div>
+              <p class="tajwid-reading-subtitle">
+                {{ result.verse?.transliteration }} · {{ verseLabel }}
+              </p>
+            </header>
+
+            <div class="mushaf-reading-panel">
+              <TajwidText :ayahs="tajwidAyahs" />
+            </div>
+
             <TajwidLegend :tokens="tajwidTokens" />
           </section>
 
@@ -310,7 +330,7 @@ async function copyVerse() {
   margin: 10px 0 0;
   font-size: 34px;
   line-height: 1.1;
-  font-family: 'Amiri', serif;
+  font-family: 'Amiri Quran', 'Amiri', serif;
   color: #111827;
 }
 
@@ -401,7 +421,7 @@ async function copyVerse() {
   line-height: 2;
   direction: rtl;
   text-align: right;
-  font-family: 'Amiri', serif;
+  font-family: 'Amiri Quran', 'Amiri', serif;
   color: #172033;
 }
 
@@ -465,9 +485,69 @@ async function copyVerse() {
 }
 
 .tajwid-reading-card {
+  position: relative;
   display: grid;
-  gap: 16px;
+  gap: 22px;
+  padding: 26px 28px 22px;
+  border: 1px solid #b9a87f;
+  border-radius: 18px;
   background: var(--tajwid-reading-surface, #dce3ea);
+  box-shadow:
+    inset 0 0 0 5px rgba(255, 252, 242, 0.76),
+    inset 0 0 0 6px rgba(185, 168, 127, 0.34),
+    0 12px 32px rgba(75, 59, 31, 0.08);
+}
+
+.tajwid-reading-header {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.tajwid-reading-header .content-label {
+  color: #806a35;
+}
+
+.surah-cartouche {
+  width: min(520px, 100%);
+  display: grid;
+  grid-template-columns: minmax(24px, 1fr) auto minmax(24px, 1fr);
+  align-items: center;
+  gap: 16px;
+}
+
+.cartouche-line {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, #a68d54);
+}
+
+.cartouche-line:last-child {
+  background: linear-gradient(90deg, #a68d54, transparent);
+}
+
+.surah-cartouche-title {
+  margin: 0;
+  padding: 4px 18px 6px;
+  border: 1px solid rgba(146, 119, 58, 0.7);
+  border-radius: 999px;
+  color: #3d3423;
+  font-family: 'Amiri Quran', 'Amiri', serif;
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.tajwid-reading-subtitle {
+  margin: 0;
+  color: #75694f;
+  font-size: 13px;
+}
+
+.mushaf-reading-panel {
+  padding: 22px 18px;
+  border-block: 1px solid rgba(166, 141, 84, 0.34);
+  background: rgba(255, 252, 244, 0.38);
 }
 
 @media (max-width: 768px) {
@@ -501,6 +581,25 @@ async function copyVerse() {
   .arabic-text {
     font-size: 30px;
     line-height: 1.9;
+  }
+
+  .tajwid-reading-card {
+    gap: 18px;
+    padding: 22px 18px 18px;
+    border-radius: 14px;
+  }
+
+  .surah-cartouche {
+    gap: 10px;
+  }
+
+  .surah-cartouche-title {
+    padding-inline: 14px;
+    font-size: 23px;
+  }
+
+  .mushaf-reading-panel {
+    padding: 18px 4px;
   }
 }
 </style>

@@ -1,4 +1,4 @@
-export const TAJWID_READING_SURFACE_COLOR = '#DCE3EA'
+export const TAJWID_READING_SURFACE_COLOR = '#F4EEDF'
 
 export const TAJWID_SOURCE_CODES = [
   'h',

@@ -7,11 +7,17 @@ import { useRuntimeConfig } from '#app'
 import { $fetch } from 'ofetch'
 import { ref } from 'vue'
 
-type TajwidResponse = {
+export type TajwidAyah = {
+  number: number
+  tajwid_text: string
+}
+
+export type TajwidResponse = {
   surah_id: number
   start_verse: number
   end_verse: number
   text: string
+  ayahs: TajwidAyah[]
 }
 
 const MAX_TAJWID_CACHE_ENTRIES = 32

@@ -16,6 +16,7 @@ describe('useTajwid', () => {
       start_verse: 1,
       end_verse: 4,
       text: 'tajwid text',
+      ayahs: [{ number: 1, tajwid_text: 'tajwid text' }],
     })
 
     const { fetchTajwid } = useTajwid()
@@ -49,6 +50,7 @@ describe('useTajwid', () => {
         start_verse: query.start_verse,
         end_verse: query.end_verse,
         text: `tajwid-${query.surah_id}`,
+        ayahs: [{ number: 1, tajwid_text: `tajwid-${query.surah_id}` }],
       }
     })
 
