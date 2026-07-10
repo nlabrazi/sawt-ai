@@ -34,8 +34,6 @@ const {
     <div class="background-glow background-glow-2" />
     <div class="background-glow background-glow-3" />
     <div class="background-glow background-glow-4" />
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
-
     <div class="page-grid" />
 
     <div class="page-noise" aria-hidden="true" />
