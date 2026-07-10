@@ -14,7 +14,7 @@ describe('TajwidText', () => {
       annotationId: index + 1,
     }))
     const wrapper = mount(TajwidText, {
-      props: { tokens },
+      props: { ayahs: [{ number: 1, tokens }] },
     })
 
     const renderedRuleTokens = wrapper.findAll('.tajwid-token--rule')
@@ -40,42 +40,53 @@ describe('TajwidText', () => {
   it('preserves the exact Arabic text and reading direction', () => {
     const tokens = parseTajwidToTokens('وَلَقَ[q:341[دْ] عَهِ[q:8627[دْ]ن[o[َآ]')
     const wrapper = mount(TajwidText, {
-      props: { tokens },
+      props: { ayahs: [{ number: 255, tokens }] },
     })
     const text = wrapper.get('.tajwid-text')
 
-    expect(text.element.textContent).toBe('وَلَقَدْ عَهِدْنَآ')
+    expect(text.element.textContent).toBe('وَلَقَدْ عَهِدْنَآ ۝٢٥٥')
     expect(text.attributes('dir')).toBe('rtl')
     expect(text.attributes('lang')).toBe('ar')
+    expect(wrapper.get('.ayah-marker').attributes('aria-label')).toBe('نهاية الآية 255')
   })
 
   it('renders raw HTML as text instead of interpreting it', () => {
     const wrapper = mount(TajwidText, {
       props: {
-        tokens: [
+        ayahs: [
           {
-            text: '<img src=x onerror=alert(1)>',
-            rule: null,
-            sourceCode: null,
-            annotationId: null,
+            number: 1,
+            tokens: [
+              {
+                text: '<img src=x onerror=alert(1)>',
+                rule: null,
+                sourceCode: null,
+                annotationId: null,
+              },
+            ],
           },
         ],
       },
     })
 
-    expect(wrapper.get('.tajwid-text').element.textContent).toBe('<img src=x onerror=alert(1)>')
+    expect(wrapper.get('.tajwid-text').element.textContent).toBe('<img src=x onerror=alert(1)> ۝١')
     expect(wrapper.find('img').exists()).toBe(false)
   })
 
   it('keeps unsupported rules visible with a neutral fallback', () => {
     const wrapper = mount(TajwidText, {
       props: {
-        tokens: [
+        ayahs: [
           {
-            text: 'ظ',
-            rule: null,
-            sourceCode: 'x',
-            annotationId: 42,
+            number: 1,
+            tokens: [
+              {
+                text: 'ظ',
+                rule: null,
+                sourceCode: 'x',
+                annotationId: 42,
+              },
+            ],
           },
         ],
       },
@@ -89,5 +100,19 @@ describe('TajwidText', () => {
     expect(
       (unknownToken.element as HTMLElement).style.getPropertyValue('--tajwid-token-color'),
     ).toBe('')
+  })
+
+  it('keeps ayahs separate and renders their Arabic-Indic numbers', () => {
+    const wrapper = mount(TajwidText, {
+      props: {
+        ayahs: [
+          { number: 9, tokens: parseTajwidToTokens('الآية الأولى') },
+          { number: 10, tokens: parseTajwidToTokens('الآية الثانية') },
+        ],
+      },
+    })
+
+    expect(wrapper.findAll('.tajwid-ayah')).toHaveLength(2)
+    expect(wrapper.findAll('.ayah-marker').map((marker) => marker.text())).toEqual(['۝٩', '۝١٠'])
   })
 })

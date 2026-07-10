@@ -105,6 +105,10 @@ describe('VerseDetailsSheet', () => {
       start_verse: 1,
       end_verse: 4,
       text: 'وَلَقَ[q:341[دْ] عَهِ[q:8627[دْ]ن[o[َآ]',
+      ayahs: [
+        { number: 1, tajwid_text: 'وَلَقَ[q:341[دْ]' },
+        { number: 2, tajwid_text: 'عَهِ[q:8627[دْ]ن[o[َآ]' },
+      ],
     })
     const wrapper = mount(VerseDetailsSheet, {
       props: {
@@ -131,7 +135,8 @@ describe('VerseDetailsSheet', () => {
       },
     })
     expect(wrapper.get('.tajwid-reading-card').text()).toContain('Affichage tajwid')
-    expect(wrapper.get('.tajwid-text').element.textContent).toBe('وَلَقَدْ عَهِدْنَآ')
+    expect(wrapper.get('.tajwid-text').element.textContent).toBe('وَلَقَدْ ۝١ عَهِدْنَآ ۝٢')
+    expect(wrapper.findAll('.tajwid-ayah')).toHaveLength(2)
     expect(wrapper.findAll('.tajwid-rule--qalaqah')).toHaveLength(2)
     expect(wrapper.find('.tajwid-rule--madda-obligatory').exists()).toBe(true)
     expect(wrapper.get('.tajwid-legend-summary').text()).toContain('2 règles')

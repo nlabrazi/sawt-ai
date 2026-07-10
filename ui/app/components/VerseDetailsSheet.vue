@@ -8,8 +8,8 @@ import MiniToast from '~/components/MiniToast.vue'
 import TajwidLegend from '~/components/TajwidLegend.vue'
 import TajwidText from '~/components/TajwidText.vue'
 import { useMiniToast } from '~/composables/useMiniToast'
-import { useTajwid } from '~/composables/useTajwid'
 import type { RecognizeResponse } from '~/composables/useRecognition'
+import { type TajwidResponse, useTajwid } from '~/composables/useTajwid'
 import { parseTajwidToTokens } from '~/utils/parseTajwid'
 import { TAJWID_READING_SURFACE_COLOR } from '~/utils/tajwidRules'
 
@@ -23,7 +23,7 @@ const emit = defineEmits<{
 }>()
 
 const { loading, fetchTajwid, error } = useTajwid()
-const tajwidText = ref<string | null>(null)
+const tajwidResponse = ref<TajwidResponse | null>(null)
 const sheetRef = ref<HTMLElement | null>(null)
 const closeButtonRef = ref<HTMLButtonElement | null>(null)
 const { message: toastMessage, visible: toastVisible, show: showToast } = useMiniToast()
@@ -49,9 +49,13 @@ const verseLabel = computed(() => {
 
 const topImam = computed(() => props.result.imam_predictions?.[0] ?? null)
 const otherImams = computed(() => props.result.imam_predictions?.slice(1) ?? [])
-const tajwidTokens = computed(() => {
-  return tajwidText.value ? parseTajwidToTokens(tajwidText.value) : []
-})
+const tajwidAyahs = computed(() =>
+  (tajwidResponse.value?.ayahs ?? []).map((ayah) => ({
+    number: ayah.number,
+    tokens: parseTajwidToTokens(ayah.tajwid_text),
+  })),
+)
+const tajwidTokens = computed(() => tajwidAyahs.value.flatMap((ayah) => ayah.tokens))
 
 watch(
   () => props.open,
@@ -71,7 +75,7 @@ watch(
     }
 
     restorePreviousFocus()
-    tajwidText.value = null
+    tajwidResponse.value = null
   },
   { immediate: true },
 )
@@ -129,8 +133,8 @@ function onSheetKeydown(event: KeyboardEvent) {
 async function toggleTajwid() {
   if (!props.result.verse) return
 
-  if (tajwidText.value) {
-    tajwidText.value = null
+  if (tajwidResponse.value) {
+    tajwidResponse.value = null
     return
   }
 
@@ -140,7 +144,7 @@ async function toggleTajwid() {
     props.result.verse.end_verse,
   )
 
-  tajwidText.value = response.text
+  tajwidResponse.value = response
 }
 
 async function copyVerse() {
@@ -210,14 +214,14 @@ async function copyVerse() {
             <button class="sheet-btn" type="button" :disabled="loading" @click="toggleTajwid">
               <BookOpen class="sheet-btn-icon" :stroke-width="2" aria-hidden="true" />
               <span v-if="loading">Chargement du tajwid…</span>
-              <span v-else-if="tajwidText">Masquer le tajwid</span>
+              <span v-else-if="tajwidResponse">Masquer le tajwid</span>
               <span v-else>Afficher le tajwid</span>
             </button>
           </section>
 
-          <section v-if="tajwidText" class="content-card tajwid-reading-card">
+          <section v-if="tajwidResponse" class="content-card tajwid-reading-card">
             <p class="content-label">Affichage tajwid</p>
-            <TajwidText :tokens="tajwidTokens" />
+            <TajwidText :ayahs="tajwidAyahs" />
             <TajwidLegend :tokens="tajwidTokens" />
           </section>
 
