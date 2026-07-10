@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import Eye from '@lucide/vue/dist/esm/icons/eye.mjs'
 import { computed, defineAsyncComponent, ref } from 'vue'
 
 import type { RecognizeResponse } from '~/composables/useRecognition'
@@ -12,7 +13,6 @@ const props = defineProps<{
 }>()
 
 const isDetailsOpen = ref(false)
-const copied = ref(false)
 
 const verseLabel = computed(() => {
   if (!props.result.verse) return ''
@@ -73,26 +73,6 @@ const imamStatusText = computed(() => {
       return ''
   }
 })
-
-async function copyVerse() {
-  if (!props.result.verse) return
-
-  const payload = [
-    `${props.result.verse.sourate_name} — ${props.result.verse.transliteration}`,
-    verseLabel.value,
-    props.result.verse.text,
-  ].join('\n')
-
-  try {
-    await navigator.clipboard.writeText(payload)
-    copied.value = true
-    window.setTimeout(() => {
-      copied.value = false
-    }, 1400)
-  } catch (error) {
-    console.error(error)
-  }
-}
 </script>
 
 <template>
@@ -113,32 +93,6 @@ async function copyVerse() {
           <p class="verse-range">
             {{ verseLabel }}
           </p>
-
-          <div class="detected-verse-block">
-            <p class="detected-verse-text">
-              {{ result.verse.text }}
-            </p>
-
-            <button
-              class="copy-verse-btn"
-              type="button"
-              :aria-label="copied ? 'Verset copié' : 'Copier le verset'"
-              @click="copyVerse"
-            >
-              <svg
-                v-if="copied"
-                class="copy-icon"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <path d="M20 6 9 17l-5-5" />
-              </svg>
-              <svg v-else class="copy-icon" viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="9" y="9" width="11" height="11" rx="2" />
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-              </svg>
-            </button>
-          </div>
         </div>
 
         <div class="result-meta">
@@ -167,10 +121,7 @@ async function copyVerse() {
             @touchstart.passive="loadVerseDetailsSheet"
             @click="isDetailsOpen = true"
           >
-            <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
+            <Eye class="action-icon" :stroke-width="2" aria-hidden="true" />
             Voir le verset
           </button>
         </div>
@@ -248,57 +199,9 @@ async function copyVerse() {
   font-size: 18px;
 }
 
-.detected-verse-text {
-  margin: 0;
-  max-width: 760px;
-  font-size: 32px;
-  line-height: 1.85;
-  direction: rtl;
-  text-align: center;
-  font-family: 'Amiri', serif;
-  color: #f8fafc;
-}
-
-.detected-verse-block {
-  margin: 22px auto 0;
-  max-width: 760px;
-  display: grid;
-  justify-items: center;
-  gap: 12px;
-}
-
-.copy-verse-btn {
-  width: 42px;
-  height: 42px;
-  border-radius: 999px;
-  border: 1px solid rgba(148, 163, 184, 0.16);
-  background: rgba(255, 255, 255, 0.06);
-  color: #dbeafe;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition:
-    transform 0.2s ease,
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.copy-verse-btn:hover {
-  transform: translateY(-1px);
-  background: rgba(59, 130, 246, 0.14);
-  border-color: rgba(147, 197, 253, 0.26);
-}
-
-.copy-icon,
 .action-icon {
   width: 19px;
   height: 19px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .result-meta {
@@ -453,18 +356,6 @@ async function copyVerse() {
 
   .verse-range {
     font-size: 15px;
-  }
-
-  .detected-verse-block {
-    margin-top: 16px;
-    gap: 10px;
-  }
-
-  .detected-verse-text {
-    max-height: 34svh;
-    overflow: auto;
-    font-size: 25px;
-    line-height: 1.75;
   }
 
   .result-meta {

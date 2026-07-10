@@ -139,7 +139,7 @@ export function useRecognition() {
     return requestId === activeRequestId
   }
 
-  async function recognizeAudio(file: File, detectImam = true) {
+  async function recognizeAudio(file: File, detectImam = false) {
     cancelActiveRequest()
     const controller = new AbortController()
     const requestId = activeRequestId + 1

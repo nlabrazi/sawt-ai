@@ -51,6 +51,23 @@ describe('useRecognition', () => {
     expect(result.value?.transcription_text).toBe('قل هو الله احد')
   })
 
+  it('disables imam detection by default in recognition requests', async () => {
+    vi.useFakeTimers()
+    vi.mocked($fetch).mockResolvedValueOnce(successfulResponse)
+
+    const { recognizeAudio } = useRecognition()
+    const audioFile = new File(['audio'], 'recitation.webm', { type: 'audio/webm' })
+    const pending = recognizeAudio(audioFile)
+
+    await vi.runAllTimersAsync()
+    await pending
+
+    const requestOptions = vi.mocked($fetch).mock.calls[0]?.[1]
+    const requestBody = requestOptions?.body as FormData
+
+    expect(requestBody.get('detect_imam')).toBe('false')
+  })
+
   it('keeps a fast confident response close to the loading target duration', async () => {
     vi.useFakeTimers()
     vi.mocked($fetch).mockResolvedValueOnce(successfulResponse)

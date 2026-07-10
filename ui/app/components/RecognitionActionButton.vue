@@ -1,4 +1,6 @@
 <script setup lang="ts">
+import Mic from '@lucide/vue/dist/esm/icons/mic.mjs'
+import Square from '@lucide/vue/dist/esm/icons/square.mjs'
 import { computed, ref } from 'vue'
 
 const props = withDefaults(
@@ -86,9 +88,8 @@ function handlePressEnd() {
 
     <span class="button-core">
       <span class="button-shine" aria-hidden="true" />
-      <span class="button-icon">
-        {{ isRecording ? '●' : '🎙️' }}
-      </span>
+      <Square v-if="isRecording" class="button-icon" :stroke-width="1.8" aria-hidden="true" />
+      <Mic v-else class="button-icon" :stroke-width="1.6" aria-hidden="true" />
     </span>
   </button>
 </template>
@@ -256,18 +257,19 @@ function handlePressEnd() {
 .button-icon {
   position: relative;
   z-index: 2;
-  font-size: 78px;
-  line-height: 1;
+  width: 78px;
+  height: 78px;
+  color: #eff6ff;
   transform: translateY(2px);
   filter: drop-shadow(0 10px 18px rgba(255, 255, 255, 0.08));
-  user-select: none;
 }
 
 .is-recording .button-icon {
-  font-size: 52px;
+  width: 52px;
+  height: 52px;
   color: #eff6ff;
+  fill: currentColor;
   transform: translateY(0);
-  text-shadow: 0 0 20px rgba(255, 255, 255, 0.18);
 }
 
 @keyframes loadingPulse {
@@ -415,11 +417,13 @@ function handlePressEnd() {
   }
 
   .button-icon {
-    font-size: 68px;
+    width: 68px;
+    height: 68px;
   }
 
   .is-recording .button-icon {
-    font-size: 46px;
+    width: 46px;
+    height: 46px;
   }
 
   .button-aura {
