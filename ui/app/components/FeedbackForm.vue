@@ -343,25 +343,35 @@ watch(selectedStartVerse, (nextStartVerse) => {
 }
 
 .feedback-action-primary {
-  background:
-    linear-gradient(180deg, rgba(8, 47, 73, 0.44) 0%, rgba(15, 23, 42, 0.78) 100%);
-  border-color: rgba(125, 211, 252, 0.18);
+  background: rgba(6, 78, 59, 0.42);
+  border-color: rgba(110, 231, 183, 0.24);
 }
 
 .feedback-action-primary:hover {
-  border-color: rgba(125, 211, 252, 0.28);
-  box-shadow: 0 14px 32px rgba(8, 47, 73, 0.16);
+  border-color: rgba(110, 231, 183, 0.38);
+  background: rgba(6, 95, 70, 0.5);
+  box-shadow: 0 14px 32px rgba(6, 78, 59, 0.18);
 }
 
 .feedback-action-secondary {
-  background:
-    linear-gradient(180deg, rgba(30, 41, 59, 0.52) 0%, rgba(15, 23, 42, 0.78) 100%);
-  border-color: rgba(148, 163, 184, 0.14);
+  background: rgba(120, 53, 15, 0.34);
+  border-color: rgba(251, 191, 36, 0.2);
 }
 
 .feedback-action-secondary:hover {
-  border-color: rgba(148, 163, 184, 0.24);
-  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.14);
+  border-color: rgba(251, 191, 36, 0.34);
+  background: rgba(146, 64, 14, 0.42);
+  box-shadow: 0 14px 32px rgba(120, 53, 15, 0.16);
+}
+
+.feedback-action-primary:focus-visible {
+  outline: 3px solid rgba(110, 231, 183, 0.22);
+  outline-offset: 3px;
+}
+
+.feedback-action-secondary:focus-visible {
+  outline: 3px solid rgba(251, 191, 36, 0.2);
+  outline-offset: 3px;
 }
 
 .feedback-action-title {
@@ -379,6 +389,16 @@ watch(selectedStartVerse, (nextStartVerse) => {
   align-items: center;
   justify-content: center;
   color: #dbeafe;
+}
+
+.feedback-action-primary .feedback-action-icon {
+  background: rgba(16, 185, 129, 0.14);
+  color: #a7f3d0;
+}
+
+.feedback-action-secondary .feedback-action-icon {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fde68a;
 }
 
 .feedback-action-icon svg {
