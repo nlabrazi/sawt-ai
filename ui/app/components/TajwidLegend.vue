@@ -75,9 +75,9 @@ const visibleRules = computed<TajwidLegendItem[]>(() => {
 
 <style scoped>
 .tajwid-legend {
-  border-top: 1px solid #b8c4d1;
+  border-top: 1px solid rgba(166, 141, 84, 0.4);
   padding-top: 6px;
-  color: #172033;
+  color: #29251d;
 }
 
 .tajwid-legend-summary {
@@ -90,7 +90,7 @@ const visibleRules = computed<TajwidLegendItem[]>(() => {
   list-style: none;
   font-size: 14px;
   font-weight: 800;
-  color: #27364a;
+  color: #4c422f;
 }
 
 .tajwid-legend-summary::-webkit-details-marker {
@@ -108,7 +108,7 @@ const visibleRules = computed<TajwidLegendItem[]>(() => {
 .tajwid-legend-count {
   font-size: 12px;
   font-weight: 700;
-  color: #526274;
+  color: #75694f;
 }
 
 .tajwid-legend-icon,
@@ -119,11 +119,11 @@ const visibleRules = computed<TajwidLegendItem[]>(() => {
 }
 
 .tajwid-legend-icon {
-  color: #274b9f;
+  color: #806a35;
 }
 
 .tajwid-legend-chevron {
-  color: #526274;
+  color: #75694f;
   transition: transform 160ms ease;
 }
 
@@ -173,20 +173,20 @@ const visibleRules = computed<TajwidLegendItem[]>(() => {
 .tajwid-legend-name {
   font-size: 14px;
   font-weight: 800;
-  color: #172033;
+  color: #29251d;
 }
 
 .tajwid-legend-name-arabic {
   font-family: 'Amiri', serif;
   font-size: 17px;
   line-height: 1;
-  color: #334155;
+  color: #4c422f;
 }
 
 .tajwid-legend-description {
   font-size: 13px;
   line-height: 1.5;
-  color: #526274;
+  color: #75694f;
 }
 
 @media (max-width: 768px) {

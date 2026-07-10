@@ -64,13 +64,13 @@ const renderedAyahs = computed(() => {
 .tajwid-text {
   max-width: 100%;
   margin: 0;
-  color: #172033;
-  font-family: 'Amiri', serif;
-  font-size: 34px;
-  line-height: 1.95;
+  color: #29251d;
+  font-family: 'Amiri Quran', 'Amiri', serif;
+  font-size: 36px;
+  line-height: 2.15;
   letter-spacing: 0;
   direction: rtl;
-  text-align: right;
+  text-align: center;
   unicode-bidi: plaintext;
   white-space: pre-wrap;
   overflow-wrap: break-word;
@@ -85,13 +85,22 @@ const renderedAyahs = computed(() => {
 }
 
 .ayah-marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.75em;
+  color: #806a35;
+  font-size: 0.72em;
+  font-weight: 700;
+  line-height: 1;
+  vertical-align: 0.08em;
   white-space: nowrap;
 }
 
 @media (max-width: 768px) {
   .tajwid-text {
-    font-size: 30px;
-    line-height: 1.9;
+    font-size: 31px;
+    line-height: 2.05;
   }
 }
 

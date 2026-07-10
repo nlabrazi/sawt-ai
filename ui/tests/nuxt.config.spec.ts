@@ -14,6 +14,7 @@ describe('Nuxt font configuration', () => {
     )
 
     expect(fontStylesheets).toHaveLength(1)
+    expect(fontStylesheets[0]?.href).toContain('family=Amiri+Quran')
     expect(fontStylesheets[0]?.href).toContain('family=Amiri:wght@400;700')
     expect(fontStylesheets[0]?.href).toContain('family=Inter:wght@400;500;600;700;800')
     expect(fontStylesheets[0]?.href).toContain('display=swap')
