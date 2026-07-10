@@ -167,6 +167,7 @@ SUPABASE_FEEDBACK_TABLE=feedbacks
 
 Set `ALLOWED_ORIGINS` with each trusted frontend origin explicitly.
 Example for production: `https://sawt-ai.nabster.dev`.
+Set `NUXT_PUBLIC_SITE_URL` to the public frontend origin (without a trailing slash) so social sharing metadata uses absolute URLs.
 Do not rely on wildcard preview domains when credentials are enabled.
 The tajwid loading order is: local snapshot, backup URL, then external API.
 `TAJWID_BACKUP_URL` works well with a public JSON file stored in Supabase Storage.
