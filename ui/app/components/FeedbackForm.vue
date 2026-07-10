@@ -175,24 +175,30 @@ watch(selectedStartVerse, (nextStartVerse) => {
   <div class="feedback">
     <template v-if="!feedbackSent">
       <div class="feedback-head">
-        <p class="feedback-label">Votre retour</p>
+        <p class="feedback-label">Validation</p>
         <p class="feedback-title">Ce résultat est-il correct&nbsp;?</p>
-        <p class="feedback-subtitle">
-          Un retour rapide nous aide à améliorer la détection.
-        </p>
       </div>
 
       <div v-if="!showCorrectionForm" class="feedback-actions">
         <button class="feedback-action feedback-action-primary" type="button" :disabled="sending"
           @click="submitPositiveFeedback">
-          <span class="feedback-action-title">Résultat correct</span>
-          <span class="feedback-action-text">Valider cette détection</span>
+          <span class="feedback-action-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M20 6 9 17l-5-5" />
+            </svg>
+          </span>
+          <span class="feedback-action-title">Valider</span>
         </button>
 
         <button class="feedback-action feedback-action-secondary" type="button" :disabled="sending"
           @click="openCorrectionForm">
-          <span class="feedback-action-title">Corriger le résultat</span>
-          <span class="feedback-action-text">Indiquer la bonne sourate et les bons versets</span>
+          <span class="feedback-action-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z" />
+            </svg>
+          </span>
+          <span class="feedback-action-title">Corriger</span>
         </button>
       </div>
 
@@ -279,12 +285,12 @@ watch(selectedStartVerse, (nextStartVerse) => {
   box-shadow:
     0 20px 54px rgba(2, 6, 23, 0.14),
     inset 0 1px 0 rgba(255, 255, 255, 0.04);
-  padding: 22px;
+  padding: 20px;
 }
 
 .feedback-head {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   justify-items: center;
   text-align: center;
 }
@@ -299,37 +305,30 @@ watch(selectedStartVerse, (nextStartVerse) => {
 
 .feedback-title {
   margin: 0;
-  font-size: 21px;
+  font-size: 20px;
   line-height: 1.2;
   font-weight: 800;
   color: #eff6ff;
 }
 
-.feedback-subtitle {
-  margin: 0;
-  max-width: 420px;
-  font-size: 14px;
-  line-height: 1.6;
-  color: #8ea1b9;
-}
-
 .feedback-actions {
-  margin-top: 18px;
+  margin-top: 14px;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
 .feedback-action {
-  min-height: 108px;
-  border-radius: 22px;
+  min-height: 64px;
+  border-radius: 18px;
   border: 1px solid rgba(148, 163, 184, 0.12);
-  padding: 18px;
-  text-align: left;
+  padding: 16px;
+  text-align: center;
   cursor: pointer;
-  display: grid;
-  align-content: space-between;
-  gap: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
   transition:
     transform 0.2s ease,
     border-color 0.2s ease,
@@ -378,10 +377,25 @@ watch(selectedStartVerse, (nextStartVerse) => {
   color: #eff6ff;
 }
 
-.feedback-action-text {
-  font-size: 13px;
-  line-height: 1.55;
-  color: #8ea1b9;
+.feedback-action-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #dbeafe;
+}
+
+.feedback-action-icon svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .correction-panel {
@@ -559,11 +573,10 @@ textarea {
 
 @media (max-width: 768px) {
   .feedback {
-    padding: 18px;
+    padding: 16px;
     border-radius: 24px;
   }
 
-  .feedback-actions,
   .field-row {
     grid-template-columns: 1fr;
   }
@@ -575,6 +588,12 @@ textarea {
   .subtle-btn,
   .submit-btn {
     width: 100%;
+  }
+}
+
+@media (max-width: 420px) {
+  .feedback-actions {
+    grid-template-columns: 1fr;
   }
 }
 </style>
