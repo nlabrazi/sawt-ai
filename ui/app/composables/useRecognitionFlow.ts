@@ -105,7 +105,7 @@ export function useRecognitionFlow() {
   } = useMicrophoneRecorder(maxAudioDurationSeconds)
 
   const uploadError = ref<string | null>(null)
-  const detectImam = ref(true)
+  const detectImam = ref(false)
 
   const screenState = computed<RecognitionScreenState>(() => {
     if (loading.value) return 'loading'

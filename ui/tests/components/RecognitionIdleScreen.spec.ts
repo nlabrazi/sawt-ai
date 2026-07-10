@@ -3,6 +3,15 @@ import { mount } from '@vue/test-utils'
 import RecognitionIdleScreen from '~/components/RecognitionIdleScreen.vue'
 
 describe('RecognitionIdleScreen', () => {
+  it('keeps imam detection unchecked by default and marks it as beta', () => {
+    const wrapper = mount(RecognitionIdleScreen)
+    const checkbox = wrapper.get('.imam-toggle-checkbox').element as HTMLInputElement
+
+    expect(checkbox.checked).toBe(false)
+    expect(wrapper.get('.imam-beta-badge').text()).toBe('Bêta')
+    expect(wrapper.find('.imam-beta-icon').exists()).toBe(true)
+  })
+
   it('keeps the idle copy short and action-led', () => {
     const wrapper = mount(RecognitionIdleScreen, {
       props: {

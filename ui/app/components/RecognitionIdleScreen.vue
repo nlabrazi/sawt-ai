@@ -216,6 +216,16 @@ function onFileChange(event: Event) {
         <input type="checkbox" class="imam-toggle-checkbox" :checked="detectImam"
           :disabled="imamDetectionAvailable === false" @change="onDetectImamChange" />
         <span class="imam-toggle-text">Reconnaître l’imam</span>
+        <span class="imam-beta-badge">
+          <svg class="imam-beta-icon" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M9 3h6" />
+            <path d="M10 9V3" />
+            <path d="M14 9V3" />
+            <path d="m8 9-4 8a3 3 0 0 0 2.7 4h10.6a3 3 0 0 0 2.7-4l-4-8" />
+            <path d="M7 15h10" />
+          </svg>
+          Bêta
+        </span>
       </label>
 
       <p class="imam-toggle-hint" :class="{ 'is-unavailable': imamDetectionAvailable === false }">
@@ -454,6 +464,33 @@ function onFileChange(event: Event) {
   font-size: 16px;
   font-weight: 700;
   color: #e6edf7;
+}
+
+.imam-beta-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  min-height: 24px;
+  padding: 0 8px;
+  border: 1px solid rgba(147, 197, 253, 0.24);
+  border-radius: 999px;
+  background: rgba(59, 130, 246, 0.12);
+  color: #bfdbfe;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.imam-beta-icon {
+  width: 12px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .imam-toggle-hint {
