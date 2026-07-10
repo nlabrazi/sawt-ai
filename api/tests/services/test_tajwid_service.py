@@ -73,8 +73,36 @@ def test_fetch_tajwid_text_downloads_payload_once_and_reuses_cache(monkeypatch):
     second_response = fetch_tajwid_text(112, 3, 4)
 
     assert first_response["text"] == "[rule[قل]] [rule[هو]]"
+    assert first_response["ayahs"] == [
+        {"number": 1, "tajwid_text": "[rule[قل]]"},
+        {"number": 2, "tajwid_text": "[rule[هو]]"},
+    ]
     assert second_response["text"] == "[rule[الله]] [rule[أحد]]"
+    assert second_response["ayahs"] == [
+        {"number": 3, "tajwid_text": "[rule[الله]]"},
+        {"number": 4, "tajwid_text": "[rule[أحد]]"},
+    ]
     assert calls == [(tajwid_service.TAJWID_API_BASE, tajwid_service.TAJWID_TIMEOUT_SECONDS)]
+
+
+def test_fetch_tajwid_text_returns_a_structured_single_ayah(monkeypatch):
+    monkeypatch.setattr(
+        tajwid_service,
+        "urlopen",
+        lambda _request_or_url, timeout: FakeUrlOpenResponse(build_tajwid_payload()),
+    )
+
+    response = fetch_tajwid_text(112, 2, 2)
+
+    assert response == {
+        "surah_id": 112,
+        "start_verse": 2,
+        "end_verse": 2,
+        "text": "[rule[هو]]",
+        "ayahs": [
+            {"number": 2, "tajwid_text": "[rule[هو]]"},
+        ],
+    }
 
 
 def test_fetch_tajwid_text_prefers_local_snapshot_when_available(monkeypatch, tmp_path):
@@ -90,6 +118,10 @@ def test_fetch_tajwid_text_prefers_local_snapshot_when_available(monkeypatch, tm
     response = fetch_tajwid_text(112, 2, 3)
 
     assert response["text"] == "[rule[هو]] [rule[الله]]"
+    assert response["ayahs"] == [
+        {"number": 2, "tajwid_text": "[rule[هو]]"},
+        {"number": 3, "tajwid_text": "[rule[الله]]"},
+    ]
 
 
 def test_fetch_tajwid_text_falls_back_to_backup_url_when_local_snapshot_is_missing(monkeypatch, tmp_path):

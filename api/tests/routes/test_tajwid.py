@@ -35,6 +35,9 @@ def test_get_tajwid_returns_payload(monkeypatch):
             "start_verse": start_verse,
             "end_verse": end_verse,
             "text": "tajwid text",
+            "ayahs": [
+                {"number": start_verse, "tajwid_text": "tajwid text"},
+            ],
         }
 
     monkeypatch.setattr(tajwid_route, "fetch_tajwid_text", fake_fetch_tajwid_text)
@@ -42,6 +45,9 @@ def test_get_tajwid_returns_payload(monkeypatch):
     response = tajwid_route.get_tajwid(surah_id=112, start_verse=1, end_verse=4)
 
     assert response["text"] == "tajwid text"
+    assert response["ayahs"] == [
+        {"number": 1, "tajwid_text": "tajwid text"},
+    ]
 
 
 def test_get_tajwid_rejects_invalid_range():
