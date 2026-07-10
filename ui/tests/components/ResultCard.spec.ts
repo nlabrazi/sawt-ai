@@ -82,6 +82,46 @@ describe('ResultCard', () => {
     expect(wrapper.find('.secondary-btn').exists()).toBe(false)
   })
 
+  it('shows a toast after copying the detected verse', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    })
+
+    const wrapper = mount(ResultCard, {
+      props: {
+        result: {
+          transcription_text: 'قل هو الله احد',
+          verse: {
+            sourate_id: 112,
+            sourate_name: 'الإخلاص',
+            transliteration: 'Al-Ikhlas',
+            start_verse: 1,
+            end_verse: 4,
+            text: 'قل هو الله احد',
+            similarity: 0.93,
+          },
+          imam_predictions: [],
+          imam_status: 'unknown',
+          imam_detection_enabled: true,
+        },
+      },
+      global: {
+        stubs: {
+          teleport: true,
+        },
+      },
+    })
+
+    await wrapper.get('.copy-verse-btn').trigger('click')
+    await flushPromises()
+
+    expect(writeText).toHaveBeenCalledWith('الإخلاص — Al-Ikhlas\nVersets 1 à 4\nقل هو الله احد')
+    expect(wrapper.get('.mini-toast').text()).toBe('Verset copié')
+    expect(wrapper.get('.copy-verse-btn').attributes('aria-label')).toBe('Verset copié')
+  })
+
   it('mounts verse details only after the user opens them', async () => {
     const wrapper = mount(ResultCard, {
       props: {

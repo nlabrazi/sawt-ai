@@ -20,6 +20,12 @@ const result = {
 
 describe('VerseDetailsSheet', () => {
   it('uses icon actions for close and copy', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined)
+    Object.defineProperty(navigator, 'clipboard', {
+      configurable: true,
+      value: { writeText },
+    })
+
     const wrapper = mount(VerseDetailsSheet, {
       props: {
         open: true,
@@ -38,6 +44,12 @@ describe('VerseDetailsSheet', () => {
     expect(wrapper.find('.lucide-copy').exists()).toBe(true)
     expect(wrapper.find('.lucide-book-open').exists()).toBe(true)
     expect(wrapper.text()).not.toContain('Fermer')
+
+    await wrapper.get('.sheet-btn').trigger('click')
+    await flushPromises()
+
+    expect(writeText).toHaveBeenCalledWith('الإخلاص — Al-Ikhlas\nVersets 1 à 4\nقل هو الله احد')
+    expect(wrapper.get('.mini-toast').text()).toBe('Verset copié')
 
     await wrapper.get('.close-btn').trigger('click')
 

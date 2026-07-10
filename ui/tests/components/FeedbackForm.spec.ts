@@ -47,19 +47,26 @@ describe('FeedbackForm', () => {
     expect(wrapper.find('.feedback-action-text').exists()).toBe(false)
   })
 
-  it('uses a Lucide confirmation icon after feedback is sent', async () => {
+  it('replaces the form with a toast after positive feedback is sent', async () => {
     vi.mocked($fetch).mockResolvedValueOnce({ success: true })
 
     const wrapper = mount(FeedbackForm, {
       props: {
         result,
       },
+      global: {
+        stubs: {
+          teleport: true,
+        },
+      },
     })
 
     await wrapper.get('.feedback-action-primary').trigger('click')
     await flushPromises()
 
-    expect(wrapper.find('.lucide-circle-check').exists()).toBe(true)
+    expect(wrapper.find('.feedback').exists()).toBe(false)
+    expect(wrapper.get('.mini-toast').text()).toBe('Retour envoyé')
+    expect(wrapper.get('.mini-toast').attributes('role')).toBe('status')
   })
 
   it('loads canonical surah options and sends a bounded correction payload', async () => {
@@ -83,6 +90,11 @@ describe('FeedbackForm', () => {
     const wrapper = mount(FeedbackForm, {
       props: {
         result,
+      },
+      global: {
+        stubs: {
+          teleport: true,
+        },
       },
     })
 
@@ -127,5 +139,7 @@ describe('FeedbackForm', () => {
         comment: 'Correction guidée',
       },
     })
+    expect(wrapper.find('.feedback').exists()).toBe(false)
+    expect(wrapper.get('.mini-toast').text()).toBe('Retour envoyé')
   })
 })

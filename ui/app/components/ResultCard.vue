@@ -4,6 +4,8 @@ import Copy from '@lucide/vue/dist/esm/icons/copy.mjs'
 import Eye from '@lucide/vue/dist/esm/icons/eye.mjs'
 import { computed, defineAsyncComponent, ref } from 'vue'
 
+import MiniToast from '~/components/MiniToast.vue'
+import { useMiniToast } from '~/composables/useMiniToast'
 import type { RecognizeResponse } from '~/composables/useRecognition'
 import { getVerseConfidenceUi } from '~/utils/verseConfidence'
 
@@ -15,7 +17,7 @@ const props = defineProps<{
 }>()
 
 const isDetailsOpen = ref(false)
-const copied = ref(false)
+const { message: toastMessage, visible: copied, show: showToast } = useMiniToast()
 
 const verseLabel = computed(() => {
   if (!props.result.verse) return ''
@@ -88,10 +90,7 @@ async function copyVerse() {
 
   try {
     await navigator.clipboard.writeText(payload)
-    copied.value = true
-    window.setTimeout(() => {
-      copied.value = false
-    }, 1400)
+    showToast('Verset copié')
   } catch (error) {
     console.error(error)
   }
@@ -189,6 +188,8 @@ async function copyVerse() {
       </section>
     </template>
   </article>
+
+  <MiniToast :open="copied" :message="toastMessage" />
 </template>
 
 <style scoped>

@@ -1,9 +1,11 @@
 <script setup lang="ts">
 import Check from '@lucide/vue/dist/esm/icons/check.mjs'
-import CircleCheck from '@lucide/vue/dist/esm/icons/circle-check.mjs'
 import Pencil from '@lucide/vue/dist/esm/icons/pencil.mjs'
 import { computed, ref, watch } from 'vue'
+
+import MiniToast from '~/components/MiniToast.vue'
 import { useFeedback } from '~/composables/useFeedback'
+import { useMiniToast } from '~/composables/useMiniToast'
 import { useSurahOptions } from '~/composables/useSurahOptions'
 import type { RecognizeResponse } from '~/composables/useRecognition'
 
@@ -21,6 +23,7 @@ const selectedSurahId = ref<number | null>(null)
 const selectedStartVerse = ref<number | null>(null)
 const selectedEndVerse = ref<number | null>(null)
 const correctionComment = ref('')
+const { message: toastMessage, visible: toastVisible, show: showToast } = useMiniToast()
 
 const { sending, error, sendFeedback } = useFeedback()
 const { surahs, loading: surahsLoading, error: surahsError, fetchSurahOptions } = useSurahOptions()
@@ -106,6 +109,7 @@ async function submitPositiveFeedback() {
     })
 
     feedbackSent.value = true
+    showToast('Retour envoyé')
     emit('completed')
   } catch {
     // handled in composable
@@ -143,6 +147,7 @@ async function submitCorrection() {
     })
 
     feedbackSent.value = true
+    showToast('Retour envoyé')
     emit('completed')
   } catch {
     // handled in composable
@@ -175,8 +180,7 @@ watch(selectedStartVerse, (nextStartVerse) => {
 </script>
 
 <template>
-  <div class="feedback">
-    <template v-if="!feedbackSent">
+  <div v-if="!feedbackSent" class="feedback">
       <div class="feedback-head">
         <p class="feedback-label">Validation</p>
         <p class="feedback-title">Ce résultat est-il correct&nbsp;?</p>
@@ -258,18 +262,9 @@ watch(selectedStartVerse, (nextStartVerse) => {
       <p v-if="formError" class="form-error">
         {{ formError }}
       </p>
-    </template>
-
-    <template v-else>
-      <div class="feedback-done">
-        <CircleCheck class="done-mark" :stroke-width="2" aria-hidden="true" />
-        <div class="done-copy">
-          <p class="done-title">Retour enregistré</p>
-          <p class="done-text">Merci, votre retour a bien été pris en compte.</p>
-        </div>
-      </div>
-    </template>
   </div>
+
+  <MiniToast :open="toastVisible" :message="toastMessage" />
 </template>
 
 <style scoped>
@@ -528,44 +523,6 @@ textarea {
   text-align: center;
   font-size: 14px;
   line-height: 1.55;
-}
-
-.feedback-done {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  border-radius: 20px;
-  padding: 16px 18px;
-  background:
-    linear-gradient(180deg, rgba(20, 83, 45, 0.24) 0%, rgba(7, 36, 22, 0.2) 100%);
-  border: 1px solid rgba(74, 222, 128, 0.14);
-}
-
-.done-mark {
-  width: 28px;
-  height: 28px;
-  flex: 0 0 auto;
-  color: #4ade80;
-  filter: drop-shadow(0 0 8px rgba(74, 222, 128, 0.2));
-}
-
-.done-copy {
-  display: grid;
-  gap: 4px;
-}
-
-.done-title {
-  margin: 0;
-  font-size: 15px;
-  font-weight: 800;
-  color: #dcfce7;
-}
-
-.done-text {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.55;
-  color: #bbf7d0;
 }
 
 @media (max-width: 768px) {

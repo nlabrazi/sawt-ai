@@ -4,6 +4,8 @@ import Copy from '@lucide/vue/dist/esm/icons/copy.mjs'
 import X from '@lucide/vue/dist/esm/icons/x.mjs'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
+import MiniToast from '~/components/MiniToast.vue'
+import { useMiniToast } from '~/composables/useMiniToast'
 import { useTajwid } from '~/composables/useTajwid'
 import type { RecognizeResponse } from '~/composables/useRecognition'
 import { parseTajwidToHtml } from '~/utils/parseTajwid'
@@ -21,6 +23,7 @@ const { loading, fetchTajwid, error } = useTajwid()
 const tajwidText = ref<string | null>(null)
 const sheetRef = ref<HTMLElement | null>(null)
 const closeButtonRef = ref<HTMLButtonElement | null>(null)
+const { message: toastMessage, visible: toastVisible, show: showToast } = useMiniToast()
 let previouslyFocusedElement: HTMLElement | null = null
 
 const focusableSelector = [
@@ -149,6 +152,7 @@ async function copyVerse() {
 
   try {
     await navigator.clipboard.writeText(payload)
+    showToast('Verset copié')
   } catch (copyError) {
     console.error(copyError)
   }
@@ -240,6 +244,8 @@ async function copyVerse() {
       </section>
     </div>
   </teleport>
+
+  <MiniToast :open="toastVisible" :message="toastMessage" />
 </template>
 
 <style scoped>
