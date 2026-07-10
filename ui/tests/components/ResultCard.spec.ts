@@ -1,4 +1,4 @@
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
 
 import ResultCard from '~/components/ResultCard.vue'
 
@@ -78,6 +78,41 @@ describe('ResultCard', () => {
 
     expect(wrapper.get('.copy-verse-btn').attributes('aria-label')).toBe('Copier le verset')
     expect(wrapper.find('.secondary-btn').exists()).toBe(false)
+  })
+
+  it('mounts verse details only after the user opens them', async () => {
+    const wrapper = mount(ResultCard, {
+      props: {
+        result: {
+          transcription_text: 'قل هو الله احد',
+          verse: {
+            sourate_id: 112,
+            sourate_name: 'الإخلاص',
+            transliteration: 'Al-Ikhlas',
+            start_verse: 1,
+            end_verse: 4,
+            text: 'قل هو الله احد',
+            similarity: 0.93,
+          },
+          imam_predictions: [],
+          imam_status: 'unknown',
+          imam_detection_enabled: true,
+        },
+      },
+      global: {
+        stubs: {
+          teleport: true,
+        },
+      },
+    })
+
+    expect(wrapper.find('.sheet-overlay').exists()).toBe(false)
+
+    await wrapper.get('.primary-btn').trigger('click')
+    await vi.dynamicImportSettled()
+    await flushPromises()
+
+    expect(wrapper.find('.sheet-overlay').exists()).toBe(true)
   })
 
   it('distinguishes an unavailable imam service from an unknown imam result', () => {

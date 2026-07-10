@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, defineAsyncComponent, ref } from 'vue'
 
-import VerseDetailsSheet from '~/components/VerseDetailsSheet.vue'
 import type { RecognizeResponse } from '~/composables/useRecognition'
 import { getVerseConfidenceUi } from '~/utils/verseConfidence'
+
+const loadVerseDetailsSheet = () => import('~/components/VerseDetailsSheet.vue')
+const VerseDetailsSheet = defineAsyncComponent(loadVerseDetailsSheet)
 
 const props = defineProps<{
   result: RecognizeResponse
@@ -157,7 +159,14 @@ async function copyVerse() {
         </p>
 
         <div class="action-row">
-          <button class="primary-btn" type="button" @click="isDetailsOpen = true">
+          <button
+            class="primary-btn"
+            type="button"
+            @pointerenter="loadVerseDetailsSheet"
+            @focus="loadVerseDetailsSheet"
+            @touchstart.passive="loadVerseDetailsSheet"
+            @click="isDetailsOpen = true"
+          >
             <svg class="action-icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z" />
               <circle cx="12" cy="12" r="3" />
@@ -168,6 +177,7 @@ async function copyVerse() {
       </section>
 
       <VerseDetailsSheet
+        v-if="isDetailsOpen"
         :open="isDetailsOpen"
         :result="result"
         @close="isDetailsOpen = false"
