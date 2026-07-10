@@ -1,9 +1,13 @@
 <script setup lang="ts">
+import { defineAsyncComponent, watch } from 'vue'
+
 import AppFooter from '~/components/AppFooter.vue'
 import RecognitionIdleScreen from '~/components/RecognitionIdleScreen.vue'
 import RecognitionLoadingScreen from '~/components/RecognitionLoadingScreen.vue'
-import RecognitionResultScreen from '~/components/RecognitionResultScreen.vue'
 import { useRecognitionFlow } from '~/composables/useRecognitionFlow'
+
+const loadRecognitionResultScreen = () => import('~/components/RecognitionResultScreen.vue')
+const RecognitionResultScreen = defineAsyncComponent(loadRecognitionResultScreen)
 
 const {
   screenState,
@@ -26,6 +30,12 @@ const {
   imamDetectionAvailable,
   imamDetectionMessage,
 } = useRecognitionFlow()
+
+watch(screenState, (state) => {
+  if (state === 'loading') {
+    void loadRecognitionResultScreen()
+  }
+})
 </script>
 
 <template>
