@@ -1,4 +1,4 @@
-export const TAJWID_READING_SURFACE_COLOR = '#F8FAFC'
+export const TAJWID_READING_SURFACE_COLOR = '#DCE3EA'
 
 export const TAJWID_SOURCE_CODES = [
   'h',
@@ -51,7 +51,7 @@ export const TAJWID_RULES = {
     labelArabic: 'همزة الوصل',
     description: 'Hamza non prononcée lorsqu’elle est précédée par un autre mot.',
     sourceColor: '#AAAAAA',
-    displayColor: '#64748B',
+    displayColor: '#475569',
   },
   s: {
     sourceCode: 's',
@@ -61,7 +61,7 @@ export const TAJWID_RULES = {
     labelArabic: 'حرف ساكن',
     description: 'Lettre ou voyelle écrite mais non prononcée.',
     sourceColor: '#AAAAAA',
-    displayColor: '#64748B',
+    displayColor: '#475569',
   },
   l: {
     sourceCode: 'l',
@@ -71,7 +71,7 @@ export const TAJWID_RULES = {
     labelArabic: 'لام شمسية',
     description: 'Lam assimilée par la lettre solaire qui la suit.',
     sourceColor: '#AAAAAA',
-    displayColor: '#64748B',
+    displayColor: '#475569',
   },
   n: {
     sourceCode: 'n',
@@ -81,7 +81,7 @@ export const TAJWID_RULES = {
     labelArabic: 'مد عادي',
     description: 'Prolongation normale de deux temps.',
     sourceColor: '#537FFF',
-    displayColor: '#3158B7',
+    displayColor: '#274B9F',
   },
   p: {
     sourceCode: 'p',
@@ -91,7 +91,7 @@ export const TAJWID_RULES = {
     labelArabic: 'مد جائز',
     description: 'Prolongation permise de deux, quatre ou six temps.',
     sourceColor: '#4050FF',
-    displayColor: '#3346C8',
+    displayColor: '#2D3EB0',
   },
   m: {
     sourceCode: 'm',
@@ -101,7 +101,7 @@ export const TAJWID_RULES = {
     labelArabic: 'مد واجب',
     description: 'Prolongation nécessaire de six temps.',
     sourceColor: '#000EBC',
-    displayColor: '#1D2D99',
+    displayColor: '#172278',
   },
   q: {
     sourceCode: 'q',
@@ -111,7 +111,7 @@ export const TAJWID_RULES = {
     labelArabic: 'قلقلة',
     description: 'Rebond sonore sur une lettre de qalqalah portant un soukoun.',
     sourceColor: '#DD0008',
-    displayColor: '#B4232C',
+    displayColor: '#96212A',
   },
   o: {
     sourceCode: 'o',
@@ -121,7 +121,7 @@ export const TAJWID_RULES = {
     labelArabic: 'مد لازم',
     description: 'Prolongation obligatoire de quatre à cinq temps.',
     sourceColor: '#2144C1',
-    displayColor: '#2645A8',
+    displayColor: '#1F398F',
   },
   c: {
     sourceCode: 'c',
@@ -131,7 +131,7 @@ export const TAJWID_RULES = {
     labelArabic: 'إخفاء شفوي',
     description: 'Dissimulation du mīm sākin devant le bāʾ.',
     sourceColor: '#D500B7',
-    displayColor: '#A3158D',
+    displayColor: '#861273',
   },
   f: {
     sourceCode: 'f',
@@ -141,7 +141,7 @@ export const TAJWID_RULES = {
     labelArabic: 'إخفاء',
     description: 'Dissimulation du nūn sākin ou du tanwīn devant certaines lettres.',
     sourceColor: '#9400A8',
-    displayColor: '#7E228A',
+    displayColor: '#681972',
   },
   w: {
     sourceCode: 'w',
@@ -151,7 +151,7 @@ export const TAJWID_RULES = {
     labelArabic: 'إدغام شفوي',
     description: 'Assimilation d’un mīm sākin dans le mīm qui le suit.',
     sourceColor: '#58B800',
-    displayColor: '#337A17',
+    displayColor: '#2B6714',
   },
   i: {
     sourceCode: 'i',
@@ -161,7 +161,7 @@ export const TAJWID_RULES = {
     labelArabic: 'إقلاب',
     description: 'Conversion du nūn sākin ou du tanwīn en mīm devant le bāʾ.',
     sourceColor: '#26BFFD',
-    displayColor: '#087A9B',
+    displayColor: '#096A84',
   },
   a: {
     sourceCode: 'a',
@@ -171,7 +171,7 @@ export const TAJWID_RULES = {
     labelArabic: 'إدغام بغنة',
     description: 'Assimilation accompagnée d’une résonance nasale.',
     sourceColor: '#169777',
-    displayColor: '#14705C',
+    displayColor: '#0F5F4E',
   },
   u: {
     sourceCode: 'u',
@@ -181,7 +181,7 @@ export const TAJWID_RULES = {
     labelArabic: 'إدغام بلا غنة',
     description: 'Assimilation sans résonance nasale.',
     sourceColor: '#169200',
-    displayColor: '#23731D',
+    displayColor: '#1B5F18',
   },
   d: {
     sourceCode: 'd',
@@ -191,7 +191,7 @@ export const TAJWID_RULES = {
     labelArabic: 'إدغام متجانسين',
     description: 'Assimilation de lettres partageant le même point d’articulation.',
     sourceColor: '#A1A1A1',
-    displayColor: '#64748B',
+    displayColor: '#475569',
   },
   b: {
     sourceCode: 'b',
@@ -201,7 +201,7 @@ export const TAJWID_RULES = {
     labelArabic: 'إدغام متقاربين',
     description: 'Assimilation de lettres dont les points d’articulation sont proches.',
     sourceColor: '#A1A1A1',
-    displayColor: '#64748B',
+    displayColor: '#475569',
   },
   g: {
     sourceCode: 'g',
@@ -211,7 +211,7 @@ export const TAJWID_RULES = {
     labelArabic: 'غنة',
     description: 'Résonance nasale tenue pendant deux temps.',
     sourceColor: '#FF7E1E',
-    displayColor: '#B94B0A',
+    displayColor: '#94400A',
   },
 } as const satisfies Record<TajwidSourceCode, TajwidRuleDefinition>
 

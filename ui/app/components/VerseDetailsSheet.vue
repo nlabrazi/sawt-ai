@@ -5,10 +5,12 @@ import X from '@lucide/vue/dist/esm/icons/x.mjs'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
 import MiniToast from '~/components/MiniToast.vue'
+import TajwidText from '~/components/TajwidText.vue'
 import { useMiniToast } from '~/composables/useMiniToast'
 import { useTajwid } from '~/composables/useTajwid'
 import type { RecognizeResponse } from '~/composables/useRecognition'
-import { parseTajwidToHtml } from '~/utils/parseTajwid'
+import { parseTajwidToTokens } from '~/utils/parseTajwid'
+import { TAJWID_READING_SURFACE_COLOR } from '~/utils/tajwidRules'
 
 const props = defineProps<{
   open: boolean
@@ -46,9 +48,8 @@ const verseLabel = computed(() => {
 
 const topImam = computed(() => props.result.imam_predictions?.[0] ?? null)
 const otherImams = computed(() => props.result.imam_predictions?.slice(1) ?? [])
-const tajwidHtml = computed(() => {
-  if (!tajwidText.value) return ''
-  return parseTajwidToHtml(tajwidText.value)
+const tajwidTokens = computed(() => {
+  return tajwidText.value ? parseTajwidToTokens(tajwidText.value) : []
 })
 
 watch(
@@ -165,6 +166,7 @@ async function copyVerse() {
       <section
         ref="sheetRef"
         class="sheet"
+        :style="{ '--tajwid-reading-surface': TAJWID_READING_SURFACE_COLOR }"
         role="dialog"
         aria-modal="true"
         aria-label="Passage détecté"
@@ -212,9 +214,9 @@ async function copyVerse() {
             </button>
           </section>
 
-          <section v-if="tajwidText" class="content-card">
+          <section v-if="tajwidText" class="content-card tajwid-reading-card">
             <p class="content-label">Affichage tajwid</p>
-            <p class="arabic-text tajwid-text" v-html="tajwidHtml" />
+            <TajwidText :tokens="tajwidTokens" />
           </section>
 
           <p v-if="error" class="error-text">
@@ -268,9 +270,10 @@ async function copyVerse() {
   display: flex;
   flex-direction: column;
   border-radius: 28px;
-  border: 1px solid rgba(148, 163, 184, 0.14);
-  background: linear-gradient(180deg, rgba(7, 16, 30, 0.98) 0%, rgba(6, 14, 27, 0.98) 100%);
-  box-shadow: 0 30px 100px rgba(2, 6, 23, 0.50);
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  background: var(--tajwid-reading-surface, #dce3ea);
+  color: #172033;
+  box-shadow: 0 30px 100px rgba(2, 6, 23, 0.5);
   overflow: hidden;
 }
 
@@ -280,7 +283,7 @@ async function copyVerse() {
   height: 5px;
   border-radius: 999px;
   margin-top: 12px;
-  background: rgba(148, 163, 184, 0.4);
+  background: #aab7c5;
 }
 
 .sheet-header {
@@ -289,7 +292,7 @@ async function copyVerse() {
   justify-content: space-between;
   gap: 18px;
   padding: 22px 22px 18px;
-  border-bottom: 1px solid rgba(148, 163, 184, 0.10);
+  border-bottom: 1px solid #b8c4d1;
 }
 
 .sheet-kicker,
@@ -298,7 +301,7 @@ async function copyVerse() {
   font-size: 13px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #93c5fd;
+  color: #274b9f;
 }
 
 .sheet-title {
@@ -306,11 +309,12 @@ async function copyVerse() {
   font-size: 34px;
   line-height: 1.1;
   font-family: 'Amiri', serif;
+  color: #111827;
 }
 
 .sheet-subtitle {
   margin: 8px 0 0;
-  color: #b8c6d8;
+  color: #526274;
 }
 
 .close-btn,
@@ -340,8 +344,19 @@ async function copyVerse() {
 .close-btn {
   width: 46px;
   padding: 0;
-  background: rgba(255, 255, 255, 0.08);
-  color: #e2e8f0;
+  border: 1px solid #b8c4d1;
+  background: #e8edf2;
+  color: #27364a;
+}
+
+.close-btn:hover {
+  background: #d2dae3;
+}
+
+.close-btn:focus-visible,
+.sheet-btn:focus-visible {
+  outline: 3px solid rgba(49, 88, 183, 0.24);
+  outline-offset: 2px;
 }
 
 .close-icon,
@@ -366,9 +381,9 @@ async function copyVerse() {
 
 .content-card,
 .action-card {
-  border: 1px solid rgba(148, 163, 184, 0.10);
-  border-radius: 24px;
-  background: rgba(8, 18, 34, 0.72);
+  border: 1px solid #b8c4d1;
+  border-radius: 8px;
+  background: #e8edf2;
   padding: 18px;
 }
 
@@ -385,7 +400,7 @@ async function copyVerse() {
   direction: rtl;
   text-align: right;
   font-family: 'Amiri', serif;
-  color: #f8fafc;
+  color: #172033;
 }
 
 .transcription-text {
@@ -393,19 +408,24 @@ async function copyVerse() {
   line-height: 1.8;
   direction: rtl;
   text-align: right;
-  color: #cbd5e1;
+  color: #3f4f62;
 }
 
 .action-card {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
+  background: #ced8e4;
 }
 
 .sheet-btn {
-  background: rgba(30, 64, 175, 0.22);
-  border: 1px solid rgba(96, 165, 250, 0.20);
-  color: #eff6ff;
+  background: #bccae3;
+  border: 1px solid #9fb0ce;
+  color: #1f3473;
+}
+
+.sheet-btn:hover:not(:disabled) {
+  background: #afc0dd;
 }
 
 .sheet-btn:disabled {
@@ -417,7 +437,7 @@ async function copyVerse() {
   margin: 14px 0 0;
   font-size: 20px;
   font-weight: 700;
-  color: #eff6ff;
+  color: #172033;
 }
 
 .imam-list {
@@ -433,43 +453,19 @@ async function copyVerse() {
   min-height: 36px;
   padding: 0 14px;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.05);
-  color: #dbeafe;
+  background: #cbd5e1;
+  color: #334155;
 }
 
 .error-text {
   margin: 18px 0 0;
-  color: #fecaca;
+  color: #8f1d1d;
 }
 
-:deep(.tajwid-fragment) {
-  color: #f8fafc;
-}
-
-:deep(.tajwid-rule-ghn),
-:deep(.tajwid-rule-g),
-:deep(.tajwid-rule-idgham),
-:deep(.tajwid-rule-i) {
-  color: #f59e0b;
-}
-
-:deep(.tajwid-rule-ikhf),
-:deep(.tajwid-rule-k) {
-  color: #22c55e;
-}
-
-:deep(.tajwid-rule-qlq),
-:deep(.tajwid-rule-q) {
-  color: #38bdf8;
-}
-
-:deep(.tajwid-rule-m),
-:deep(.tajwid-rule-p) {
-  color: #f472b6;
-}
-
-:deep(.tajwid-rule-n) {
-  color: #a78bfa;
+.tajwid-reading-card {
+  display: grid;
+  gap: 16px;
+  background: var(--tajwid-reading-surface, #dce3ea);
 }
 
 @media (max-width: 768px) {
