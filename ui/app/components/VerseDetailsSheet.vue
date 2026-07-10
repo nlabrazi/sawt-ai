@@ -184,7 +184,7 @@ async function copyVerse() {
             <p class="sheet-kicker">Passage détecté</p>
             <h2 class="sheet-title">{{ result.verse?.sourate_name }}</h2>
             <p class="sheet-subtitle">
-              {{ result.verse?.transliteration }} · {{ verseLabel }}
+              Sourate {{ result.verse?.transliteration }} · {{ verseLabel }}
             </p>
           </div>
 
@@ -200,9 +200,11 @@ async function copyVerse() {
         </div>
 
         <div class="sheet-scroll">
-          <section v-if="result.verse" class="content-card">
-            <p class="content-label">Texte coranique</p>
-            <p class="arabic-text">{{ result.verse.text }}</p>
+          <section v-if="result.transcription_text" class="content-card">
+            <p class="content-label">Transcription brute</p>
+            <p class="transcription-text">
+              {{ result.transcription_text }}
+            </p>
           </section>
 
           <section class="action-card">
@@ -244,13 +246,6 @@ async function copyVerse() {
           <p v-if="error" class="error-text">
             {{ error }}
           </p>
-
-          <section v-if="result.transcription_text" class="content-card">
-            <p class="content-label">Transcription brute</p>
-            <p class="transcription-text">
-              {{ result.transcription_text }}
-            </p>
-          </section>
 
           <section v-if="topImam || otherImams.length" class="content-card">
             <p class="content-label">Récitateur</p>
@@ -317,6 +312,11 @@ async function copyVerse() {
   border-bottom: 1px solid #b8c4d1;
 }
 
+.sheet-header > div {
+  flex: 1;
+  min-width: 0;
+}
+
 .sheet-kicker,
 .content-label {
   margin: 0;
@@ -330,12 +330,14 @@ async function copyVerse() {
   margin: 10px 0 0;
   font-size: 34px;
   line-height: 1.1;
+  text-align: center;
   font-family: 'Amiri Quran', 'Amiri', serif;
   color: #111827;
 }
 
 .sheet-subtitle {
   margin: 8px 0 0;
+  text-align: center;
   color: #526274;
 }
 
@@ -413,16 +415,6 @@ async function copyVerse() {
 .content-card + .action-card,
 .action-card + .content-card {
   margin-top: 18px;
-}
-
-.arabic-text {
-  margin: 16px 0 0;
-  font-size: 38px;
-  line-height: 2;
-  direction: rtl;
-  text-align: right;
-  font-family: 'Amiri Quran', 'Amiri', serif;
-  color: #172033;
 }
 
 .transcription-text {
@@ -552,14 +544,16 @@ async function copyVerse() {
 
 @media (max-width: 768px) {
   .sheet-overlay {
-    align-items: flex-end;
-    padding: 0;
+    align-items: flex-start;
+    padding: 4vh 0 0;
+    padding-top: 4dvh;
   }
 
   .sheet {
     width: 100%;
-    max-height: 92vh;
-    border-radius: 28px 28px 0 0;
+    max-height: 96vh;
+    max-height: 96dvh;
+    border-radius: 28px;
   }
 
   .sheet-header {
@@ -576,11 +570,6 @@ async function copyVerse() {
 
   .action-card {
     flex-direction: column;
-  }
-
-  .arabic-text {
-    font-size: 30px;
-    line-height: 1.9;
   }
 
   .tajwid-reading-card {
