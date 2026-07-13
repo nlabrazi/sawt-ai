@@ -18,12 +18,29 @@ export type UploadPolicy = {
   accepted_file_extensions: string[]
 }
 
+export type DetectionPolicy = {
+  min_accepted_similarity: number
+  min_probable_similarity: number
+  min_matched_word_count: number
+  min_score_margin: number
+  progressive_analysis_step_seconds: number
+}
+
 export type ApiHealthResponse = {
   status: 'ok'
   services: {
     imam_detection: ImamDetectionHealth
     upload_policy: UploadPolicy
+    detection_policy?: Partial<DetectionPolicy>
   }
+}
+
+const DEFAULT_DETECTION_POLICY: DetectionPolicy = {
+  min_accepted_similarity: 0.8,
+  min_probable_similarity: 0.6,
+  min_matched_word_count: 3,
+  min_score_margin: 0.08,
+  progressive_analysis_step_seconds: 5,
 }
 
 const imamDetection = ref<ImamDetectionHealth>({
@@ -32,6 +49,7 @@ const imamDetection = ref<ImamDetectionHealth>({
   message: null,
 })
 const uploadPolicy = ref<UploadPolicy | null>(null)
+const detectionPolicy = ref<DetectionPolicy>({ ...DEFAULT_DETECTION_POLICY })
 
 let activeHealthRequest: Promise<void> | null = null
 
@@ -43,6 +61,35 @@ function applyUploadPolicy(nextPolicy: UploadPolicy | null) {
   uploadPolicy.value = nextPolicy
 }
 
+function resolvePolicyNumber(value: unknown, fallback: number) {
+  return typeof value === 'number' && Number.isFinite(value) ? value : fallback
+}
+
+function applyDetectionPolicy(nextPolicy?: Partial<DetectionPolicy>) {
+  detectionPolicy.value = {
+    min_accepted_similarity: resolvePolicyNumber(
+      nextPolicy?.min_accepted_similarity,
+      DEFAULT_DETECTION_POLICY.min_accepted_similarity,
+    ),
+    min_probable_similarity: resolvePolicyNumber(
+      nextPolicy?.min_probable_similarity,
+      DEFAULT_DETECTION_POLICY.min_probable_similarity,
+    ),
+    min_matched_word_count: resolvePolicyNumber(
+      nextPolicy?.min_matched_word_count,
+      DEFAULT_DETECTION_POLICY.min_matched_word_count,
+    ),
+    min_score_margin: resolvePolicyNumber(
+      nextPolicy?.min_score_margin,
+      DEFAULT_DETECTION_POLICY.min_score_margin,
+    ),
+    progressive_analysis_step_seconds: resolvePolicyNumber(
+      nextPolicy?.progressive_analysis_step_seconds,
+      DEFAULT_DETECTION_POLICY.progressive_analysis_step_seconds,
+    ),
+  }
+}
+
 export function resetApiHealthState() {
   imamDetection.value = {
     available: true,
@@ -50,6 +97,7 @@ export function resetApiHealthState() {
     message: null,
   }
   uploadPolicy.value = null
+  detectionPolicy.value = { ...DEFAULT_DETECTION_POLICY }
   activeHealthRequest = null
 }
 
@@ -71,6 +119,7 @@ export function useApiHealth() {
 
         applyImamDetectionHealth(response.services.imam_detection)
         applyUploadPolicy(response.services.upload_policy)
+        applyDetectionPolicy(response.services.detection_policy)
       } catch (error) {
         console.error(error)
       } finally {
@@ -94,6 +143,7 @@ export function useApiHealth() {
     imamDetectionAvailable,
     imamDetectionMessage,
     uploadPolicy,
+    detectionPolicy,
     refreshHealth,
     markImamDetectionUnavailable,
   }

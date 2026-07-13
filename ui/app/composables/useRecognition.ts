@@ -6,6 +6,7 @@
 import { useRuntimeConfig } from '#app'
 import { $fetch } from 'ofetch'
 import { ref } from 'vue'
+import { useApiHealth } from '~/composables/useApiHealth'
 import { isVerseConfident } from '~/utils/verseConfidence'
 
 export type ImamPrediction = {
@@ -25,9 +26,27 @@ export type VerseMatch = {
   similarity: number
 }
 
+export type DetectionStatus = 'confident' | 'probable' | 'ambiguous' | 'insufficient'
+
+export type VerseDetectionMetadata = {
+  status: DetectionStatus
+  score: number | null
+  score_margin: number | null
+  matched_word_count: number
+  analyzed_duration_seconds: number | null
+  analysis_attempts: number
+  rejection_reason:
+    | 'no_match'
+    | 'score_too_low'
+    | 'transcription_too_short'
+    | 'ambiguous_match'
+    | null
+}
+
 export type RecognizeResponse = {
   transcription_text: string
   verse: VerseMatch | null
+  detection?: VerseDetectionMetadata
   imam_predictions: ImamPrediction[]
   imam_status: ImamStatus
   imam_detection_enabled: boolean
@@ -123,11 +142,13 @@ function resolveMatchingDelayMs(startedAt: number, targetMs: number) {
 
 export function useRecognition() {
   const apiBaseUrl = useRuntimeConfig().public.apiBaseUrl.replace(/\/$/, '')
+  const { detectionPolicy } = useApiHealth()
   const loading = ref(false)
   const error = ref<string | null>(null)
   const result = ref<RecognizeResponse | null>(null)
   const loadingStep = ref<LoadingStep>('transcribing')
   let activeController: AbortController | null = null
+  let probeController: AbortController | null = null
   let activeRequestId = 0
 
   function cancelActiveRequest() {
@@ -139,8 +160,53 @@ export function useRecognition() {
     return requestId === activeRequestId
   }
 
+  function buildRecognitionFormData(
+    file: File,
+    detectImam: boolean,
+    allowAmbiguousResult: boolean,
+  ) {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('detect_imam', String(detectImam))
+    formData.append('allow_ambiguous_result', String(allowAmbiguousResult))
+    return formData
+  }
+
+  async function probeAudio(file: File, detectImam = false) {
+    probeController?.abort()
+    const controller = new AbortController()
+    probeController = controller
+
+    try {
+      return await $fetch<RecognizeResponse>(`${apiBaseUrl}/recognize`, {
+        method: 'POST',
+        body: buildRecognitionFormData(file, detectImam, false),
+        signal: controller.signal,
+      })
+    } catch (err) {
+      if (!isAbortError(err)) {
+        console.error(err)
+      }
+
+      return null
+    } finally {
+      if (probeController === controller) {
+        probeController = null
+      }
+    }
+  }
+
+  function acceptResult(response: RecognizeResponse) {
+    probeController?.abort()
+    probeController = null
+    error.value = response.verse ? null : 'Aucun verset fiable trouvé pour cet audio.'
+    result.value = response
+  }
+
   async function recognizeAudio(file: File, detectImam = false) {
     cancelActiveRequest()
+    probeController?.abort()
+    probeController = null
     const controller = new AbortController()
     const requestId = activeRequestId + 1
 
@@ -154,18 +220,19 @@ export function useRecognition() {
     const startedAt = Date.now()
 
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('detect_imam', String(detectImam))
-
       const response = await $fetch<RecognizeResponse>(`${apiBaseUrl}/recognize`, {
         method: 'POST',
-        body: formData,
+        body: buildRecognitionFormData(file, detectImam, true),
         signal: controller.signal,
       })
 
       const hasVerse = !!response.verse
-      const isConfident = isVerseConfident(response.verse?.similarity ?? 0)
+      const isConfident = response.detection
+        ? response.detection.status === 'confident'
+        : isVerseConfident(
+            response.verse?.similarity ?? 0,
+            detectionPolicy.value.min_accepted_similarity,
+          )
       const loadingTargetMs = resolveLoadingTargetMs(hasVerse && isConfident)
       const transcribingDelayMs = resolveTranscribingDelayMs(startedAt, loadingTargetMs)
 
@@ -206,6 +273,8 @@ export function useRecognition() {
   function reset() {
     activeRequestId += 1
     cancelActiveRequest()
+    probeController?.abort()
+    probeController = null
     loading.value = false
     error.value = null
     result.value = null
@@ -218,6 +287,8 @@ export function useRecognition() {
     error,
     result,
     recognizeAudio,
+    probeAudio,
+    acceptResult,
     reset,
   }
 }

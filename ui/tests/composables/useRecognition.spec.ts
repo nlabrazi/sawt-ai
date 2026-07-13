@@ -22,6 +22,15 @@ const successfulResponse = {
     text: 'قل هو الله احد',
     similarity: 0.92,
   },
+  detection: {
+    status: 'confident',
+    score: 0.92,
+    score_margin: 0.14,
+    matched_word_count: 4,
+    analyzed_duration_seconds: 10,
+    analysis_attempts: 2,
+    rejection_reason: null,
+  },
   imam_predictions: [],
   imam_status: 'unknown',
   imam_detection_enabled: true,
@@ -66,6 +75,30 @@ describe('useRecognition', () => {
     const requestBody = requestOptions?.body as FormData
 
     expect(requestBody.get('detect_imam')).toBe('false')
+    expect(requestBody.get('allow_ambiguous_result')).toBe('true')
+  })
+
+  it('probes audio without changing the main loading state', async () => {
+    vi.mocked($fetch).mockResolvedValueOnce(successfulResponse)
+
+    const { loading, result, probeAudio, acceptResult } = useRecognition()
+    const audioFile = new File(['audio'], 'snapshot.wav', { type: 'audio/wav' })
+
+    const response = await probeAudio(audioFile)
+
+    const requestOptions = vi.mocked($fetch).mock.calls[0]?.[1]
+    const requestBody = requestOptions?.body as FormData
+
+    expect(loading.value).toBe(false)
+    expect(result.value).toBeNull()
+    expect(response?.detection?.status).toBe('confident')
+    expect(requestBody.get('allow_ambiguous_result')).toBe('false')
+
+    if (response) {
+      acceptResult(response)
+    }
+
+    expect(result.value?.verse?.sourate_id).toBe(112)
   })
 
   it('keeps a fast confident response close to the loading target duration', async () => {

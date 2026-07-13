@@ -1,0 +1,35 @@
+{
+  "description": "Corpus textuel initial pour mesurer le matching indépendamment de Whisper.",
+  "cases": [
+    {
+      "id": "ikhlas_exact_verses_1_2",
+      "transcription": "قل هو الله احد الله الصمد",
+      "expected_verse": { "sourate_id": 112, "start_verse": 1, "end_verse": 2 }
+    },
+    {
+      "id": "ikhlas_noisy_transcription",
+      "transcription": "قل هو لله احد الله سمد",
+      "expected_verse": { "sourate_id": 112, "start_verse": 1, "end_verse": 2 }
+    },
+    {
+      "id": "falaq_exact_verses_1_2",
+      "transcription": "قل اعوذ برب الفلق من شر ما خلق",
+      "expected_verse": { "sourate_id": 113, "start_verse": 1, "end_verse": 2 }
+    },
+    {
+      "id": "nas_exact_verses_1_2",
+      "transcription": "قل اعوذ برب الناس ملك الناس",
+      "expected_verse": { "sourate_id": 114, "start_verse": 1, "end_verse": 2 }
+    },
+    {
+      "id": "too_short_common_word",
+      "transcription": "قل",
+      "expected_verse": null
+    },
+    {
+      "id": "unrelated_arabic_sentence",
+      "transcription": "هذا نص عربي عادي لا ينتمي الي التلاوه",
+      "expected_verse": null
+    }
+  ]
+}

@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.api_logger import log_api_error
+from app.core.detection_policy import build_detection_policy
 from app.core.upload_policy import build_upload_policy
 from app.routes.recognize import router as recognize_router
 from app.routes.tajwid import router as tajwid_router
@@ -129,5 +130,6 @@ def health():
         "services": {
             "imam_detection": get_imam_service_health(),
             "upload_policy": build_upload_policy(),
+            "detection_policy": build_detection_policy(),
         },
     }

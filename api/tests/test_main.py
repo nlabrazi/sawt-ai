@@ -1,6 +1,7 @@
 import asyncio
 
 import app.main as main
+from app.core.detection_policy import build_detection_policy
 from app.core.upload_policy import build_upload_policy
 
 from app.main import app, build_cors_options, parse_allowed_origins
@@ -36,6 +37,7 @@ def test_openapi_documents_recognize_response_contract():
 
     assert recognize_response == {"$ref": "#/components/schemas/RecognizeResponse"}
     assert "imam_detection_enabled" in schema["components"]["schemas"]["RecognizeResponse"]["required"]
+    assert "detection" in schema["components"]["schemas"]["RecognizeResponse"]["required"]
 
 
 def test_health_reports_imam_detection_service_status(monkeypatch):
@@ -58,6 +60,7 @@ def test_health_reports_imam_detection_service_status(monkeypatch):
                 "message": "La reconnaissance de l’imam est temporairement indisponible.",
             },
             "upload_policy": build_upload_policy(),
+            "detection_policy": build_detection_policy(),
         },
     }
 

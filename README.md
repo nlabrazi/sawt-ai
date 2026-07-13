@@ -142,6 +142,17 @@ cd ui
 npm test
 ```
 
+Verse detection quality benchmark (text matching only):
+
+```bash
+api/.venv/bin/python api/scripts/evaluate_verse_detection.py
+```
+
+The versioned corpus is stored in `api/evaluation/verse_detection_corpus.json`.
+Add transcriptions observed from real audio to this file before tuning detection
+thresholds. This benchmark measures exact passage accuracy, precision, recall,
+false positives, and matching latency; it does not measure Whisper accuracy.
+
 The current test suite covers:
 
 - FastAPI routes for `recognize`, `feedback`, and `tajwid`
