@@ -39,6 +39,8 @@ class VerseDetectionMetadata(BaseModel):
     score_margin: float | None
     matched_word_count: int
     rejection_reason: RejectionReason | None
+    analyzed_duration_seconds: float | None
+    analysis_attempts: int
 
 
 class RecognizeResponse(BaseModel):

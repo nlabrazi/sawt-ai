@@ -40,10 +40,11 @@ def test_recognize_runs_pipeline_in_threadpool_and_cleans_temp_file(monkeypatch)
         "threadpool_called": False,
     }
 
-    def fake_pipeline(audio_path: str, detect_imam: bool):
+    def fake_pipeline(audio_path: str, detect_imam: bool, audio_duration_seconds: float):
         path = Path(audio_path)
         captured["path"] = path
         captured["detect_imam"] = detect_imam
+        captured["audio_duration_seconds"] = audio_duration_seconds
         captured["bytes"] = path.read_bytes()
 
         return {
@@ -55,6 +56,8 @@ def test_recognize_runs_pipeline_in_threadpool_and_cleans_temp_file(monkeypatch)
                 "score_margin": None,
                 "matched_word_count": 0,
                 "rejection_reason": "no_match",
+                "analyzed_duration_seconds": audio_duration_seconds,
+                "analysis_attempts": 3,
             },
             "imam_predictions": [],
             "imam_status": "disabled",
@@ -80,6 +83,7 @@ def test_recognize_runs_pipeline_in_threadpool_and_cleans_temp_file(monkeypatch)
     assert response["imam_detection_enabled"] is False
     assert captured["threadpool_called"] is True
     assert captured["detect_imam"] is False
+    assert captured["audio_duration_seconds"] == 12.5
     assert captured["bytes"] == build_wav_like_audio()
     assert captured["path"].suffix == ".wav"
     assert not captured["path"].exists()

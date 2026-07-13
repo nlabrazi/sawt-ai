@@ -16,8 +16,13 @@ VAD_MIN_SILENCE_DURATION_MS = 500
 VAD_SPEECH_PAD_MS = 400
 
 
-def transcribe_audio(audio_path: str):
+def transcribe_audio(audio_path: str, clip_end_seconds: float | None = None):
     model = get_whisper_model()
+    clip_options = (
+        {"clip_timestamps": [0, clip_end_seconds]}
+        if clip_end_seconds is not None
+        else {}
+    )
 
     segments, _info = model.transcribe(
         audio_path,
@@ -31,6 +36,7 @@ def transcribe_audio(audio_path: str):
             "min_silence_duration_ms": VAD_MIN_SILENCE_DURATION_MS,
             "speech_pad_ms": VAD_SPEECH_PAD_MS,
         },
+        **clip_options,
     )
 
     result = [

@@ -33,6 +33,8 @@ export type VerseDetectionMetadata = {
   score: number | null
   score_margin: number | null
   matched_word_count: number
+  analyzed_duration_seconds: number | null
+  analysis_attempts: number
   rejection_reason:
     | 'no_match'
     | 'score_too_low'

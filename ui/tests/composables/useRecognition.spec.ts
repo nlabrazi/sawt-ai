@@ -27,6 +27,8 @@ const successfulResponse = {
     score: 0.92,
     score_margin: 0.14,
     matched_word_count: 4,
+    analyzed_duration_seconds: 10,
+    analysis_attempts: 2,
     rejection_reason: null,
   },
   imam_predictions: [],

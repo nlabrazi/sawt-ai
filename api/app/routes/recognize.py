@@ -173,6 +173,7 @@ async def recognize(
             run_inference_pipeline,
             str(temp_file),
             detect_imam,
+            audio_duration_seconds,
         )
     finally:
         await file.close()

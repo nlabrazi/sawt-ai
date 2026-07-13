@@ -50,3 +50,15 @@ def test_transcribe_audio_discards_empty_segments(monkeypatch):
     result = transcription_service.transcribe_audio("/tmp/recitation.wav")
 
     assert result == [{"text": "قل اعوذ برب الفلق"}]
+
+
+def test_transcribe_audio_limits_analysis_to_requested_clip(monkeypatch):
+    model = FakeWhisperModel([SimpleNamespace(text="قل هو الله")])
+    monkeypatch.setattr(transcription_service, "get_whisper_model", lambda: model)
+
+    transcription_service.transcribe_audio(
+        "/tmp/recitation.wav",
+        clip_end_seconds=5,
+    )
+
+    assert model.calls[0][1]["clip_timestamps"] == [0, 5]
