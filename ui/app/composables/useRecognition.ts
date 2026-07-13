@@ -148,6 +148,7 @@ export function useRecognition() {
   const result = ref<RecognizeResponse | null>(null)
   const loadingStep = ref<LoadingStep>('transcribing')
   let activeController: AbortController | null = null
+  let probeController: AbortController | null = null
   let activeRequestId = 0
 
   function cancelActiveRequest() {
@@ -159,8 +160,48 @@ export function useRecognition() {
     return requestId === activeRequestId
   }
 
+  function buildRecognitionFormData(file: File, detectImam: boolean) {
+    const formData = new FormData()
+    formData.append('file', file)
+    formData.append('detect_imam', String(detectImam))
+    return formData
+  }
+
+  async function probeAudio(file: File, detectImam = false) {
+    probeController?.abort()
+    const controller = new AbortController()
+    probeController = controller
+
+    try {
+      return await $fetch<RecognizeResponse>(`${apiBaseUrl}/recognize`, {
+        method: 'POST',
+        body: buildRecognitionFormData(file, detectImam),
+        signal: controller.signal,
+      })
+    } catch (err) {
+      if (!isAbortError(err)) {
+        console.error(err)
+      }
+
+      return null
+    } finally {
+      if (probeController === controller) {
+        probeController = null
+      }
+    }
+  }
+
+  function acceptResult(response: RecognizeResponse) {
+    probeController?.abort()
+    probeController = null
+    error.value = response.verse ? null : 'Aucun verset fiable trouvé pour cet audio.'
+    result.value = response
+  }
+
   async function recognizeAudio(file: File, detectImam = false) {
     cancelActiveRequest()
+    probeController?.abort()
+    probeController = null
     const controller = new AbortController()
     const requestId = activeRequestId + 1
 
@@ -174,13 +215,9 @@ export function useRecognition() {
     const startedAt = Date.now()
 
     try {
-      const formData = new FormData()
-      formData.append('file', file)
-      formData.append('detect_imam', String(detectImam))
-
       const response = await $fetch<RecognizeResponse>(`${apiBaseUrl}/recognize`, {
         method: 'POST',
-        body: formData,
+        body: buildRecognitionFormData(file, detectImam),
         signal: controller.signal,
       })
 
@@ -231,6 +268,8 @@ export function useRecognition() {
   function reset() {
     activeRequestId += 1
     cancelActiveRequest()
+    probeController?.abort()
+    probeController = null
     loading.value = false
     error.value = null
     result.value = null
@@ -243,6 +282,8 @@ export function useRecognition() {
     error,
     result,
     recognizeAudio,
+    probeAudio,
+    acceptResult,
     reset,
   }
 }

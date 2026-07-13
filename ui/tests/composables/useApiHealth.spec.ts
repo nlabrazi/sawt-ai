@@ -31,6 +31,7 @@ describe('useApiHealth', () => {
           min_probable_similarity: 0.65,
           min_matched_word_count: 4,
           min_score_margin: 0.1,
+          progressive_analysis_step_seconds: 4,
         },
       },
     })
@@ -63,6 +64,7 @@ describe('useApiHealth', () => {
       min_probable_similarity: 0.65,
       min_matched_word_count: 4,
       min_score_margin: 0.1,
+      progressive_analysis_step_seconds: 4,
     })
   })
 
@@ -103,6 +105,7 @@ describe('useApiHealth', () => {
       min_probable_similarity: 0.6,
       min_matched_word_count: 3,
       min_score_margin: 0.08,
+      progressive_analysis_step_seconds: 5,
     })
   })
 })

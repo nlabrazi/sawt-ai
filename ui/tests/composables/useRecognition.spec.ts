@@ -77,6 +77,25 @@ describe('useRecognition', () => {
     expect(requestBody.get('detect_imam')).toBe('false')
   })
 
+  it('probes audio without changing the main loading state', async () => {
+    vi.mocked($fetch).mockResolvedValueOnce(successfulResponse)
+
+    const { loading, result, probeAudio, acceptResult } = useRecognition()
+    const audioFile = new File(['audio'], 'snapshot.wav', { type: 'audio/wav' })
+
+    const response = await probeAudio(audioFile)
+
+    expect(loading.value).toBe(false)
+    expect(result.value).toBeNull()
+    expect(response?.detection?.status).toBe('confident')
+
+    if (response) {
+      acceptResult(response)
+    }
+
+    expect(result.value?.verse?.sourate_id).toBe(112)
+  })
+
   it('keeps a fast confident response close to the loading target duration', async () => {
     vi.useFakeTimers()
     vi.mocked($fetch).mockResolvedValueOnce(successfulResponse)

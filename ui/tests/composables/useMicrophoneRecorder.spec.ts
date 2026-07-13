@@ -17,6 +17,14 @@ class FakeMediaRecorder {
 
   start() {}
 
+  requestData() {
+    window.setTimeout(() => {
+      this.ondataavailable?.({
+        data: new Blob(['snapshot'], { type: this.mimeType }),
+      })
+    }, 0)
+  }
+
   stop() {
     window.setTimeout(() => {
       this.ondataavailable?.({
@@ -188,5 +196,29 @@ describe('useMicrophoneRecorder', () => {
     expect(recordedFile?.type).toBe('audio/webm;codecs=opus')
     expect(warnSpy).toHaveBeenCalledTimes(1)
     expect(stopTrack).toHaveBeenCalledTimes(1)
+  })
+
+  it('creates cumulative snapshots without stopping the recorder', async () => {
+    vi.useFakeTimers()
+
+    const { stopTrack } = setupRecorderEnvironment()
+    const recorder = useMicrophoneRecorder(ref(90))
+
+    await recorder.startRecording()
+
+    const firstSnapshotPromise = recorder.snapshotRecording()
+    await vi.advanceTimersByTimeAsync(0)
+    const firstSnapshot = await firstSnapshotPromise
+
+    const secondSnapshotPromise = recorder.snapshotRecording()
+    await vi.advanceTimersByTimeAsync(0)
+    const secondSnapshot = await secondSnapshotPromise
+
+    expect(firstSnapshot).toBeInstanceOf(File)
+    expect(firstSnapshot?.type).toBe('audio/wav')
+    expect(secondSnapshot).toBeInstanceOf(File)
+    expect((secondSnapshot?.size ?? 0) >= (firstSnapshot?.size ?? 0)).toBe(true)
+    expect(recorder.isRecording.value).toBe(true)
+    expect(stopTrack).not.toHaveBeenCalled()
   })
 })

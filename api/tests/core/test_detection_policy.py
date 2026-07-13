@@ -7,4 +7,5 @@ def test_build_detection_policy_exposes_shared_acceptance_thresholds():
         "min_probable_similarity": 0.6,
         "min_matched_word_count": 3,
         "min_score_margin": 0.08,
+        "progressive_analysis_step_seconds": 5,
     }

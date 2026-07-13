@@ -1,4 +1,4 @@
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useApiHealth } from '~/composables/useApiHealth'
 import { useRecognition } from '~/composables/useRecognition'
 import { useMicrophoneRecorder } from '~/composables/useMicrophoneRecorder'
@@ -50,6 +50,7 @@ export function useRecognitionFlow() {
     imamDetectionAvailable,
     imamDetectionMessage,
     uploadPolicy,
+    detectionPolicy,
     refreshHealth,
     markImamDetectionUnavailable,
   } = useApiHealth()
@@ -90,7 +91,8 @@ export function useRecognitionFlow() {
     return `Formats : ${formatsLabel} · max ${maxFileSizeLabel.value} Mo · max ${maxAudioDurationSeconds.value} sec`
   })
 
-  const { loading, loadingStep, error, result, recognizeAudio, reset } = useRecognition()
+  const { loading, loadingStep, error, result, recognizeAudio, probeAudio, acceptResult, reset } =
+    useRecognition()
 
   const {
     isRecording,
@@ -101,11 +103,65 @@ export function useRecognitionFlow() {
     audioLevel,
     startRecording,
     stopRecording,
+    snapshotRecording,
     cleanup,
   } = useMicrophoneRecorder(maxAudioDurationSeconds)
 
   const uploadError = ref<string | null>(null)
   const detectImam = ref(false)
+  let microphoneProbeTimerId: number | null = null
+  let microphoneProbeInFlight = false
+  let recordingSessionId = 0
+
+  function stopMicrophoneProbeLoop() {
+    if (microphoneProbeTimerId !== null) {
+      window.clearInterval(microphoneProbeTimerId)
+      microphoneProbeTimerId = null
+    }
+  }
+
+  async function runMicrophoneProbe(sessionId: number) {
+    if (microphoneProbeInFlight || sessionId !== recordingSessionId || !isRecording.value) {
+      return
+    }
+
+    microphoneProbeInFlight = true
+
+    try {
+      const snapshot = await snapshotRecording()
+
+      if (!snapshot || sessionId !== recordingSessionId || !isRecording.value) {
+        return
+      }
+
+      const response = await probeAudio(snapshot, detectImam.value)
+
+      if (
+        !response ||
+        response.detection?.status !== 'confident' ||
+        sessionId !== recordingSessionId ||
+        !isRecording.value
+      ) {
+        return
+      }
+
+      stopMicrophoneProbeLoop()
+      recordingSessionId += 1
+      await stopRecording()
+      acceptResult(response)
+    } finally {
+      microphoneProbeInFlight = false
+    }
+  }
+
+  function startMicrophoneProbeLoop(sessionId: number) {
+    stopMicrophoneProbeLoop()
+    const intervalMs = Math.max(1, detectionPolicy.value.progressive_analysis_step_seconds) * 1000
+
+    microphoneProbeTimerId = window.setInterval(() => {
+      void runMicrophoneProbe(sessionId)
+    }, intervalMs)
+  }
 
   const screenState = computed<RecognitionScreenState>(() => {
     if (loading.value) return 'loading'
@@ -177,10 +233,18 @@ export function useRecognitionFlow() {
     uploadError.value = null
 
     if (!isRecording.value) {
+      recordingSessionId += 1
+      const sessionId = recordingSessionId
       await startRecording()
+
+      if (isRecording.value && sessionId === recordingSessionId) {
+        startMicrophoneProbeLoop(sessionId)
+      }
       return
     }
 
+    stopMicrophoneProbeLoop()
+    recordingSessionId += 1
     const recordedFile = await stopRecording()
 
     if (!recordedFile) {
@@ -194,6 +258,8 @@ export function useRecognitionFlow() {
   watch(maxDurationReached, async (reached) => {
     if (!reached || loading.value) return
 
+    stopMicrophoneProbeLoop()
+    recordingSessionId += 1
     const recordedFile = await stopRecording()
 
     if (!recordedFile) {
@@ -205,11 +271,18 @@ export function useRecognitionFlow() {
   })
 
   function resetApp() {
+    stopMicrophoneProbeLoop()
+    recordingSessionId += 1
     uploadError.value = null
     clearTajwidCache()
     cleanup()
     reset()
   }
+
+  onBeforeUnmount(() => {
+    stopMicrophoneProbeLoop()
+    recordingSessionId += 1
+  })
 
   return {
     loading,

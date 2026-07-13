@@ -23,6 +23,7 @@ export type DetectionPolicy = {
   min_probable_similarity: number
   min_matched_word_count: number
   min_score_margin: number
+  progressive_analysis_step_seconds: number
 }
 
 export type ApiHealthResponse = {
@@ -39,6 +40,7 @@ const DEFAULT_DETECTION_POLICY: DetectionPolicy = {
   min_probable_similarity: 0.6,
   min_matched_word_count: 3,
   min_score_margin: 0.08,
+  progressive_analysis_step_seconds: 5,
 }
 
 const imamDetection = ref<ImamDetectionHealth>({
@@ -80,6 +82,10 @@ function applyDetectionPolicy(nextPolicy?: Partial<DetectionPolicy>) {
     min_score_margin: resolvePolicyNumber(
       nextPolicy?.min_score_margin,
       DEFAULT_DETECTION_POLICY.min_score_margin,
+    ),
+    progressive_analysis_step_seconds: resolvePolicyNumber(
+      nextPolicy?.progressive_analysis_step_seconds,
+      DEFAULT_DETECTION_POLICY.progressive_analysis_step_seconds,
     ),
   }
 }

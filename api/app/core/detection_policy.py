@@ -11,4 +11,5 @@ def build_detection_policy() -> dict[str, float | int]:
         "min_probable_similarity": MIN_PROBABLE_SIMILARITY,
         "min_matched_word_count": MIN_MATCHED_WORD_COUNT,
         "min_score_margin": MIN_SCORE_MARGIN,
+        "progressive_analysis_step_seconds": PROGRESSIVE_ANALYSIS_STEP_SECONDS,
     }

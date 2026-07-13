@@ -121,6 +121,8 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
   let sourceNode: MediaStreamAudioSourceNode | null = null
   let animationFrameId: number | null = null
   let stopPromise: Promise<File | null> | null = null
+  let snapshotPromise: Promise<File | null> | null = null
+  let resolveSnapshotData: (() => void) | null = null
 
   function getSupportedMimeType() {
     const candidates = [
@@ -227,6 +229,23 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
     audioLevel.value = 0
   }
 
+  async function createRecordedFile(blob: Blob, filenameBase: string) {
+    const mimeType = blob.type || 'audio/webm'
+
+    try {
+      return await convertRecordedBlobToWavFile(blob, `${filenameBase}.wav`)
+    } catch (error) {
+      console.warn(
+        'Unable to convert recorded audio to WAV, falling back to the original blob.',
+        error,
+      )
+
+      return new File([blob], `${filenameBase}.${resolveRecordedExtension(mimeType)}`, {
+        type: mimeType,
+      })
+    }
+  }
+
   async function startRecording() {
     micError.value = null
     resetRecordingState()
@@ -263,6 +282,8 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
         if (event.data.size > 0) {
           audioChunks.push(event.data)
         }
+
+        resolveSnapshotData?.()
       }
 
       mediaRecorder.start()
@@ -274,6 +295,35 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
       micError.value = 'Impossible d’accéder au microphone.'
       cleanup()
     }
+  }
+
+  function snapshotRecording(): Promise<File | null> {
+    if (snapshotPromise) return snapshotPromise
+    if (!mediaRecorder || !isRecording.value) return Promise.resolve(null)
+
+    const recorder = mediaRecorder
+
+    snapshotPromise = new Promise<File | null>((resolve) => {
+      resolveSnapshotData = () => {
+        resolveSnapshotData = null
+        const mimeType = recorder.mimeType || 'audio/webm'
+        const blob = new Blob(audioChunks, { type: mimeType })
+
+        void createRecordedFile(blob, `recording-snapshot-${Date.now()}`).then(resolve)
+      }
+
+      try {
+        recorder.requestData()
+      } catch (error) {
+        console.warn('Unable to create a recording snapshot.', error)
+        resolveSnapshotData = null
+        resolve(null)
+      }
+    }).finally(() => {
+      snapshotPromise = null
+    })
+
+    return snapshotPromise
   }
 
   function stopRecording(): Promise<File | null> {
@@ -290,22 +340,7 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
         const mimeType = recorderToStop.mimeType || 'audio/webm'
         const blob = new Blob(audioChunks, { type: mimeType })
         const filenameBase = `recording-${Date.now()}`
-        let file: File
-
-        try {
-          // Uniformise l'audio micro en WAV pour éviter les variations de conteneur
-          // entre navigateurs/périphériques qui finissent en 415 côté API.
-          file = await convertRecordedBlobToWavFile(blob, `${filenameBase}.wav`)
-        } catch (error) {
-          console.warn(
-            'Unable to convert recorded audio to WAV, falling back to the original blob.',
-            error,
-          )
-
-          file = new File([blob], `${filenameBase}.${resolveRecordedExtension(mimeType)}`, {
-            type: mimeType,
-          })
-        }
+        const file = await createRecordedFile(blob, filenameBase)
 
         cleanup()
         stopPromise = null
@@ -345,6 +380,7 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
     audioLevel,
     startRecording,
     stopRecording,
+    snapshotRecording,
     cleanup,
   }
 }

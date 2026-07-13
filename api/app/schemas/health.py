@@ -21,6 +21,7 @@ class DetectionPolicy(BaseModel):
     min_probable_similarity: float
     min_matched_word_count: int
     min_score_margin: float
+    progressive_analysis_step_seconds: int
 
 
 class HealthServices(BaseModel):
