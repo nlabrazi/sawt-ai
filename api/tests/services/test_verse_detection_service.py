@@ -189,6 +189,61 @@ def test_compute_similarity_score_combines_local_and_token_scores():
     assert fuzz.ratio(transcription, candidate) < score < 100
 
 
+def test_build_transcription_windows_keeps_full_text_and_overlaps_chunks():
+    transcription = " ".join(f"word{index}" for index in range(10))
+
+    windows = verse_detection_service.build_transcription_windows(transcription)
+
+    assert windows == (
+        transcription,
+        "word0 word1 word2 word3",
+        "word2 word3 word4 word5",
+        "word4 word5 word6 word7",
+        "word6 word7 word8 word9",
+        "word0 word1 word2 word3 word4 word5 word6 word7",
+        "word2 word3 word4 word5 word6 word7 word8 word9",
+    )
+
+
+def test_build_transcription_windows_limits_each_size_across_long_transcription():
+    transcription = " ".join(f"word{index}" for index in range(100))
+
+    windows = verse_detection_service.build_transcription_windows(transcription)
+    four_word_windows = [window for window in windows if len(window.split()) == 4]
+
+    assert len(four_word_windows) == verse_detection_service.MAX_WINDOWS_PER_SIZE
+    assert four_word_windows[0] == "word0 word1 word2 word3"
+    assert four_word_windows[-1] == "word96 word97 word98 word99"
+
+
+def test_detect_versets_uses_best_sliding_window(monkeypatch):
+    candidates = (
+        QuranVerseCandidate(
+            sourate_id=112,
+            sourate_name="الإخلاص",
+            transliteration="Al-Ikhlas",
+            start_verse=1,
+            end_verse=1,
+            normalized_text="قل هو الله احد",
+        ),
+    )
+    monkeypatch.setattr(
+        verse_detection_service,
+        "get_quran_verse_candidates",
+        lambda: candidates,
+    )
+
+    match = verse_detection_service.detect_versets([
+        {"text": "كلمات زائده في البدايه"},
+        {"text": "قل هو الله احد"},
+        {"text": "كلمات زائده في النهايه"},
+    ])
+
+    assert match is not None
+    assert match["sourate_id"] == 112
+    assert match["similarity"] == 1
+
+
 def test_detect_versets_returns_normalized_combined_score(monkeypatch):
     candidates = (
         QuranVerseCandidate(
