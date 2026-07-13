@@ -2,6 +2,7 @@
 import Eye from '@lucide/vue/dist/esm/icons/eye.mjs'
 import { computed, defineAsyncComponent, ref } from 'vue'
 
+import { useApiHealth } from '~/composables/useApiHealth'
 import type { RecognizeResponse } from '~/composables/useRecognition'
 import { getVerseConfidenceUi } from '~/utils/verseConfidence'
 
@@ -11,6 +12,7 @@ const VerseDetailsSheet = defineAsyncComponent(loadVerseDetailsSheet)
 const props = defineProps<{
   result: RecognizeResponse
 }>()
+const { detectionPolicy } = useApiHealth()
 
 const isDetailsOpen = ref(false)
 
@@ -25,7 +27,11 @@ const verseLabel = computed(() => {
 
 const topImam = computed(() => props.result.imam_predictions?.[0] ?? null)
 const confidenceUi = computed(() => {
-  return getVerseConfidenceUi(props.result.verse?.similarity ?? 0)
+  return getVerseConfidenceUi(
+    props.result.verse?.similarity ?? 0,
+    detectionPolicy.value.min_accepted_similarity,
+    detectionPolicy.value.min_probable_similarity,
+  )
 })
 const confidenceScoreLabel = computed(() => {
   return `${formatSimilarityPercent(props.result.verse?.similarity ?? 0)}%`

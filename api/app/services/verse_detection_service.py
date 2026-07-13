@@ -7,6 +7,11 @@ from dataclasses import dataclass
 
 from rapidfuzz import fuzz, process
 
+from app.core.detection_policy import (
+    MIN_ACCEPTED_SIMILARITY,
+    MIN_MATCHED_WORD_COUNT,
+    MIN_SCORE_MARGIN,
+)
 from app.core.model_loader import QuranVerseCandidate, get_quran_verse_candidates
 from app.utils.normalize_arabic import normalize_arabic
 
@@ -19,9 +24,6 @@ MAX_WINDOWS_PER_SIZE = 6
 MATCH_CANDIDATE_LIMIT = 20
 RANKED_CANDIDATE_LIMIT = 2
 AMBIGUITY_CANDIDATE_LIMIT = 10
-MIN_ACCEPTED_SCORE_PERCENT = 80
-MIN_MATCHED_WORD_COUNT = 3
-MIN_SCORE_MARGIN_PERCENT = 8
 
 
 @dataclass(frozen=True, slots=True)
@@ -190,13 +192,13 @@ def assess_match_acceptance(
         else None
     )
 
-    if top_match.score_percent < MIN_ACCEPTED_SCORE_PERCENT:
+    if top_match.score_percent < MIN_ACCEPTED_SIMILARITY * 100:
         reason = "score_too_low"
     elif matched_word_count < MIN_MATCHED_WORD_COUNT:
         reason = "transcription_too_short"
     elif (
         score_margin_percent is not None
-        and score_margin_percent < MIN_SCORE_MARGIN_PERCENT
+        and score_margin_percent < MIN_SCORE_MARGIN * 100
     ):
         reason = "ambiguous_match"
     else:

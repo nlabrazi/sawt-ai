@@ -16,9 +16,17 @@ class UploadPolicy(BaseModel):
     accepted_file_extensions: list[str]
 
 
+class DetectionPolicy(BaseModel):
+    min_accepted_similarity: float
+    min_probable_similarity: float
+    min_matched_word_count: int
+    min_score_margin: float
+
+
 class HealthServices(BaseModel):
     imam_detection: ImamDetectionHealth
     upload_policy: UploadPolicy
+    detection_policy: DetectionPolicy
 
 
 class HealthResponse(BaseModel):

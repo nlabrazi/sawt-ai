@@ -6,6 +6,7 @@
 import { useRuntimeConfig } from '#app'
 import { $fetch } from 'ofetch'
 import { ref } from 'vue'
+import { useApiHealth } from '~/composables/useApiHealth'
 import { isVerseConfident } from '~/utils/verseConfidence'
 
 export type ImamPrediction = {
@@ -123,6 +124,7 @@ function resolveMatchingDelayMs(startedAt: number, targetMs: number) {
 
 export function useRecognition() {
   const apiBaseUrl = useRuntimeConfig().public.apiBaseUrl.replace(/\/$/, '')
+  const { detectionPolicy } = useApiHealth()
   const loading = ref(false)
   const error = ref<string | null>(null)
   const result = ref<RecognizeResponse | null>(null)
@@ -165,7 +167,10 @@ export function useRecognition() {
       })
 
       const hasVerse = !!response.verse
-      const isConfident = isVerseConfident(response.verse?.similarity ?? 0)
+      const isConfident = isVerseConfident(
+        response.verse?.similarity ?? 0,
+        detectionPolicy.value.min_accepted_similarity,
+      )
       const loadingTargetMs = resolveLoadingTargetMs(hasVerse && isConfident)
       const transcribingDelayMs = resolveTranscribingDelayMs(startedAt, loadingTargetMs)
 
