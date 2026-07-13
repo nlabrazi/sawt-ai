@@ -11,6 +11,20 @@ from app.utils.normalize_arabic import normalize_arabic
 
 logger = logging.getLogger(__name__)
 
+LOCAL_SIMILARITY_WEIGHT = 0.7
+TOKEN_SIMILARITY_WEIGHT = 0.3
+
+
+def compute_similarity_score(query: str, candidate: str, **_kwargs) -> float:
+    """Combine la correspondance locale et la similarité des mots sur 100."""
+    local_score = fuzz.partial_ratio(query, candidate)
+    token_score = fuzz.token_sort_ratio(query, candidate)
+
+    return (
+        LOCAL_SIMILARITY_WEIGHT * local_score
+        + TOKEN_SIMILARITY_WEIGHT * token_score
+    )
+
 
 def detect_versets(segments):
     transcription = normalize_arabic(
@@ -27,7 +41,7 @@ def detect_versets(segments):
     match = process.extractOne(
         transcription,
         (candidate.normalized_text for candidate in candidates),
-        scorer=fuzz.ratio,
+        scorer=compute_similarity_score,
     )
 
     if match is None:

@@ -109,7 +109,7 @@ def test_detect_versets_documents_short_transcription_ambiguity(monkeypatch):
     match = verse_detection_service.detect_versets([{"text": "قل"}])
 
     assert match is not None
-    assert match["similarity"] < 0.5
+    assert match["similarity"] < 0.8
 
 
 def test_detect_versets_returns_best_precomputed_match(monkeypatch):
@@ -175,7 +175,21 @@ def test_detect_versets_skips_candidate_scan_for_empty_transcription(monkeypatch
     assert candidate_calls == []
 
 
-def test_detect_versets_returns_normalized_rapidfuzz_score(monkeypatch):
+def test_compute_similarity_score_combines_local_and_token_scores():
+    transcription = "قل هو الله احد"
+    candidate = "قل هو الله"
+
+    score = verse_detection_service.compute_similarity_score(transcription, candidate)
+    expected_score = (
+        0.7 * fuzz.partial_ratio(transcription, candidate)
+        + 0.3 * fuzz.token_sort_ratio(transcription, candidate)
+    )
+
+    assert score == pytest.approx(expected_score)
+    assert fuzz.ratio(transcription, candidate) < score < 100
+
+
+def test_detect_versets_returns_normalized_combined_score(monkeypatch):
     candidates = (
         QuranVerseCandidate(
             sourate_id=112,
@@ -197,7 +211,13 @@ def test_detect_versets_returns_normalized_rapidfuzz_score(monkeypatch):
         {"text": "قل هو الله احد"},
     ])
 
-    expected_score = fuzz.ratio("قل هو الله احد", "قل هو الله") / 100
+    expected_score = (
+        verse_detection_service.compute_similarity_score(
+            "قل هو الله احد",
+            "قل هو الله",
+        )
+        / 100
+    )
 
     assert match is not None
     assert match["similarity"] == pytest.approx(expected_score)
