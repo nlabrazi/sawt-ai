@@ -3,10 +3,11 @@
 # Trouve le meilleur match de versets à partir des segments de transcription.
 
 import logging
+from dataclasses import dataclass
 
 from rapidfuzz import fuzz, process
 
-from app.core.model_loader import get_quran_verse_candidates
+from app.core.model_loader import QuranVerseCandidate, get_quran_verse_candidates
 from app.utils.normalize_arabic import normalize_arabic
 
 logger = logging.getLogger(__name__)
@@ -16,6 +17,15 @@ TOKEN_SIMILARITY_WEIGHT = 0.3
 TRANSCRIPTION_WINDOW_WORD_SIZES = (4, 8, 12, 16, 24, 32)
 MAX_WINDOWS_PER_SIZE = 6
 MATCH_CANDIDATE_LIMIT = 20
+RANKED_CANDIDATE_LIMIT = 2
+
+
+@dataclass(frozen=True, slots=True)
+class RankedVerseCandidate:
+    candidate_index: int
+    candidate: QuranVerseCandidate
+    score_percent: float
+    matched_window: str
 
 
 def compute_similarity_score(query: str, candidate: str, **_kwargs) -> float:
@@ -63,7 +73,11 @@ def build_transcription_windows(transcription: str) -> tuple[str, ...]:
     return tuple(windows)
 
 
-def extract_best_match(query: str, candidate_texts: tuple[str, ...]):
+def extract_ranked_matches(
+    query: str,
+    candidate_texts: tuple[str, ...],
+    limit: int = RANKED_CANDIDATE_LIMIT,
+):
     """Présélectionne rapidement les candidats avant le score combiné."""
     shortlisted_matches = process.extract(
         query,
@@ -73,15 +87,48 @@ def extract_best_match(query: str, candidate_texts: tuple[str, ...]):
     )
 
     if not shortlisted_matches:
-        return None
+        return []
 
-    return max(
+    rescored_matches = sorted(
         (
             (candidate_text, compute_similarity_score(query, candidate_text), candidate_index)
             for candidate_text, _score, candidate_index in shortlisted_matches
         ),
-        key=lambda match: match[1],
+        key=lambda match: (-match[1], match[2]),
     )
+
+    return rescored_matches[:limit]
+
+
+def rank_verse_candidates(
+    transcription: str,
+    candidates: tuple[QuranVerseCandidate, ...],
+    limit: int = RANKED_CANDIDATE_LIMIT,
+) -> list[RankedVerseCandidate]:
+    """Classe les candidats uniques selon leur meilleur score toutes fenêtres confondues."""
+    candidate_texts = tuple(candidate.normalized_text for candidate in candidates)
+    best_matches_by_index: dict[int, RankedVerseCandidate] = {}
+
+    for window in build_transcription_windows(transcription):
+        for _text, score_percent, candidate_index in extract_ranked_matches(
+            window,
+            candidate_texts,
+            limit=limit,
+        ):
+            previous_match = best_matches_by_index.get(candidate_index)
+
+            if previous_match is None or score_percent > previous_match.score_percent:
+                best_matches_by_index[candidate_index] = RankedVerseCandidate(
+                    candidate_index=candidate_index,
+                    candidate=candidates[candidate_index],
+                    score_percent=score_percent,
+                    matched_window=window,
+                )
+
+    return sorted(
+        best_matches_by_index.values(),
+        key=lambda match: (-match.score_percent, match.candidate_index),
+    )[:limit]
 
 
 def detect_versets(segments):
@@ -96,25 +143,16 @@ def detect_versets(segments):
         return None
 
     candidates = get_quran_verse_candidates()
-    candidate_texts = tuple(candidate.normalized_text for candidate in candidates)
-    match = None
-    matched_window = transcription
+    ranked_matches = rank_verse_candidates(transcription, candidates)
 
-    for window in build_transcription_windows(transcription):
-        window_match = extract_best_match(window, candidate_texts)
-
-        if window_match is not None and (match is None or window_match[1] > match[1]):
-            match = window_match
-            matched_window = window
-
-    if match is None:
+    if not ranked_matches:
         logger.info(
             "Verse detection skipped: no Quran verse candidates available."
         )
         return None
 
-    _, score_percent, candidate_index = match
-    candidate = candidates[candidate_index]
+    top_match = ranked_matches[0]
+    candidate = top_match.candidate
     best_match = {
         "sourate_id": candidate.sourate_id,
         "sourate_name": candidate.sourate_name,
@@ -122,13 +160,13 @@ def detect_versets(segments):
         "start_verse": candidate.start_verse,
         "end_verse": candidate.end_verse,
         "text": candidate.normalized_text,
-        "similarity": score_percent / 100,
+        "similarity": top_match.score_percent / 100,
     }
 
     logger.info(
         "Verse detection complete: transcription_chars=%s matched_window_words=%s best_sourate=%s best_similarity=%s",
         len(transcription),
-        len(matched_window.split()),
+        len(top_match.matched_window.split()),
         best_match["sourate_name"] if best_match else None,
         best_match["similarity"] if best_match else None,
     )

@@ -244,6 +244,41 @@ def test_detect_versets_uses_best_sliding_window(monkeypatch):
     assert match["similarity"] == 1
 
 
+def test_rank_verse_candidates_returns_two_unique_candidates_in_score_order(
+    representative_candidates,
+):
+    ranked_matches = verse_detection_service.rank_verse_candidates(
+        "قل اعوذ برب الناس ملك الناس",
+        representative_candidates,
+    )
+
+    assert [match.candidate.sourate_id for match in ranked_matches] == [114, 113]
+    assert ranked_matches[0].score_percent > ranked_matches[1].score_percent
+    assert ranked_matches[0].matched_window == "قل اعوذ برب الناس ملك الناس"
+
+
+def test_rank_verse_candidates_deduplicates_candidate_across_windows():
+    candidates = (
+        QuranVerseCandidate(
+            sourate_id=112,
+            sourate_name="الإخلاص",
+            transliteration="Al-Ikhlas",
+            start_verse=1,
+            end_verse=1,
+            normalized_text="قل هو الله احد",
+        ),
+    )
+
+    ranked_matches = verse_detection_service.rank_verse_candidates(
+        "كلمات زائده قل هو الله احد كلمات اخري",
+        candidates,
+    )
+
+    assert len(ranked_matches) == 1
+    assert ranked_matches[0].candidate.sourate_id == 112
+    assert ranked_matches[0].score_percent == 100
+
+
 def test_detect_versets_returns_normalized_combined_score(monkeypatch):
     candidates = (
         QuranVerseCandidate(
