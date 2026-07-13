@@ -59,6 +59,43 @@ describe('ResultCard', () => {
     expect(confidenceDetail.text()).not.toContain('Une correspondance a été trouvée')
   })
 
+  it('does not present an ambiguous high score as a reliable result', () => {
+    const wrapper = mount(ResultCard, {
+      props: {
+        result: {
+          transcription_text: 'قل هو الله احد',
+          verse: {
+            sourate_id: 112,
+            sourate_name: 'الإخلاص',
+            transliteration: 'Al-Ikhlas',
+            start_verse: 1,
+            end_verse: 4,
+            text: 'قل هو الله احد',
+            similarity: 0.92,
+          },
+          detection: {
+            status: 'ambiguous',
+            score: 0.92,
+            score_margin: 0.04,
+            matched_word_count: 4,
+            analyzed_duration_seconds: 10,
+            analysis_attempts: 2,
+            rejection_reason: 'ambiguous_match',
+          },
+          imam_predictions: [],
+          imam_status: 'unknown',
+          imam_detection_enabled: true,
+        },
+      },
+    })
+
+    const confidenceDetail = wrapper.get('.confidence-detail')
+
+    expect(confidenceDetail.text()).toContain('92%')
+    expect(confidenceDetail.text()).toContain('Correspondance à confirmer')
+    expect(confidenceDetail.text()).not.toContain('Résultat fiable')
+  })
+
   it('keeps verse details as the only passage action', () => {
     const wrapper = mount(ResultCard, {
       props: {

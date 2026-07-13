@@ -50,7 +50,7 @@ def test_detect_verse_progressively_stops_after_confident_match(monkeypatch):
     monkeypatch.setattr(
         inference_pipeline,
         "detect_verse_with_metadata",
-        lambda _segments: next(outcomes),
+        lambda _segments, include_ambiguous_verse=False: next(outcomes),
     )
 
     _segments, detection, analyzed_duration, attempts = (
@@ -65,23 +65,28 @@ def test_detect_verse_progressively_stops_after_confident_match(monkeypatch):
 
 def test_detect_verse_progressively_falls_back_to_full_audio(monkeypatch):
     transcription_calls = []
+    ambiguous_result_flags = []
 
     def fake_transcribe(_audio_path, clip_end_seconds=None):
         transcription_calls.append(clip_end_seconds)
         return [{"text": "نص غير كاف"}]
 
     monkeypatch.setattr(inference_pipeline, "transcribe_audio", fake_transcribe)
-    monkeypatch.setattr(
-        inference_pipeline,
-        "detect_verse_with_metadata",
-        lambda _segments: VerseDetectionOutcome(
+    def fake_detect(_segments, include_ambiguous_verse=False):
+        ambiguous_result_flags.append(include_ambiguous_verse)
+        return VerseDetectionOutcome(
             None,
             "insufficient",
             0.4,
             None,
             3,
             "score_too_low",
-        ),
+        )
+
+    monkeypatch.setattr(
+        inference_pipeline,
+        "detect_verse_with_metadata",
+        fake_detect,
     )
 
     _segments, detection, analyzed_duration, attempts = (
@@ -89,6 +94,7 @@ def test_detect_verse_progressively_falls_back_to_full_audio(monkeypatch):
     )
 
     assert transcription_calls == [5, 10, None]
+    assert ambiguous_result_flags == [False, False, True]
     assert detection.status == "insufficient"
     assert analyzed_duration == 12
     assert attempts == 3
@@ -103,7 +109,7 @@ def test_run_inference_pipeline_returns_unavailable_when_imam_prediction_fails(m
     monkeypatch.setattr(
         inference_pipeline,
         "detect_verse_with_metadata",
-        lambda _segments: VerseDetectionOutcome(
+        lambda _segments, include_ambiguous_verse=False: VerseDetectionOutcome(
             verse=None,
             status="insufficient",
             score=None,

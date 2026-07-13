@@ -245,6 +245,7 @@ def assess_match_acceptance(
 def build_detection_outcome(
     ranked_matches: list[RankedVerseCandidate],
     acceptance: MatchAcceptance,
+    include_ambiguous_verse: bool = False,
 ) -> VerseDetectionOutcome:
     if not ranked_matches:
         return VerseDetectionOutcome(
@@ -265,6 +266,19 @@ def build_detection_outcome(
     )
 
     if acceptance.accepted:
+        status: DetectionStatus = "confident"
+    elif acceptance.reason == "ambiguous_match":
+        status = "ambiguous"
+    elif acceptance.reason == "score_too_low" and score >= MIN_PROBABLE_SIMILARITY:
+        status = "probable"
+    else:
+        status = "insufficient"
+
+    should_include_verse = acceptance.accepted or (
+        include_ambiguous_verse and acceptance.reason == "ambiguous_match"
+    )
+
+    if should_include_verse:
         candidate = top_match.candidate
         verse = {
             "sourate_id": candidate.sourate_id,
@@ -275,16 +289,8 @@ def build_detection_outcome(
             "text": candidate.normalized_text,
             "similarity": score,
         }
-        status: DetectionStatus = "confident"
     else:
         verse = None
-
-        if acceptance.reason == "ambiguous_match":
-            status = "ambiguous"
-        elif acceptance.reason == "score_too_low" and score >= MIN_PROBABLE_SIMILARITY:
-            status = "probable"
-        else:
-            status = "insufficient"
 
     return VerseDetectionOutcome(
         verse=verse,
@@ -296,7 +302,10 @@ def build_detection_outcome(
     )
 
 
-def detect_verse_with_metadata(segments) -> VerseDetectionOutcome:
+def detect_verse_with_metadata(
+    segments,
+    include_ambiguous_verse: bool = False,
+) -> VerseDetectionOutcome:
     transcription = normalize_arabic(
         " ".join(segment.get("text", "") for segment in segments).strip()
     )
@@ -321,7 +330,11 @@ def detect_verse_with_metadata(segments) -> VerseDetectionOutcome:
         return build_detection_outcome([], assess_match_acceptance([]))
 
     acceptance = assess_match_acceptance(ranked_matches)
-    outcome = build_detection_outcome(ranked_matches, acceptance)
+    outcome = build_detection_outcome(
+        ranked_matches,
+        acceptance,
+        include_ambiguous_verse=include_ambiguous_verse,
+    )
 
     if not acceptance.accepted:
         logger.info(

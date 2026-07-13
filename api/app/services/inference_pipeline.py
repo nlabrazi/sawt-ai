@@ -38,10 +38,19 @@ def build_progressive_analysis_endpoints(duration_seconds: float) -> list[float]
 def detect_verse_progressively(
     audio_path: str,
     audio_duration_seconds: float | None,
+    allow_ambiguous_result: bool = True,
 ) -> tuple[list[dict], VerseDetectionOutcome, float | None, int]:
     if audio_duration_seconds is None:
         segments = transcribe_audio(audio_path)
-        return segments, detect_verse_with_metadata(segments), None, 1
+        return (
+            segments,
+            detect_verse_with_metadata(
+                segments,
+                include_ambiguous_verse=allow_ambiguous_result,
+            ),
+            None,
+            1,
+        )
 
     endpoints = build_progressive_analysis_endpoints(audio_duration_seconds)
 
@@ -51,13 +60,24 @@ def detect_verse_progressively(
             audio_path,
             clip_end_seconds=None if is_full_audio else endpoint,
         )
-        detection = detect_verse_with_metadata(segments)
+        detection = detect_verse_with_metadata(
+            segments,
+            include_ambiguous_verse=allow_ambiguous_result and is_full_audio,
+        )
 
         if detection.status == "confident" or is_full_audio:
             return segments, detection, endpoint, attempt
 
     segments = transcribe_audio(audio_path)
-    return segments, detect_verse_with_metadata(segments), audio_duration_seconds, 1
+    return (
+        segments,
+        detect_verse_with_metadata(
+            segments,
+            include_ambiguous_verse=allow_ambiguous_result,
+        ),
+        audio_duration_seconds,
+        1,
+    )
 
 
 def compute_imam_status(
@@ -92,6 +112,7 @@ def run_inference_pipeline(
     audio_path: str,
     detect_imam: bool = True,
     audio_duration_seconds: float | None = None,
+    allow_ambiguous_result: bool = True,
 ):
     """
     Pipeline principal
@@ -99,7 +120,11 @@ def run_inference_pipeline(
 
     # 1️⃣ transcription whisper
     segments, verse_detection, analyzed_duration_seconds, analysis_attempts = (
-        detect_verse_progressively(audio_path, audio_duration_seconds)
+        detect_verse_progressively(
+            audio_path,
+            audio_duration_seconds,
+            allow_ambiguous_result=allow_ambiguous_result,
+        )
     )
 
     transcription_text = " ".join(

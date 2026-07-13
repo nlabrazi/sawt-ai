@@ -3,6 +3,7 @@ import { useApiHealth } from '~/composables/useApiHealth'
 import { useRecognition } from '~/composables/useRecognition'
 import { useMicrophoneRecorder } from '~/composables/useMicrophoneRecorder'
 import { clearTajwidCache } from '~/composables/useTajwid'
+import { isVerseConfident } from '~/utils/verseConfidence'
 
 export type RecognitionScreenState = 'idle' | 'loading' | 'result'
 
@@ -135,13 +136,12 @@ export function useRecognitionFlow() {
       }
 
       const response = await probeAudio(snapshot, detectImam.value)
+      const isConfident = response?.detection
+        ? response.detection.status === 'confident'
+        : !!response?.verse &&
+          isVerseConfident(response.verse.similarity, detectionPolicy.value.min_accepted_similarity)
 
-      if (
-        !response ||
-        response.detection?.status !== 'confident' ||
-        sessionId !== recordingSessionId ||
-        !isRecording.value
-      ) {
+      if (!response || !isConfident || sessionId !== recordingSessionId || !isRecording.value) {
         return
       }
 

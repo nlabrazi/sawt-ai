@@ -75,6 +75,7 @@ describe('useRecognition', () => {
     const requestBody = requestOptions?.body as FormData
 
     expect(requestBody.get('detect_imam')).toBe('false')
+    expect(requestBody.get('allow_ambiguous_result')).toBe('true')
   })
 
   it('probes audio without changing the main loading state', async () => {
@@ -85,9 +86,13 @@ describe('useRecognition', () => {
 
     const response = await probeAudio(audioFile)
 
+    const requestOptions = vi.mocked($fetch).mock.calls[0]?.[1]
+    const requestBody = requestOptions?.body as FormData
+
     expect(loading.value).toBe(false)
     expect(result.value).toBeNull()
     expect(response?.detection?.status).toBe('confident')
+    expect(requestBody.get('allow_ambiguous_result')).toBe('false')
 
     if (response) {
       acceptResult(response)

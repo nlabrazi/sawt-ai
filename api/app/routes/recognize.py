@@ -133,6 +133,7 @@ def enforce_audio_duration_limit(audio_path: Path) -> float:
 async def recognize(
     file: UploadFile,
     detect_imam: bool = Form(True),
+    allow_ambiguous_result: bool = Form(True),
 ):
     request_id = uuid.uuid4()
     temp_file: Path | None = None
@@ -153,6 +154,7 @@ async def recognize(
                 "size": file_size,
                 "durationSeconds": round(audio_duration_seconds, 3),
                 "detectImam": detect_imam,
+                "allowAmbiguousResult": allow_ambiguous_result,
             },
         )
 
@@ -174,6 +176,7 @@ async def recognize(
             str(temp_file),
             detect_imam,
             audio_duration_seconds,
+            allow_ambiguous_result,
         )
     finally:
         await file.close()

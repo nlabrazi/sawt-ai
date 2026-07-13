@@ -160,10 +160,15 @@ export function useRecognition() {
     return requestId === activeRequestId
   }
 
-  function buildRecognitionFormData(file: File, detectImam: boolean) {
+  function buildRecognitionFormData(
+    file: File,
+    detectImam: boolean,
+    allowAmbiguousResult: boolean,
+  ) {
     const formData = new FormData()
     formData.append('file', file)
     formData.append('detect_imam', String(detectImam))
+    formData.append('allow_ambiguous_result', String(allowAmbiguousResult))
     return formData
   }
 
@@ -175,7 +180,7 @@ export function useRecognition() {
     try {
       return await $fetch<RecognizeResponse>(`${apiBaseUrl}/recognize`, {
         method: 'POST',
-        body: buildRecognitionFormData(file, detectImam),
+        body: buildRecognitionFormData(file, detectImam, false),
         signal: controller.signal,
       })
     } catch (err) {
@@ -217,7 +222,7 @@ export function useRecognition() {
     try {
       const response = await $fetch<RecognizeResponse>(`${apiBaseUrl}/recognize`, {
         method: 'POST',
-        body: buildRecognitionFormData(file, detectImam),
+        body: buildRecognitionFormData(file, detectImam, true),
         signal: controller.signal,
       })
 

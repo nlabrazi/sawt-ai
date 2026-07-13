@@ -482,6 +482,29 @@ def test_build_detection_outcome_exposes_ambiguous_decision():
     }
 
 
+def test_build_detection_outcome_can_expose_ambiguous_candidate_for_manual_result():
+    candidates = (
+        QuranVerseCandidate(1, "First", "First", 1, 1, "نص اول واضح"),
+        QuranVerseCandidate(2, "Second", "Second", 1, 1, "نص ثان واضح"),
+    )
+    ranked_matches = [
+        verse_detection_service.RankedVerseCandidate(0, candidates[0], 92, "نص كامل واضح"),
+        verse_detection_service.RankedVerseCandidate(1, candidates[1], 88, "نص كامل واضح"),
+    ]
+    acceptance = verse_detection_service.assess_match_acceptance(ranked_matches)
+
+    outcome = verse_detection_service.build_detection_outcome(
+        ranked_matches,
+        acceptance,
+        include_ambiguous_verse=True,
+    )
+
+    assert outcome.verse is not None
+    assert outcome.verse["sourate_id"] == 1
+    assert outcome.status == "ambiguous"
+    assert outcome.rejection_reason == "ambiguous_match"
+
+
 def test_build_detection_outcome_classifies_low_score_as_probable():
     candidate = QuranVerseCandidate(1, "First", "First", 1, 1, "نص اول واضح")
     ranked_matches = [

@@ -1,7 +1,7 @@
 import { ref } from 'vue'
 
 describe('useRecognitionFlow microphone probing', () => {
-  it('stops recording and accepts a confident periodic result', async () => {
+  it('stops recording for a confident legacy response without metadata', async () => {
     vi.useFakeTimers()
     vi.resetModules()
 
@@ -27,15 +27,6 @@ describe('useRecognitionFlow microphone probing', () => {
         end_verse: 1,
         text: 'قل هو الله احد',
         similarity: 0.94,
-      },
-      detection: {
-        status: 'confident',
-        score: 0.94,
-        score_margin: 0.12,
-        matched_word_count: 4,
-        analyzed_duration_seconds: 5,
-        analysis_attempts: 1,
-        rejection_reason: null,
       },
       imam_predictions: [],
       imam_status: 'disabled',

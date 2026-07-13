@@ -40,11 +40,17 @@ def test_recognize_runs_pipeline_in_threadpool_and_cleans_temp_file(monkeypatch)
         "threadpool_called": False,
     }
 
-    def fake_pipeline(audio_path: str, detect_imam: bool, audio_duration_seconds: float):
+    def fake_pipeline(
+        audio_path: str,
+        detect_imam: bool,
+        audio_duration_seconds: float,
+        allow_ambiguous_result: bool,
+    ):
         path = Path(audio_path)
         captured["path"] = path
         captured["detect_imam"] = detect_imam
         captured["audio_duration_seconds"] = audio_duration_seconds
+        captured["allow_ambiguous_result"] = allow_ambiguous_result
         captured["bytes"] = path.read_bytes()
 
         return {
@@ -78,12 +84,19 @@ def test_recognize_runs_pipeline_in_threadpool_and_cleans_temp_file(monkeypatch)
         "audio/webm",
     )
 
-    response = asyncio.run(recognize_route.recognize(file=upload, detect_imam=False))
+    response = asyncio.run(
+        recognize_route.recognize(
+            file=upload,
+            detect_imam=False,
+            allow_ambiguous_result=True,
+        )
+    )
 
     assert response["imam_detection_enabled"] is False
     assert captured["threadpool_called"] is True
     assert captured["detect_imam"] is False
     assert captured["audio_duration_seconds"] == 12.5
+    assert captured["allow_ambiguous_result"] is True
     assert captured["bytes"] == build_wav_like_audio()
     assert captured["path"].suffix == ".wav"
     assert not captured["path"].exists()
@@ -97,7 +110,13 @@ def test_recognize_rejects_invalid_audio_signature():
     )
 
     try:
-        asyncio.run(recognize_route.recognize(file=invalid_upload, detect_imam=True))
+        asyncio.run(
+            recognize_route.recognize(
+                file=invalid_upload,
+                detect_imam=True,
+                allow_ambiguous_result=True,
+            )
+        )
     except HTTPException as exc:
         assert exc.status_code == 415
         assert exc.detail == "Format audio invalide ou non pris en charge."
@@ -115,7 +134,13 @@ def test_recognize_rejects_audio_longer_than_the_server_policy(monkeypatch):
     )
 
     try:
-        asyncio.run(recognize_route.recognize(file=oversized_duration_upload, detect_imam=True))
+        asyncio.run(
+            recognize_route.recognize(
+                file=oversized_duration_upload,
+                detect_imam=True,
+                allow_ambiguous_result=True,
+            )
+        )
     except HTTPException as exc:
         assert exc.status_code == 413
         assert exc.detail == "Audio trop long. Maximum 90 secondes."
@@ -135,7 +160,13 @@ def test_recognize_rejects_too_large_files_during_streaming(monkeypatch):
     )
 
     try:
-        asyncio.run(recognize_route.recognize(file=oversized_upload, detect_imam=True))
+        asyncio.run(
+            recognize_route.recognize(
+                file=oversized_upload,
+                detect_imam=True,
+                allow_ambiguous_result=True,
+            )
+        )
     except HTTPException as exc:
         assert exc.status_code == 413
         assert exc.detail == "Fichier trop volumineux."

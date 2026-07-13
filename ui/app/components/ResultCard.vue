@@ -27,6 +27,14 @@ const verseLabel = computed(() => {
 
 const topImam = computed(() => props.result.imam_predictions?.[0] ?? null)
 const confidenceUi = computed(() => {
+  if (props.result.detection?.status === 'ambiguous') {
+    return {
+      label: 'Correspondance à confirmer',
+      description: 'Le score est élevé, mais un passage voisin reste également plausible.',
+      className: 'banner-warning',
+    }
+  }
+
   return getVerseConfidenceUi(
     props.result.verse?.similarity ?? 0,
     detectionPolicy.value.min_accepted_similarity,
