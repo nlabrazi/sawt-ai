@@ -43,3 +43,18 @@ def test_load_all_models_precomputes_quran_verse_candidates_once(monkeypatch, tm
     assert len(candidates) == 3
     assert candidates[0].normalized_text == "قل"
     assert candidates[-1].normalized_text == "قل هو الله"
+
+
+def test_load_quran_catalog_does_not_load_whisper(monkeypatch, tmp_path):
+    snapshot_path = tmp_path / "quran_versets.json"
+    snapshot_path.write_text(json.dumps(build_quran_payload()), encoding="utf-8")
+
+    monkeypatch.setattr(model_loader, "QURAN_VERSETS_PATH", snapshot_path)
+    monkeypatch.setattr(model_loader, "whisper_model", None)
+    monkeypatch.setattr(model_loader, "quran_versets", None)
+    monkeypatch.setattr(model_loader, "quran_verse_candidates", None)
+
+    model_loader.load_quran_catalog()
+
+    assert model_loader.whisper_model is None
+    assert len(model_loader.get_quran_verse_candidates()) == 3

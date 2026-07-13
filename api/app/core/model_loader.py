@@ -82,7 +82,7 @@ def _ensure_quran_verse_candidates_loaded() -> tuple[QuranVerseCandidate, ...]:
 
 
 def load_all_models() -> None:
-    global whisper_model, quran_versets
+    global whisper_model
 
     if whisper_model is None:
         from faster_whisper import WhisperModel
@@ -92,6 +92,12 @@ def load_all_models() -> None:
             device="cpu",
             compute_type="int8",
         )
+
+    load_quran_catalog()
+
+
+def load_quran_catalog() -> None:
+    global quran_versets
 
     if quran_versets is None:
         with QURAN_VERSETS_PATH.open("r", encoding="utf-8") as file:
