@@ -49,6 +49,13 @@ def test_recognize_runs_pipeline_in_threadpool_and_cleans_temp_file(monkeypatch)
         return {
             "transcription_text": "قل هو الله احد",
             "verse": None,
+            "detection": {
+                "status": "insufficient",
+                "score": None,
+                "score_margin": None,
+                "matched_word_count": 0,
+                "rejection_reason": "no_match",
+            },
             "imam_predictions": [],
             "imam_status": "disabled",
             "imam_detection_enabled": detect_imam,

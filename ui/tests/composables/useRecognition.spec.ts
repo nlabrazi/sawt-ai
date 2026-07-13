@@ -22,6 +22,13 @@ const successfulResponse = {
     text: 'قل هو الله احد',
     similarity: 0.92,
   },
+  detection: {
+    status: 'confident',
+    score: 0.92,
+    score_margin: 0.14,
+    matched_word_count: 4,
+    rejection_reason: null,
+  },
   imam_predictions: [],
   imam_status: 'unknown',
   imam_detection_enabled: true,

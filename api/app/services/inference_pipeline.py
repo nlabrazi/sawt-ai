@@ -7,7 +7,7 @@ import logging
 from typing import Literal
 
 from app.services.transcription_service import transcribe_audio
-from app.services.verse_detection_service import detect_versets
+from app.services.verse_detection_service import detect_verse_with_metadata
 from app.services.imam_prediction_service import ImamPredictionError, predict_imam
 
 logger = logging.getLogger(__name__)
@@ -57,7 +57,8 @@ def run_inference_pipeline(audio_path: str, detect_imam: bool = True):
     ).strip()
 
     # 2️⃣ détection verset
-    verse = detect_versets(segments)
+    verse_detection = detect_verse_with_metadata(segments)
+    verse = verse_detection.verse
 
     # 3️⃣ détection imam
     imam_predictions = []
@@ -89,6 +90,7 @@ def run_inference_pipeline(audio_path: str, detect_imam: bool = True):
     return {
         "transcription_text": transcription_text,
         "verse": verse,
+        "detection": verse_detection.metadata(),
         "imam_predictions": imam_predictions,
         "imam_status": imam_status,
         "imam_detection_enabled": detect_imam,

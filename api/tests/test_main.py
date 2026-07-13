@@ -37,6 +37,7 @@ def test_openapi_documents_recognize_response_contract():
 
     assert recognize_response == {"$ref": "#/components/schemas/RecognizeResponse"}
     assert "imam_detection_enabled" in schema["components"]["schemas"]["RecognizeResponse"]["required"]
+    assert "detection" in schema["components"]["schemas"]["RecognizeResponse"]["required"]
 
 
 def test_health_reports_imam_detection_service_status(monkeypatch):

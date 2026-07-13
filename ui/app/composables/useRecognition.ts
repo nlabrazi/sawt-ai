@@ -26,9 +26,25 @@ export type VerseMatch = {
   similarity: number
 }
 
+export type DetectionStatus = 'confident' | 'probable' | 'ambiguous' | 'insufficient'
+
+export type VerseDetectionMetadata = {
+  status: DetectionStatus
+  score: number | null
+  score_margin: number | null
+  matched_word_count: number
+  rejection_reason:
+    | 'no_match'
+    | 'score_too_low'
+    | 'transcription_too_short'
+    | 'ambiguous_match'
+    | null
+}
+
 export type RecognizeResponse = {
   transcription_text: string
   verse: VerseMatch | null
+  detection?: VerseDetectionMetadata
   imam_predictions: ImamPrediction[]
   imam_status: ImamStatus
   imam_detection_enabled: boolean
@@ -167,10 +183,12 @@ export function useRecognition() {
       })
 
       const hasVerse = !!response.verse
-      const isConfident = isVerseConfident(
-        response.verse?.similarity ?? 0,
-        detectionPolicy.value.min_accepted_similarity,
-      )
+      const isConfident = response.detection
+        ? response.detection.status === 'confident'
+        : isVerseConfident(
+            response.verse?.similarity ?? 0,
+            detectionPolicy.value.min_accepted_similarity,
+          )
       const loadingTargetMs = resolveLoadingTargetMs(hasVerse && isConfident)
       const transcribingDelayMs = resolveTranscribingDelayMs(startedAt, loadingTargetMs)
 

@@ -426,3 +426,77 @@ def test_detect_versets_returns_none_without_candidates(monkeypatch):
     )
 
     assert verse_detection_service.detect_versets([{"text": "نص"}]) is None
+
+
+def test_detect_verse_with_metadata_exposes_confident_decision(monkeypatch):
+    candidates = (
+        QuranVerseCandidate(
+            sourate_id=112,
+            sourate_name="الإخلاص",
+            transliteration="Al-Ikhlas",
+            start_verse=1,
+            end_verse=1,
+            normalized_text="قل هو الله احد",
+        ),
+    )
+    monkeypatch.setattr(
+        verse_detection_service,
+        "get_quran_verse_candidates",
+        lambda: candidates,
+    )
+
+    outcome = verse_detection_service.detect_verse_with_metadata([
+        {"text": "قل هو الله احد"},
+    ])
+
+    assert outcome.verse is not None
+    assert outcome.metadata() == {
+        "status": "confident",
+        "score": 1,
+        "score_margin": None,
+        "matched_word_count": 4,
+        "rejection_reason": None,
+    }
+
+
+def test_build_detection_outcome_exposes_ambiguous_decision():
+    candidates = (
+        QuranVerseCandidate(1, "First", "First", 1, 1, "نص اول واضح"),
+        QuranVerseCandidate(2, "Second", "Second", 1, 1, "نص ثان واضح"),
+    )
+    ranked_matches = [
+        verse_detection_service.RankedVerseCandidate(0, candidates[0], 92, "نص كامل واضح"),
+        verse_detection_service.RankedVerseCandidate(1, candidates[1], 88, "نص كامل واضح"),
+    ]
+    acceptance = verse_detection_service.assess_match_acceptance(ranked_matches)
+
+    outcome = verse_detection_service.build_detection_outcome(ranked_matches, acceptance)
+
+    assert outcome.verse is None
+    assert outcome.metadata() == {
+        "status": "ambiguous",
+        "score": 0.92,
+        "score_margin": 0.04,
+        "matched_word_count": 3,
+        "rejection_reason": "ambiguous_match",
+    }
+
+
+def test_build_detection_outcome_classifies_low_score_as_probable():
+    candidate = QuranVerseCandidate(1, "First", "First", 1, 1, "نص اول واضح")
+    ranked_matches = [
+        verse_detection_service.RankedVerseCandidate(
+            0,
+            candidate,
+            74,
+            "نص كامل واضح",
+        ),
+    ]
+    acceptance = verse_detection_service.assess_match_acceptance(ranked_matches)
+
+    outcome = verse_detection_service.build_detection_outcome(ranked_matches, acceptance)
+
+    assert outcome.verse is None
+    assert outcome.status == "probable"
+    assert outcome.score == 0.74
+    assert outcome.rejection_reason == "score_too_low"

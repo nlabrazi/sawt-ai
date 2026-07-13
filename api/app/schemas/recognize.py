@@ -9,6 +9,13 @@ from typing import Literal
 from pydantic import BaseModel
 
 ImamStatus = Literal["disabled", "unknown", "unavailable", "high", "medium", "low"]
+DetectionStatus = Literal["confident", "probable", "ambiguous", "insufficient"]
+RejectionReason = Literal[
+    "no_match",
+    "score_too_low",
+    "transcription_too_short",
+    "ambiguous_match",
+]
 
 
 class ImamPrediction(BaseModel):
@@ -26,9 +33,18 @@ class VerseMatch(BaseModel):
     similarity: float
 
 
+class VerseDetectionMetadata(BaseModel):
+    status: DetectionStatus
+    score: float | None
+    score_margin: float | None
+    matched_word_count: int
+    rejection_reason: RejectionReason | None
+
+
 class RecognizeResponse(BaseModel):
     transcription_text: str
     verse: VerseMatch | None
+    detection: VerseDetectionMetadata
     imam_predictions: list[ImamPrediction]
     imam_status: ImamStatus
     imam_detection_enabled: bool

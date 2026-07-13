@@ -4,12 +4,14 @@
 
 import logging
 from dataclasses import dataclass
+from typing import Literal
 
 from rapidfuzz import fuzz, process
 
 from app.core.detection_policy import (
     MIN_ACCEPTED_SIMILARITY,
     MIN_MATCHED_WORD_COUNT,
+    MIN_PROBABLE_SIMILARITY,
     MIN_SCORE_MARGIN,
 )
 from app.core.model_loader import QuranVerseCandidate, get_quran_verse_candidates
@@ -25,6 +27,14 @@ MATCH_CANDIDATE_LIMIT = 20
 RANKED_CANDIDATE_LIMIT = 2
 AMBIGUITY_CANDIDATE_LIMIT = 10
 
+DetectionStatus = Literal["confident", "probable", "ambiguous", "insufficient"]
+RejectionReason = Literal[
+    "no_match",
+    "score_too_low",
+    "transcription_too_short",
+    "ambiguous_match",
+]
+
 
 @dataclass(frozen=True, slots=True)
 class RankedVerseCandidate:
@@ -37,10 +47,29 @@ class RankedVerseCandidate:
 @dataclass(frozen=True, slots=True)
 class MatchAcceptance:
     accepted: bool
-    reason: str | None
+    reason: RejectionReason | None
     matched_word_count: int
     score_margin_percent: float | None
     competing_match: RankedVerseCandidate | None
+
+
+@dataclass(frozen=True, slots=True)
+class VerseDetectionOutcome:
+    verse: dict | None
+    status: DetectionStatus
+    score: float | None
+    score_margin: float | None
+    matched_word_count: int
+    rejection_reason: RejectionReason | None
+
+    def metadata(self) -> dict:
+        return {
+            "status": self.status,
+            "score": self.score,
+            "score_margin": self.score_margin,
+            "matched_word_count": self.matched_word_count,
+            "rejection_reason": self.rejection_reason,
+        }
 
 
 def compute_similarity_score(query: str, candidate: str, **_kwargs) -> float:
@@ -213,7 +242,61 @@ def assess_match_acceptance(
     )
 
 
-def detect_versets(segments):
+def build_detection_outcome(
+    ranked_matches: list[RankedVerseCandidate],
+    acceptance: MatchAcceptance,
+) -> VerseDetectionOutcome:
+    if not ranked_matches:
+        return VerseDetectionOutcome(
+            verse=None,
+            status="insufficient",
+            score=None,
+            score_margin=None,
+            matched_word_count=0,
+            rejection_reason="no_match",
+        )
+
+    top_match = ranked_matches[0]
+    score = top_match.score_percent / 100
+    score_margin = (
+        acceptance.score_margin_percent / 100
+        if acceptance.score_margin_percent is not None
+        else None
+    )
+
+    if acceptance.accepted:
+        candidate = top_match.candidate
+        verse = {
+            "sourate_id": candidate.sourate_id,
+            "sourate_name": candidate.sourate_name,
+            "transliteration": candidate.transliteration,
+            "start_verse": candidate.start_verse,
+            "end_verse": candidate.end_verse,
+            "text": candidate.normalized_text,
+            "similarity": score,
+        }
+        status: DetectionStatus = "confident"
+    else:
+        verse = None
+
+        if acceptance.reason == "ambiguous_match":
+            status = "ambiguous"
+        elif acceptance.reason == "score_too_low" and score >= MIN_PROBABLE_SIMILARITY:
+            status = "probable"
+        else:
+            status = "insufficient"
+
+    return VerseDetectionOutcome(
+        verse=verse,
+        status=status,
+        score=score,
+        score_margin=score_margin,
+        matched_word_count=acceptance.matched_word_count,
+        rejection_reason=acceptance.reason,
+    )
+
+
+def detect_verse_with_metadata(segments) -> VerseDetectionOutcome:
     transcription = normalize_arabic(
         " ".join(segment.get("text", "") for segment in segments).strip()
     )
@@ -222,7 +305,7 @@ def detect_versets(segments):
         logger.info(
             "Verse detection skipped: empty transcription after normalization."
         )
-        return None
+        return build_detection_outcome([], assess_match_acceptance([]))
 
     candidates = get_quran_verse_candidates()
     ranked_matches = rank_verse_candidates(
@@ -235,9 +318,10 @@ def detect_versets(segments):
         logger.info(
             "Verse detection skipped: no Quran verse candidates available."
         )
-        return None
+        return build_detection_outcome([], assess_match_acceptance([]))
 
     acceptance = assess_match_acceptance(ranked_matches)
+    outcome = build_detection_outcome(ranked_matches, acceptance)
 
     if not acceptance.accepted:
         logger.info(
@@ -251,26 +335,20 @@ def detect_versets(segments):
                 else None
             ),
         )
-        return None
+        return outcome
 
     top_match = ranked_matches[0]
-    candidate = top_match.candidate
-    best_match = {
-        "sourate_id": candidate.sourate_id,
-        "sourate_name": candidate.sourate_name,
-        "transliteration": candidate.transliteration,
-        "start_verse": candidate.start_verse,
-        "end_verse": candidate.end_verse,
-        "text": candidate.normalized_text,
-        "similarity": top_match.score_percent / 100,
-    }
 
     logger.info(
         "Verse detection complete: transcription_chars=%s matched_window_words=%s best_sourate=%s best_similarity=%s",
         len(transcription),
         len(top_match.matched_window.split()),
-        best_match["sourate_name"] if best_match else None,
-        best_match["similarity"] if best_match else None,
+        outcome.verse["sourate_name"] if outcome.verse else None,
+        outcome.score,
     )
 
-    return best_match
+    return outcome
+
+
+def detect_versets(segments):
+    return detect_verse_with_metadata(segments).verse
