@@ -18,6 +18,10 @@ TRANSCRIPTION_WINDOW_WORD_SIZES = (4, 8, 12, 16, 24, 32)
 MAX_WINDOWS_PER_SIZE = 6
 MATCH_CANDIDATE_LIMIT = 20
 RANKED_CANDIDATE_LIMIT = 2
+AMBIGUITY_CANDIDATE_LIMIT = 10
+MIN_ACCEPTED_SCORE_PERCENT = 80
+MIN_MATCHED_WORD_COUNT = 3
+MIN_SCORE_MARGIN_PERCENT = 8
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,6 +30,15 @@ class RankedVerseCandidate:
     candidate: QuranVerseCandidate
     score_percent: float
     matched_window: str
+
+
+@dataclass(frozen=True, slots=True)
+class MatchAcceptance:
+    accepted: bool
+    reason: str | None
+    matched_word_count: int
+    score_margin_percent: float | None
+    competing_match: RankedVerseCandidate | None
 
 
 def compute_similarity_score(query: str, candidate: str, **_kwargs) -> float:
@@ -117,7 +130,13 @@ def rank_verse_candidates(
         ):
             previous_match = best_matches_by_index.get(candidate_index)
 
-            if previous_match is None or score_percent > previous_match.score_percent:
+            if previous_match is None or (
+                score_percent,
+                len(window.split()),
+            ) > (
+                previous_match.score_percent,
+                len(previous_match.matched_window.split()),
+            ):
                 best_matches_by_index[candidate_index] = RankedVerseCandidate(
                     candidate_index=candidate_index,
                     candidate=candidates[candidate_index],
@@ -127,8 +146,69 @@ def rank_verse_candidates(
 
     return sorted(
         best_matches_by_index.values(),
-        key=lambda match: (-match.score_percent, match.candidate_index),
+        key=lambda match: (
+            -match.score_percent,
+            -len(match.matched_window.split()),
+            -len(match.candidate.normalized_text.split()),
+            match.candidate_index,
+        ),
     )[:limit]
+
+
+def candidates_overlap(
+    first: QuranVerseCandidate,
+    second: QuranVerseCandidate,
+) -> bool:
+    if first.sourate_id != second.sourate_id:
+        return False
+
+    return not (
+        first.end_verse < second.start_verse
+        or second.end_verse < first.start_verse
+    )
+
+
+def assess_match_acceptance(
+    ranked_matches: list[RankedVerseCandidate],
+) -> MatchAcceptance:
+    if not ranked_matches:
+        return MatchAcceptance(False, "no_match", 0, None, None)
+
+    top_match = ranked_matches[0]
+    matched_word_count = len(top_match.matched_window.split())
+    competing_match = next(
+        (
+            match
+            for match in ranked_matches[1:]
+            if not candidates_overlap(top_match.candidate, match.candidate)
+        ),
+        None,
+    )
+    score_margin_percent = (
+        top_match.score_percent - competing_match.score_percent
+        if competing_match is not None
+        else None
+    )
+
+    if top_match.score_percent < MIN_ACCEPTED_SCORE_PERCENT:
+        reason = "score_too_low"
+    elif matched_word_count < MIN_MATCHED_WORD_COUNT:
+        reason = "transcription_too_short"
+    elif (
+        score_margin_percent is not None
+        and score_margin_percent < MIN_SCORE_MARGIN_PERCENT
+    ):
+        reason = "ambiguous_match"
+    else:
+        reason = None
+
+    return MatchAcceptance(
+        accepted=reason is None,
+        reason=reason,
+        matched_word_count=matched_word_count,
+        score_margin_percent=score_margin_percent,
+        competing_match=competing_match,
+    )
 
 
 def detect_versets(segments):
@@ -143,11 +223,31 @@ def detect_versets(segments):
         return None
 
     candidates = get_quran_verse_candidates()
-    ranked_matches = rank_verse_candidates(transcription, candidates)
+    ranked_matches = rank_verse_candidates(
+        transcription,
+        candidates,
+        limit=AMBIGUITY_CANDIDATE_LIMIT,
+    )
 
     if not ranked_matches:
         logger.info(
             "Verse detection skipped: no Quran verse candidates available."
+        )
+        return None
+
+    acceptance = assess_match_acceptance(ranked_matches)
+
+    if not acceptance.accepted:
+        logger.info(
+            "Verse detection rejected: reason=%s best_similarity=%s matched_window_words=%s score_margin=%s",
+            acceptance.reason,
+            ranked_matches[0].score_percent / 100,
+            acceptance.matched_word_count,
+            (
+                acceptance.score_margin_percent / 100
+                if acceptance.score_margin_percent is not None
+                else None
+            ),
         )
         return None
 

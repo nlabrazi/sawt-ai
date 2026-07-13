@@ -81,7 +81,7 @@ def test_detect_versets_ranks_representative_recitations(
     assert 0 <= match["similarity"] <= 1, case_name
 
 
-def test_detect_versets_documents_short_transcription_ambiguity(monkeypatch):
+def test_detect_versets_rejects_short_transcription(monkeypatch):
     candidates = (
         QuranVerseCandidate(
             sourate_id=112,
@@ -108,8 +108,7 @@ def test_detect_versets_documents_short_transcription_ambiguity(monkeypatch):
 
     match = verse_detection_service.detect_versets([{"text": "قل"}])
 
-    assert match is not None
-    assert match["similarity"] < 0.8
+    assert match is None
 
 
 def test_detect_versets_returns_best_precomputed_match(monkeypatch):
@@ -279,6 +278,84 @@ def test_rank_verse_candidates_deduplicates_candidate_across_windows():
     assert ranked_matches[0].score_percent == 100
 
 
+def test_assess_match_acceptance_rejects_close_competing_location():
+    candidates = (
+        QuranVerseCandidate(1, "First", "First", 1, 1, "نص اول واضح"),
+        QuranVerseCandidate(2, "Second", "Second", 1, 1, "نص ثان واضح"),
+    )
+    ranked_matches = [
+        verse_detection_service.RankedVerseCandidate(0, candidates[0], 92, "نص كامل واضح"),
+        verse_detection_service.RankedVerseCandidate(1, candidates[1], 88, "نص كامل واضح"),
+    ]
+
+    acceptance = verse_detection_service.assess_match_acceptance(ranked_matches)
+
+    assert acceptance.accepted is False
+    assert acceptance.reason == "ambiguous_match"
+    assert acceptance.score_margin_percent == 4
+
+
+def test_assess_match_acceptance_ignores_overlapping_candidate_window():
+    candidates = (
+        QuranVerseCandidate(112, "Al-Ikhlas", "Al-Ikhlas", 1, 2, "نص اول واضح"),
+        QuranVerseCandidate(112, "Al-Ikhlas", "Al-Ikhlas", 1, 1, "نص اول"),
+        QuranVerseCandidate(113, "Al-Falaq", "Al-Falaq", 1, 1, "نص مختلف"),
+    )
+    ranked_matches = [
+        verse_detection_service.RankedVerseCandidate(0, candidates[0], 96, "نص كامل واضح"),
+        verse_detection_service.RankedVerseCandidate(1, candidates[1], 94, "نص كامل واضح"),
+        verse_detection_service.RankedVerseCandidate(2, candidates[2], 80, "نص كامل واضح"),
+    ]
+
+    acceptance = verse_detection_service.assess_match_acceptance(ranked_matches)
+
+    assert acceptance.accepted is True
+    assert acceptance.competing_match == ranked_matches[2]
+    assert acceptance.score_margin_percent == 16
+
+
+def test_rank_and_acceptance_prefer_candidate_covering_overlapping_windows():
+    candidates = (
+        QuranVerseCandidate(113, "Al-Falaq", "Al-Falaq", 1, 1, "قل اعوذ برب الفلق"),
+        QuranVerseCandidate(113, "Al-Falaq", "Al-Falaq", 2, 2, "من شر ما خلق"),
+        QuranVerseCandidate(
+            113,
+            "Al-Falaq",
+            "Al-Falaq",
+            1,
+            2,
+            "قل اعوذ برب الفلق من شر ما خلق",
+        ),
+        QuranVerseCandidate(114, "An-Nas", "An-Nas", 1, 1, "قل اعوذ برب الناس"),
+    )
+    transcription = "قل اعوذ برب الفلق من شر ما خلق"
+
+    ranked_matches = verse_detection_service.rank_verse_candidates(
+        transcription,
+        candidates,
+        limit=4,
+    )
+    acceptance = verse_detection_service.assess_match_acceptance(ranked_matches)
+
+    assert ranked_matches[0].candidate.start_verse == 1
+    assert ranked_matches[0].candidate.end_verse == 2
+    assert acceptance.accepted is True
+    assert acceptance.competing_match is not None
+    assert acceptance.competing_match.candidate.sourate_id == 114
+
+
+def test_assess_match_acceptance_rejects_low_score():
+    candidate = QuranVerseCandidate(1, "First", "First", 1, 1, "نص اول واضح")
+    ranked_matches = [
+        verse_detection_service.RankedVerseCandidate(0, candidate, 79, "نص كامل واضح"),
+    ]
+
+    acceptance = verse_detection_service.assess_match_acceptance(ranked_matches)
+
+    assert acceptance.accepted is False
+    assert acceptance.reason == "score_too_low"
+
+
 def test_detect_versets_returns_normalized_combined_score(monkeypatch):
     candidates = (
         QuranVerseCandidate(
@@ -314,7 +391,7 @@ def test_detect_versets_returns_normalized_combined_score(monkeypatch):
     assert 0 < match["similarity"] < 1
 
 
-def test_detect_versets_keeps_first_candidate_when_scores_are_tied(monkeypatch):
+def test_rank_verse_candidates_keeps_catalog_order_when_scores_are_tied():
     candidates = (
         QuranVerseCandidate(
             sourate_id=1,
@@ -322,7 +399,7 @@ def test_detect_versets_keeps_first_candidate_when_scores_are_tied(monkeypatch):
             transliteration="First",
             start_verse=1,
             end_verse=1,
-            normalized_text="نص",
+            normalized_text="نص كامل واضح",
         ),
         QuranVerseCandidate(
             sourate_id=2,
@@ -330,20 +407,15 @@ def test_detect_versets_keeps_first_candidate_when_scores_are_tied(monkeypatch):
             transliteration="Second",
             start_verse=1,
             end_verse=1,
-            normalized_text="نص",
+            normalized_text="نص كامل واضح",
         ),
     )
-
-    monkeypatch.setattr(
-        verse_detection_service,
-        "get_quran_verse_candidates",
-        lambda: candidates,
+    ranked_matches = verse_detection_service.rank_verse_candidates(
+        "نص كامل واضح",
+        candidates,
     )
 
-    match = verse_detection_service.detect_versets([{"text": "نص"}])
-
-    assert match is not None
-    assert match["sourate_id"] == 1
+    assert [match.candidate.sourate_id for match in ranked_matches] == [1, 2]
 
 
 def test_detect_versets_returns_none_without_candidates(monkeypatch):
