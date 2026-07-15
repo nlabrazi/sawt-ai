@@ -3,6 +3,7 @@
 # Trouve le meilleur match de versets à partir des segments de transcription.
 
 import logging
+from collections import Counter
 from dataclasses import dataclass
 from typing import Literal
 
@@ -29,6 +30,11 @@ MAX_WINDOWS_PER_SIZE = 6
 MATCH_CANDIDATE_LIMIT = 20
 RANKED_CANDIDATE_LIMIT = 2
 AMBIGUITY_CANDIDATE_LIMIT = 10
+PASSAGE_ANCHOR_MIN_WORD_COUNT = 4
+PASSAGE_ANCHOR_MIN_SIMILARITY = 90.0
+PASSAGE_ANCHOR_MIN_TEXT_COVERAGE = 0.85
+PASSAGE_ANCHOR_BOUNDARY_TOLERANCE = 1
+MAX_UNSUPPORTED_VERSES_BETWEEN_ANCHORS = 2
 
 DetectionStatus = Literal["confident", "probable", "ambiguous", "insufficient"]
 RejectionReason = Literal[
@@ -58,6 +64,15 @@ class MatchAcceptance:
     matched_word_count: int
     score_margin_percent: float | None
     competing_match: RankedVerseCandidate | None
+
+
+@dataclass(frozen=True, slots=True)
+class PassageVerseEvidence:
+    candidate_index: int
+    candidate: QuranVerseCandidate
+    score_percent: float
+    transcription_start: int
+    transcription_end: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -259,6 +274,324 @@ def candidates_overlap(
     )
 
 
+def _alignment_is_near_word_boundaries(
+    transcription: str,
+    start: int,
+    end: int,
+) -> bool:
+    """Tolère une lettre tronquée par Whisper, pas une sous-chaîne arbitraire."""
+    word_start = transcription.rfind(" ", 0, start) + 1
+    next_separator = transcription.find(" ", end)
+    word_end = len(transcription) if next_separator == -1 else next_separator
+
+    return (
+        start - word_start <= PASSAGE_ANCHOR_BOUNDARY_TOLERANCE
+        and word_end - end <= PASSAGE_ANCHOR_BOUNDARY_TOLERANCE
+    )
+
+
+def extract_passage_verse_evidence(
+    transcription: str,
+    candidates: tuple[QuranVerseCandidate, ...],
+    sourate_id: int,
+) -> list[PassageVerseEvidence]:
+    """Extrait des ancres fortes et non ambiguës pour une seule sourate.
+
+    Les versets courts et les refrains identiques au sein d'une sourate sont
+    exclus : ils sont utiles au classement classique, mais trop faibles pour
+    justifier l'extension d'une plage.
+    """
+    all_single_verse_candidates = [
+        (candidate_index, candidate)
+        for candidate_index, candidate in enumerate(candidates)
+        if candidate.start_verse == candidate.end_verse
+    ]
+    text_occurrences = Counter(
+        candidate.normalized_text for _, candidate in all_single_verse_candidates
+    )
+    single_verse_candidates = (
+        (candidate_index, candidate)
+        for candidate_index, candidate in all_single_verse_candidates
+        if candidate.sourate_id == sourate_id
+    )
+    evidence = []
+
+    for candidate_index, candidate in single_verse_candidates:
+        candidate_text = candidate.normalized_text
+
+        if (
+            len(candidate_text.split()) < PASSAGE_ANCHOR_MIN_WORD_COUNT
+            or text_occurrences[candidate_text] != 1
+        ):
+            continue
+
+        alignment = fuzz.partial_ratio_alignment(candidate_text, transcription)
+
+        if alignment is None or alignment.score < PASSAGE_ANCHOR_MIN_SIMILARITY:
+            continue
+
+        covered_character_count = alignment.src_end - alignment.src_start
+        text_coverage = covered_character_count / len(candidate_text)
+
+        if (
+            text_coverage < PASSAGE_ANCHOR_MIN_TEXT_COVERAGE
+            or not _alignment_is_near_word_boundaries(
+                transcription,
+                alignment.dest_start,
+                alignment.dest_end,
+            )
+        ):
+            continue
+
+        evidence.append(
+            PassageVerseEvidence(
+                candidate_index=candidate_index,
+                candidate=candidate,
+                score_percent=alignment.score,
+                transcription_start=alignment.dest_start,
+                transcription_end=alignment.dest_end,
+            )
+        )
+
+    return sorted(
+        evidence,
+        key=lambda item: (
+            item.transcription_start,
+            item.transcription_end,
+            item.candidate.start_verse,
+        ),
+    )
+
+
+def _passage_evidence_follows(
+    previous: PassageVerseEvidence,
+    current: PassageVerseEvidence,
+    top_match: RankedVerseCandidate,
+) -> bool:
+    previous_end_verse = previous.candidate.end_verse
+    current_start_verse = current.candidate.start_verse
+
+    # Le meilleur candidat soutient déjà toute sa propre plage. Lorsqu'une
+    # ancre se trouve dedans, seuls les versets entre cette plage et l'ancre
+    # extérieure comptent comme non étayés.
+    if (
+        previous_end_verse < top_match.candidate.start_verse
+        <= current_start_verse
+        <= top_match.candidate.end_verse
+    ):
+        current_start_verse = top_match.candidate.start_verse
+    elif (
+        top_match.candidate.start_verse
+        <= previous_end_verse
+        <= top_match.candidate.end_verse
+        < current_start_verse
+    ):
+        previous_end_verse = top_match.candidate.end_verse
+
+    missing_verse_count = current_start_verse - previous_end_verse - 1
+
+    return (
+        current.transcription_start >= previous.transcription_end
+        and 0 <= missing_verse_count <= MAX_UNSUPPORTED_VERSES_BETWEEN_ANCHORS
+    )
+
+
+def _passage_evidence_chain_quality(
+    chain: tuple[PassageVerseEvidence, ...],
+) -> tuple[int, int, float, int]:
+    unsupported_verse_count = sum(
+        current.candidate.start_verse - previous.candidate.end_verse - 1
+        for previous, current in zip(chain, chain[1:])
+    )
+
+    return (
+        len(chain),
+        sum(len(item.candidate.normalized_text.split()) for item in chain),
+        sum(item.score_percent for item in chain),
+        -unsupported_verse_count,
+    )
+
+
+def _chain_relation_to_match(
+    evidence: PassageVerseEvidence,
+    match: RankedVerseCandidate,
+) -> tuple[bool, bool]:
+    verse_id = evidence.candidate.start_verse
+    is_inside = match.candidate.start_verse <= verse_id <= match.candidate.end_verse
+    return is_inside, not is_inside
+
+
+def _find_supported_passage_chains(
+    evidence: list[PassageVerseEvidence],
+    top_match: RankedVerseCandidate,
+) -> list[tuple[PassageVerseEvidence, ...]]:
+    """Conserve les meilleures chaînes ordonnées avec preuve interne/externe."""
+    states_by_end: list[
+        dict[tuple[bool, bool], tuple[PassageVerseEvidence, ...]]
+    ] = []
+
+    for current_index, current in enumerate(evidence):
+        relation = _chain_relation_to_match(current, top_match)
+        states = {relation: (current,)}
+
+        for previous_index in range(current_index):
+            previous = evidence[previous_index]
+
+            if not _passage_evidence_follows(previous, current, top_match):
+                continue
+
+            for previous_relation, previous_chain in states_by_end[
+                previous_index
+            ].items():
+                combined_relation = (
+                    previous_relation[0] or relation[0],
+                    previous_relation[1] or relation[1],
+                )
+                combined_chain = (*previous_chain, current)
+                existing_chain = states.get(combined_relation)
+
+                if existing_chain is None or _passage_evidence_chain_quality(
+                    combined_chain
+                ) > _passage_evidence_chain_quality(existing_chain):
+                    states[combined_relation] = combined_chain
+
+        states_by_end.append(states)
+
+    return [
+        states[(True, True)]
+        for states in states_by_end
+        if (True, True) in states and len(states[(True, True)]) >= 2
+    ]
+
+
+def infer_enclosing_passage_match(
+    transcription: str,
+    ranked_matches: list[RankedVerseCandidate],
+    candidates: tuple[QuranVerseCandidate, ...],
+    acceptance: MatchAcceptance,
+) -> RankedVerseCandidate | None:
+    """Infère prudemment une plage englobante sans modifier l'acceptation.
+
+    Une ambiguïté entre sourates reste intacte. Une ambiguïté interne à
+    une sourate peut seulement produire un meilleur candidat manuel ; elle
+    n'est jamais promue en résultat accepté.
+    """
+    if not ranked_matches or (
+        not acceptance.accepted and acceptance.reason != "ambiguous_match"
+    ):
+        return None
+
+    top_match = ranked_matches[0]
+    competing_match = acceptance.competing_match
+
+    if acceptance.reason == "ambiguous_match" and (
+        competing_match is None
+        or competing_match.candidate.sourate_id != top_match.candidate.sourate_id
+    ):
+        return None
+
+    evidence = extract_passage_verse_evidence(
+        transcription,
+        candidates,
+        top_match.candidate.sourate_id,
+    )
+    supported_chains = _find_supported_passage_chains(evidence, top_match)
+    candidate_by_range = {
+        (
+            candidate.sourate_id,
+            candidate.start_verse,
+            candidate.end_verse,
+        ): (candidate_index, candidate)
+        for candidate_index, candidate in enumerate(candidates)
+        if candidate.sourate_id == top_match.candidate.sourate_id
+    }
+    proposals = []
+
+    for chain in supported_chains:
+        start_verse = min(
+            top_match.candidate.start_verse,
+            chain[0].candidate.start_verse,
+        )
+        end_verse = max(
+            top_match.candidate.end_verse,
+            chain[-1].candidate.end_verse,
+        )
+
+        if (
+            start_verse == top_match.candidate.start_verse
+            and end_verse == top_match.candidate.end_verse
+        ):
+            continue
+
+        passage_entry = candidate_by_range.get(
+            (top_match.candidate.sourate_id, start_verse, end_verse)
+        )
+
+        if passage_entry is None:
+            continue
+
+        if acceptance.reason == "ambiguous_match" and competing_match is not None:
+            competing_candidate = competing_match.candidate
+
+            if not (
+                start_verse <= competing_candidate.start_verse
+                and competing_candidate.end_verse <= end_verse
+            ):
+                continue
+
+        candidate_index, passage_candidate = passage_entry
+        passage_similarity = compute_similarity_score(
+            transcription,
+            passage_candidate.normalized_text,
+        )
+
+        if passage_similarity < MIN_ACCEPTED_SIMILARITY * 100:
+            continue
+
+        proposals.append(
+            (
+                _passage_evidence_chain_quality(chain),
+                passage_similarity,
+                candidate_index,
+                passage_candidate,
+            )
+        )
+
+    if not proposals:
+        return None
+
+    proposals.sort(key=lambda proposal: (proposal[0], proposal[1]), reverse=True)
+    best_proposal = proposals[0]
+
+    if len(proposals) > 1:
+        next_proposal = proposals[1]
+        same_primary_evidence = best_proposal[0][:2] == next_proposal[0][:2]
+        different_range = (
+            best_proposal[3].start_verse,
+            best_proposal[3].end_verse,
+        ) != (
+            next_proposal[3].start_verse,
+            next_proposal[3].end_verse,
+        )
+
+        if same_primary_evidence and different_range:
+            return None
+
+    _, passage_similarity, candidate_index, passage_candidate = best_proposal
+
+    return RankedVerseCandidate(
+        candidate_index=candidate_index,
+        candidate=passage_candidate,
+        score_percent=passage_similarity,
+        matched_window=transcription,
+        ranking_score_percent=compute_ranking_score(
+            passage_similarity,
+            transcription,
+            passage_candidate.normalized_text,
+        ),
+    )
+
+
 def assess_match_acceptance(
     ranked_matches: list[RankedVerseCandidate],
 ) -> MatchAcceptance:
@@ -390,11 +723,57 @@ def detect_verse_with_metadata(
         return build_detection_outcome([], assess_match_acceptance([]))
 
     acceptance = assess_match_acceptance(ranked_matches)
+    inferred_match = None
+    outcome_acceptance = acceptance
+    matches_for_outcome = ranked_matches
+
+    if acceptance.accepted or include_ambiguous_verse:
+        inferred_match = infer_enclosing_passage_match(
+            transcription,
+            ranked_matches,
+            candidates,
+            acceptance,
+        )
+
+    if inferred_match is not None:
+        inferred_matches = [inferred_match, *ranked_matches]
+        inferred_acceptance = assess_match_acceptance(inferred_matches)
+
+        if acceptance.accepted and inferred_acceptance.accepted:
+            matches_for_outcome = inferred_matches
+            outcome_acceptance = inferred_acceptance
+        elif acceptance.reason == "ambiguous_match":
+            matches_for_outcome = inferred_matches
+            # L'inférence améliore seulement les bornes proposées en revue
+            # manuelle. Elle ne transforme jamais une décision ambiguë en
+            # résultat confiant.
+            outcome_acceptance = MatchAcceptance(
+                accepted=False,
+                reason="ambiguous_match",
+                matched_word_count=inferred_acceptance.matched_word_count,
+                score_margin_percent=inferred_acceptance.score_margin_percent,
+                competing_match=inferred_acceptance.competing_match,
+            )
+        else:
+            # Le passage élargi n'est pas aussi solide que le meilleur passage
+            # initial : conserver la prédiction courte plutôt que de lui prêter
+            # une confiance qui ne lui appartient pas.
+            inferred_match = None
+
     outcome = build_detection_outcome(
-        ranked_matches,
-        acceptance,
+        matches_for_outcome,
+        outcome_acceptance,
         include_ambiguous_verse=include_ambiguous_verse,
     )
+
+    if inferred_match is not None:
+        logger.info(
+            "Verse passage inferred: sourate=%s start_verse=%s end_verse=%s anchor_decision=%s",
+            inferred_match.candidate.sourate_id,
+            inferred_match.candidate.start_verse,
+            inferred_match.candidate.end_verse,
+            "accepted" if acceptance.accepted else acceptance.reason,
+        )
 
     if not acceptance.accepted:
         logger.info(
