@@ -22,7 +22,8 @@ WHISPER_MODEL_NAME = os.getenv("WHISPER_MODEL_NAME", "base")
 QURAN_VERSETS_PATH = Path(
     os.getenv("QURAN_VERSETS_PATH", str(BASE_DIR / "assets" / "quran_versets.json"))
 )
-MAX_VERSE_DETECTION_WINDOW_SIZE = 5
+MAX_VERSE_DETECTION_WINDOW_SIZE = 10
+MAX_VERSE_DETECTION_WORD_COUNT = 64
 
 whisper_model: WhisperModel | None = None
 quran_versets: list[dict[str, Any]] | None = None
@@ -58,6 +59,16 @@ def _build_quran_verse_candidates(
         for window_size in range(1, max_window_size + 1):
             for start_index in range(len(normalized_verses) - window_size + 1):
                 chunk = normalized_verses[start_index:start_index + window_size]
+                normalized_text = " ".join(verse["text"] for verse in chunk)
+
+                # Un verset long doit rester détectable, mais les passages
+                # multi-versets sont bornés pour contenir le coût mémoire et CPU.
+                if (
+                    window_size > 1
+                    and len(normalized_text.split()) > MAX_VERSE_DETECTION_WORD_COUNT
+                ):
+                    continue
+
                 candidates.append(
                     QuranVerseCandidate(
                         sourate_id=sourate["id"],
@@ -65,7 +76,7 @@ def _build_quran_verse_candidates(
                         transliteration=sourate.get("transliteration", ""),
                         start_verse=chunk[0]["id"],
                         end_verse=chunk[-1]["id"],
-                        normalized_text=" ".join(verse["text"] for verse in chunk),
+                        normalized_text=normalized_text,
                     )
                 )
 

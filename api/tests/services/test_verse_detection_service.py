@@ -188,6 +188,23 @@ def test_compute_similarity_score_combines_local_and_token_scores():
     assert fuzz.ratio(transcription, candidate) < score < 100
 
 
+def test_compute_ranking_score_rewards_longer_consistent_evidence():
+    short_score = verse_detection_service.compute_ranking_score(
+        100,
+        "بسم الله الرحمن الرحيم",
+        "بسم الله الرحمن الرحيم",
+    )
+    long_score = verse_detection_service.compute_ranking_score(
+        98,
+        " ".join(["كلمه"] * 24),
+        " ".join(["كلمه"] * 24),
+    )
+
+    assert long_score > short_score
+    assert short_score < 100
+    assert long_score == pytest.approx(98)
+
+
 def test_build_transcription_windows_keeps_full_text_and_overlaps_chunks():
     transcription = " ".join(f"word{index}" for index in range(10))
 
@@ -342,6 +359,79 @@ def test_rank_and_acceptance_prefer_candidate_covering_overlapping_windows():
     assert acceptance.accepted is True
     assert acceptance.competing_match is not None
     assert acceptance.competing_match.candidate.sourate_id == 114
+
+
+def test_rank_verse_candidates_prefers_complete_fatiha_over_exact_short_window():
+    full_fatiha = (
+        "بسم الله الرحمن الرحيم الحمد لله رب العلمين الرحمن الرحيم ملك يوم الدين "
+        "اياك نعبد واياك نستعين اهدنا الصرط المستقيم صرط الذين انعمت عليهم "
+        "غير المغضوب عليهم ولا الضالين"
+    )
+    candidates = (
+        QuranVerseCandidate(
+            1,
+            "Al-Fatihah",
+            "Al-Fatihah",
+            1,
+            1,
+            "بسم الله الرحمن الرحيم",
+        ),
+        QuranVerseCandidate(
+            1,
+            "Al-Fatihah",
+            "Al-Fatihah",
+            1,
+            7,
+            full_fatiha,
+        ),
+        QuranVerseCandidate(
+            112,
+            "Al-Ikhlas",
+            "Al-Ikhlas",
+            1,
+            4,
+            "قل هو الله احد الله الصمد لم يلد ولم يولد",
+        ),
+    )
+
+    ranked_matches = verse_detection_service.rank_verse_candidates(
+        full_fatiha.replace("الدين", "الديت"),
+        candidates,
+        limit=3,
+    )
+    acceptance = verse_detection_service.assess_match_acceptance(ranked_matches)
+
+    assert ranked_matches[0].candidate.sourate_id == 1
+    assert ranked_matches[0].candidate.start_verse == 1
+    assert ranked_matches[0].candidate.end_verse == 7
+    assert len(ranked_matches[0].matched_window.split()) > 20
+    assert acceptance.accepted is True
+
+
+@pytest.mark.parametrize(
+    "transcription",
+    [
+        "ceci est un texte français sans rapport avec le coran",
+        "هذا حديث يومي عن العمل والطقس وليس تلاوه",
+    ],
+)
+def test_detect_versets_rejects_text_outside_quran(
+    monkeypatch,
+    representative_candidates,
+    transcription,
+):
+    monkeypatch.setattr(
+        verse_detection_service,
+        "get_quran_verse_candidates",
+        lambda: representative_candidates,
+    )
+
+    outcome = verse_detection_service.detect_verse_with_metadata([
+        {"text": transcription},
+    ])
+
+    assert outcome.verse is None
+    assert outcome.status in {"insufficient", "probable"}
 
 
 def test_assess_match_acceptance_rejects_low_score():

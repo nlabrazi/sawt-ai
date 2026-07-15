@@ -21,6 +21,9 @@ logger = logging.getLogger(__name__)
 
 LOCAL_SIMILARITY_WEIGHT = 0.7
 TOKEN_SIMILARITY_WEIGHT = 0.3
+MIN_EVIDENCE_FACTOR = 0.8
+LENGTH_COMPATIBILITY_WEIGHT = 0.2
+FULL_EVIDENCE_WORD_COUNT = 16
 TRANSCRIPTION_WINDOW_WORD_SIZES = (4, 8, 12, 16, 24, 32)
 MAX_WINDOWS_PER_SIZE = 6
 MATCH_CANDIDATE_LIMIT = 20
@@ -33,6 +36,9 @@ RejectionReason = Literal[
     "score_too_low",
     "transcription_too_short",
     "ambiguous_match",
+    "insufficient_speech",
+    "non_arabic_speech",
+    "low_transcription_confidence",
 ]
 
 
@@ -42,6 +48,7 @@ class RankedVerseCandidate:
     candidate: QuranVerseCandidate
     score_percent: float
     matched_window: str
+    ranking_score_percent: float | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -81,6 +88,49 @@ def compute_similarity_score(query: str, candidate: str, **_kwargs) -> float:
         LOCAL_SIMILARITY_WEIGHT * local_score
         + TOKEN_SIMILARITY_WEIGHT * token_score
     )
+
+
+def compute_ranking_score(
+    similarity_score: float,
+    matched_window: str,
+    candidate: str,
+) -> float:
+    """Pondère la similarité par la quantité et la cohérence des preuves.
+
+    Une courte sous-fenêtre exacte reste un bon signal, mais ne doit pas dominer
+    un passage long presque exact. La pondération est volontairement bornée :
+    elle sert uniquement au classement et ne transforme pas une correspondance
+    faible en résultat acceptable.
+    """
+    window_word_count = len(matched_window.split())
+    candidate_word_count = len(candidate.split())
+
+    if window_word_count == 0 or candidate_word_count == 0:
+        return 0.0
+
+    evidence_word_count = min(window_word_count, candidate_word_count)
+    evidence_factor = MIN_EVIDENCE_FACTOR + (
+        (1 - MIN_EVIDENCE_FACTOR)
+        * min(evidence_word_count / FULL_EVIDENCE_WORD_COUNT, 1)
+    )
+    length_compatibility = evidence_word_count / max(
+        window_word_count,
+        candidate_word_count,
+    )
+    length_factor = (
+        1 - LENGTH_COMPATIBILITY_WEIGHT
+        + LENGTH_COMPATIBILITY_WEIGHT * length_compatibility
+    )
+
+    return similarity_score * evidence_factor * length_factor
+
+
+def effective_ranking_score(match: RankedVerseCandidate) -> float:
+    """Garde les candidats construits manuellement compatibles avec l'API interne."""
+    if match.ranking_score_percent is None:
+        return match.score_percent
+
+    return match.ranking_score_percent
 
 
 def build_transcription_windows(transcription: str) -> tuple[str, ...]:
@@ -159,25 +209,35 @@ def rank_verse_candidates(
             candidate_texts,
             limit=limit,
         ):
+            candidate = candidates[candidate_index]
+            ranking_score_percent = compute_ranking_score(
+                score_percent,
+                window,
+                candidate.normalized_text,
+            )
             previous_match = best_matches_by_index.get(candidate_index)
 
             if previous_match is None or (
+                ranking_score_percent,
                 score_percent,
                 len(window.split()),
             ) > (
+                effective_ranking_score(previous_match),
                 previous_match.score_percent,
                 len(previous_match.matched_window.split()),
             ):
                 best_matches_by_index[candidate_index] = RankedVerseCandidate(
                     candidate_index=candidate_index,
-                    candidate=candidates[candidate_index],
+                    candidate=candidate,
                     score_percent=score_percent,
                     matched_window=window,
+                    ranking_score_percent=ranking_score_percent,
                 )
 
     return sorted(
         best_matches_by_index.values(),
         key=lambda match: (
+            -effective_ranking_score(match),
             -match.score_percent,
             -len(match.matched_window.split()),
             -len(match.candidate.normalized_text.split()),
