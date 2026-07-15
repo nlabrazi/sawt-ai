@@ -67,4 +67,56 @@ describe('RecognitionResultScreen', () => {
 
     expect(wrapper.emitted('reset')).toHaveLength(1)
   })
+
+  it.each([
+    [
+      'insufficient_speech',
+      'Récitation trop courte',
+      'Récitez distinctement pendant quelques secondes',
+    ],
+    [
+      'non_arabic_speech',
+      'Récitation en arabe non détectée',
+      'Cet audio semble contenir une autre langue',
+    ],
+    [
+      'low_transcription_confidence',
+      'Audio trop difficile à analyser',
+      'réduisez le bruit ambiant',
+    ],
+  ] as const)('explains the %s rejection without showing a result card', (reason, title, hint) => {
+    const wrapper = mount(RecognitionResultScreen, {
+      props: {
+        result: {
+          transcription_text: '',
+          verse: null,
+          detection: {
+            status: 'insufficient',
+            score: null,
+            score_margin: null,
+            matched_word_count: 0,
+            analyzed_duration_seconds: 5,
+            analysis_attempts: 1,
+            rejection_reason: reason,
+          },
+          imam_predictions: [],
+          imam_status: 'disabled',
+          imam_detection_enabled: false,
+        },
+        error: null,
+      },
+      global: {
+        stubs: {
+          ResultCard: {
+            template: '<article class="result-card-stub" />',
+          },
+          FeedbackForm: true,
+        },
+      },
+    })
+
+    expect(wrapper.text()).toContain(title)
+    expect(wrapper.text()).toContain(hint)
+    expect(wrapper.find('.result-card-stub').exists()).toBe(false)
+  })
 })

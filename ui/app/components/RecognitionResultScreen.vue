@@ -15,16 +15,49 @@ defineEmits<{
   reset: []
 }>()
 
+const rejectionCopy = computed(() => {
+  switch (props.result?.detection?.rejection_reason) {
+    case 'insufficient_speech':
+      return {
+        heading: 'Récitation trop courte',
+        introduction:
+          'Récitez distinctement pendant quelques secondes, puis laissez Sawt AI analyser.',
+      }
+    case 'non_arabic_speech':
+      return {
+        heading: 'Récitation en arabe non détectée',
+        introduction:
+          'Cet audio semble contenir une autre langue. Essayez à nouveau avec un passage du Coran.',
+      }
+    case 'low_transcription_confidence':
+      return {
+        heading: 'Audio trop difficile à analyser',
+        introduction:
+          'La voix est trop couverte ou incertaine. Rapprochez-vous du micro et réduisez le bruit ambiant.',
+      }
+    case 'ambiguous_match':
+      return {
+        heading: 'Plusieurs passages sont possibles',
+        introduction: 'Récitez quelques mots supplémentaires pour départager les correspondances.',
+      }
+    default:
+      return {
+        heading: 'Aucun passage reconnu',
+        introduction: 'Essayez un extrait un peu plus long, avec moins de bruit autour de vous.',
+      }
+  }
+})
+
 const heading = computed(() => {
   if (props.error) return 'Analyse interrompue'
   if (props.result?.verse) return 'Passage proposé'
-  return 'Aucun passage reconnu'
+  return rejectionCopy.value.heading
 })
 
 const introduction = computed(() => {
   if (props.error) return 'La récitation n’a pas pu être analysée cette fois-ci.'
   if (props.result?.verse) return 'Vérifiez la sourate et les versets avant de valider le résultat.'
-  return 'Essayez un extrait un peu plus long, avec moins de bruit autour de vous.'
+  return rejectionCopy.value.introduction
 })
 
 const statusPanel = computed(() => {
@@ -65,7 +98,7 @@ const statusPanel = computed(() => {
         <p class="status-text">{{ statusPanel.text }}</p>
       </div>
 
-      <ResultCard v-if="result" :result="result" />
+      <ResultCard v-if="result?.verse" :result="result" />
       <FeedbackForm v-if="result?.verse" :result="result" />
     </div>
 
