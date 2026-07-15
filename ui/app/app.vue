@@ -21,6 +21,7 @@ const {
   uploadError,
   micError,
   isRecording,
+  isFinalizingRecording,
   recordingSeconds,
   maxRecordingSeconds,
   audioLevel,
@@ -48,6 +49,7 @@ watch(screenState, (state) => {
           :upload-error="uploadError"
           :mic-error="micError"
           :is-recording="isRecording"
+          :is-finalizing-recording="isFinalizingRecording"
           :recording-seconds="recordingSeconds"
           :max-recording-seconds="maxRecordingSeconds"
           :upload-accept="uploadAccept"

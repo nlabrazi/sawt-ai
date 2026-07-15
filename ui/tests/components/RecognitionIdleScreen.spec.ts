@@ -90,6 +90,20 @@ describe('RecognitionIdleScreen', () => {
     expect(wrapper.text()).not.toContain('/ 90s')
   })
 
+  it('locks the primary action while the recorded audio is being prepared', () => {
+    const wrapper = mount(RecognitionIdleScreen, {
+      props: {
+        isFinalizingRecording: true,
+      },
+    })
+
+    expect(wrapper.text()).toContain('Préparation de l’audio')
+    expect(wrapper.text()).toContain('Votre enregistrement est terminé')
+    expect(wrapper.get('.action-button').attributes('disabled')).toBeDefined()
+    expect(wrapper.get('.action-button').attributes('aria-busy')).toBe('true')
+    expect(wrapper.find('.secondary-actions').exists()).toBe(false)
+  })
+
   it('shows microphone error guidance near the primary action', () => {
     const wrapper = mount(RecognitionIdleScreen, {
       props: {

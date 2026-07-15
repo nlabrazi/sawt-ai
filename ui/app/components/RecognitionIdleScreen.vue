@@ -9,6 +9,7 @@ const props = withDefaults(
     uploadError?: string | null
     micError?: string | null
     isRecording?: boolean
+    isFinalizingRecording?: boolean
     recordingSeconds?: number
     maxRecordingSeconds?: number | null
     audioLevel?: number
@@ -32,16 +33,23 @@ const emit = defineEmits<{
 const fileInput = ref<HTMLInputElement | null>(null)
 
 const title = computed(() => {
+  if (props.isFinalizingRecording) return 'Préparation de l’audio'
   return props.isRecording ? 'Je vous écoute' : 'Récitez un passage du Coran'
 })
 
 const subtitle = computed(() => {
+  if (props.isFinalizingRecording) {
+    return 'Votre enregistrement est terminé. L’analyse va commencer.'
+  }
+
   return props.isRecording
     ? 'Récitez naturellement, dans un environnement aussi calme que possible.'
     : 'Sawt AI vous propose la sourate et les versets correspondants.'
 })
 
 const recognitionActionHint = computed(() => {
+  if (props.isFinalizingRecording) return 'Quelques instants…'
+
   return props.isRecording
     ? 'Appuyez à nouveau pour arrêter et analyser.'
     : 'Appuyez pour commencer, puis une seconde fois pour arrêter et analyser.'
@@ -149,7 +157,11 @@ function onFileChange(event: Event) {
       <div class="hero-copy">
         <p class="state-label">
           <span v-if="isRecording" class="recording-dot" aria-hidden="true" />
-          {{ isRecording ? 'Enregistrement en cours' : 'Reconnaissance coranique' }}
+          {{ isFinalizingRecording
+            ? 'Enregistrement terminé'
+            : isRecording
+              ? 'Enregistrement en cours'
+              : 'Reconnaissance coranique' }}
         </p>
 
         <h1 id="recognition-title" class="main-title">{{ title }}</h1>
@@ -189,6 +201,9 @@ function onFileChange(event: Event) {
       <div class="hero-action">
         <RecognitionActionButton
           :is-recording="isRecording"
+          :loading="isFinalizingRecording"
+          :disabled="isFinalizingRecording"
+          loading-label="Préparation de l’audio"
           :audio-level="audioLevel"
           aria-describedby="recognition-guidance recognition-action-hint"
           @click="onMicroButtonClick"
@@ -204,7 +219,7 @@ function onFileChange(event: Event) {
         </div>
       </div>
 
-      <div v-if="!isRecording" class="secondary-actions">
+      <div v-if="!isRecording && !isFinalizingRecording" class="secondary-actions">
         <button class="file-button" type="button" @click="openFilePicker">
           Importer un fichier audio
         </button>

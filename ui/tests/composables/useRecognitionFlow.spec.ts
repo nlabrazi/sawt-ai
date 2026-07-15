@@ -1,15 +1,27 @@
 import { nextTick, ref } from 'vue'
 
-async function setupRecognitionFlow() {
+async function setupRecognitionFlow(options: { deferStop?: boolean } = {}) {
   vi.resetModules()
 
   const isRecording = ref(false)
+  const isFinalizingRecording = ref(false)
   const maxDurationReached = ref(false)
+  let releaseStop = () => undefined
+  const stopGate = new Promise<void>((resolve) => {
+    releaseStop = resolve
+  })
   const startRecording = vi.fn(async () => {
     isRecording.value = true
   })
   const stopRecording = vi.fn(async () => {
     isRecording.value = false
+    isFinalizingRecording.value = true
+
+    if (options.deferStop) {
+      await stopGate
+    }
+
+    isFinalizingRecording.value = false
     return new File(['audio'], 'recording.wav', { type: 'audio/wav' })
   })
   const snapshotRecording = vi.fn(async () => {
@@ -41,6 +53,7 @@ async function setupRecognitionFlow() {
   vi.doMock('~/composables/useMicrophoneRecorder', () => ({
     useMicrophoneRecorder: () => ({
       isRecording,
+      isFinalizingRecording,
       micError: ref(null),
       recordingSeconds: ref(0),
       maxDurationReached,
@@ -61,12 +74,14 @@ async function setupRecognitionFlow() {
   return {
     flow: useRecognitionFlow(),
     isRecording,
+    isFinalizingRecording,
     maxDurationReached,
     startRecording,
     stopRecording,
     snapshotRecording,
     probeAudio,
     recognizeAudio,
+    releaseStop,
   }
 }
 
@@ -98,6 +113,25 @@ describe('useRecognitionFlow microphone recording', () => {
     expect(stopRecording).toHaveBeenCalledTimes(1)
     expect(recognizeAudio).toHaveBeenCalledWith(expect.any(File), false)
     expect(isRecording.value).toBe(false)
+  })
+
+  it('submits only once when the stop action is tapped twice during WAV preparation', async () => {
+    const { flow, isFinalizingRecording, stopRecording, recognizeAudio, releaseStop } =
+      await setupRecognitionFlow({ deferStop: true })
+
+    await flow.onMicroClick()
+
+    const firstStop = flow.onMicroClick()
+    const secondStop = flow.onMicroClick()
+
+    expect(stopRecording).toHaveBeenCalledTimes(1)
+    expect(isFinalizingRecording.value).toBe(true)
+
+    releaseStop()
+    await Promise.all([firstStop, secondStop])
+
+    expect(recognizeAudio).toHaveBeenCalledTimes(1)
+    expect(isFinalizingRecording.value).toBe(false)
   })
 
   it('stops and analyzes automatically only when the maximum duration is reached', async () => {

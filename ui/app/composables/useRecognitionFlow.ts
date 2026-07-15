@@ -99,6 +99,7 @@ export function useRecognitionFlow() {
     maxDurationReached,
     maxRecordingSeconds,
     audioLevel,
+    isFinalizingRecording,
     startRecording,
     stopRecording,
     cleanup,
@@ -106,6 +107,8 @@ export function useRecognitionFlow() {
 
   const uploadError = ref<string | null>(null)
   const detectImam = ref(false)
+  let startRecordingPromise: Promise<void> | null = null
+  let finalizeRecordingPromise: Promise<void> | null = null
   const screenState = computed<RecognitionScreenState>(() => {
     if (loading.value) return 'loading'
     if (result.value || error.value) return 'result'
@@ -170,35 +173,51 @@ export function useRecognitionFlow() {
     await recognizeAudio(file, detectImam.value)
   }
 
+  function finalizeRecordingAndSubmit() {
+    if (finalizeRecordingPromise) return finalizeRecordingPromise
+
+    finalizeRecordingPromise = (async () => {
+      const recordedFile = await stopRecording()
+
+      if (!recordedFile) {
+        uploadError.value = 'Erreur pendant l’enregistrement audio.'
+        return
+      }
+
+      await submitAudio(recordedFile, false)
+    })().finally(() => {
+      finalizeRecordingPromise = null
+    })
+
+    return finalizeRecordingPromise
+  }
+
   async function onMicroClick() {
     uploadError.value = null
 
-    if (!isRecording.value) {
-      await startRecording()
+    if (loading.value) return
+
+    if (isRecording.value || isFinalizingRecording.value) {
+      await finalizeRecordingAndSubmit()
       return
     }
 
-    const recordedFile = await stopRecording()
-
-    if (!recordedFile) {
-      uploadError.value = 'Erreur pendant l’enregistrement audio.'
+    if (startRecordingPromise) {
+      await startRecordingPromise
       return
     }
 
-    await submitAudio(recordedFile, false)
+    startRecordingPromise = startRecording().finally(() => {
+      startRecordingPromise = null
+    })
+
+    await startRecordingPromise
   }
 
   watch(maxDurationReached, async (reached) => {
     if (!reached || loading.value) return
 
-    const recordedFile = await stopRecording()
-
-    if (!recordedFile) {
-      uploadError.value = 'Erreur pendant l’enregistrement audio.'
-      return
-    }
-
-    await submitAudio(recordedFile, false)
+    await finalizeRecordingAndSubmit()
   })
 
   function resetApp() {
@@ -216,6 +235,7 @@ export function useRecognitionFlow() {
     uploadError,
     micError,
     isRecording,
+    isFinalizingRecording,
     recordingSeconds,
     maxDurationReached,
     maxRecordingSeconds,

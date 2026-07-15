@@ -48,6 +48,18 @@ describe('RecognitionActionButton', () => {
     expect(wrapper.find('.lucide-loader-circle').exists()).toBe(true)
   })
 
+  it('supports a specific label while preparing recorded audio', () => {
+    const wrapper = mount(RecognitionActionButton, {
+      props: {
+        loading: true,
+        loadingLabel: 'Préparation de l’audio',
+      },
+    })
+
+    expect(wrapper.get('button').attributes('aria-label')).toBe('Préparation de l’audio')
+    expect(wrapper.get('.button-label').text()).toBe('Préparation de l’audio')
+  })
+
   it('uses Lucide icons for microphone and stop states', async () => {
     const wrapper = mount(RecognitionActionButton)
 

@@ -10,12 +10,14 @@ const props = withDefaults(
     loading?: boolean
     isRecording?: boolean
     audioLevel?: number
+    loadingLabel?: string
   }>(),
   {
     disabled: false,
     loading: false,
     isRecording: false,
     audioLevel: 0,
+    loadingLabel: 'Analyse en cours',
   },
 )
 
@@ -39,12 +41,12 @@ const signalOpacity = computed(() => {
 })
 
 const actionLabel = computed(() => {
-  if (props.loading) return 'Analyse en cours'
+  if (props.loading) return props.loadingLabel
   return props.isRecording ? 'Arrêter et analyser' : 'Commencer la récitation'
 })
 
 const visibleLabel = computed(() => {
-  if (props.loading) return 'Analyse en cours'
+  if (props.loading) return props.loadingLabel
   return props.isRecording ? 'Arrêter et analyser' : 'Commencer'
 })
 
