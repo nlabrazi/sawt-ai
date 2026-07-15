@@ -104,15 +104,20 @@ docker compose up --build
 ### ▶️ Usage
 
 1. Open `http://localhost:3000`
-2. Record audio with the microphone or upload an audio file
-3. The UI sends the audio to `POST /recognize` on the API
-4. The API returns:
+2. Press the central microphone once to start recording
+3. Recite a Quran passage, then press the same button again to stop and analyze
+4. Alternatively, upload an existing audio file
+5. The UI sends the completed audio to `POST /recognize` on the API
+6. The API returns:
    - Arabic transcription
-   - A Quran passage only when the evidence is sufficient
+   - A confirmed Quran passage when the evidence is sufficient
+   - An explicitly labelled proposal when two neighbouring passages remain plausible
    - Imam predictions if enabled
 
 French speech, conversations, songs, silence, and uncertain audio are expected
 to return no Quran passage instead of a low-confidence guess.
+The application does not listen continuously: recording ends only after the
+second press or when the 90-second safety limit is reached.
 
 ### 🔧 Local Notes
 
@@ -170,9 +175,10 @@ offline model setup, quality metrics, and CI-style quality gates.
 The current test suite covers:
 
 - FastAPI routes for `recognize`, `feedback`, and `tajwid`
-- Python utility and service logic
-- Frontend composables for recognition, feedback, and tajwid loading
-- Frontend utility parsing and a core UI button component
+- language screening, transcription policy, passage ranking, and rejection reasons
+- reproducible text and audio evaluation metrics with manual release gates
+- frontend recording transitions, double-click protection, result/rejection screens, and navigation
+- feedback, tajwid loading, confidence rendering, accessibility, and utility parsing
 
 ### 🌍 Environment Variables
 
