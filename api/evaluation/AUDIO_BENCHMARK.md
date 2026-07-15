@@ -141,13 +141,14 @@ Le runner désactive la prédiction d'imam, sans rapport avec la qualité du
 passage, et appelle `run_inference_pipeline` avec la durée réelle. Il conserve
 par défaut `allow_ambiguous_result=true`, comme l'API actuelle ; l'option
 `--no-allow-ambiguous-result` permet de mesurer séparément une politique stricte.
-Il mesure donc aussi le comportement progressif de production. Avec la version
-actuelle de faster-whisper, `clip_timestamps` peut modifier le comportement du
-VAD ; ce biais doit rester visible dans ce benchmark E2E plutôt que masqué par un
-runner différent de la production.
+Le pipeline de production utilise le VAD uniquement pour isoler la parole et
+échantillonner jusqu'à trois fenêtres de langue réparties entre début, milieu et
+fin. Si l'arabe reste plausible, il décode ensuite le signal complet en arabe,
+sans VAD : les modulations longues d'une récitation ne sont ainsi pas coupées.
 
-Il s'agit d'un E2E **backend**. Il ne simule pas encore la séquence des probes
-frontend ni un éventuel arrêt automatique prématuré du microphone.
+Il s'agit d'un E2E **backend**. Les permissions du microphone, l'arrêt explicite
+de l'enregistrement et les écrans de résultat restent couverts par les tests
+frontend dédiés.
 
 ## Métriques et garde-fous
 
@@ -185,8 +186,15 @@ d'ajouter une catégorie obligatoire.
 
 Les seuils bloquants portent sur les **macro-métriques par source**, pas sur le
 nombre de variantes : `macro_positive_exact_accuracy`,
+`macro_positive_surah_accuracy`,
 `macro_negative_rejection_rate` et `macro_false_positive_rate`. Une récitation
 déclinée sous six bruits ne peut donc pas masquer l'échec d'un autre locuteur.
+
+Le mode qualité applique par défaut les planchers de non-régression mesurés sur
+le corpus de référence : `0.50` pour la plage exacte, `0.85` pour la bonne
+sourate, `1.0` pour le rejet des négatifs et `0.0` faux positif. Ce sont des
+seuils de livraison, pas la cible finale : ils doivent monter à mesure que le
+corpus gagne en diversité et que le pipeline progresse.
 
 Exemple de garde qualité pour une itération avancée :
 
@@ -194,6 +202,7 @@ Exemple de garde qualité pour une itération avancée :
 docker compose exec api python scripts/evaluate_audio_recognition.py \
   --mode quality \
   --min-macro-positive-exact-accuracy 0.90 \
+  --min-macro-positive-surah-accuracy 0.95 \
   --min-macro-negative-rejection-rate 1.0 \
   --max-macro-false-positive-rate 0.0 \
   --min-positive-sources 3 \
@@ -206,3 +215,38 @@ La commande termine avec un code non nul si un seuil échoue ou si un ensemble
 requis est vide. Cela permet la boucle de travail : construire le corpus,
 mesurer, corriger le pipeline dans un commit séparé, puis rejouer exactement le
 même corpus avant toute nouvelle modification.
+
+## Baseline mesurée le 15 juillet 2026
+
+La baseline structurée et expurgée est versionnée dans
+`audio_quality_baseline.json`. Le rapport détaillé et les audios restent locaux.
+Le run de référence utilise faster-whisper `1.1.1`, le modèle `turbo` sur CPU
+`int8`, trois récitations complètes d'Al-Fatiha et six variantes par source :
+propre, bruits blanc 20 dB et 10 dB, bruit rose 10 dB, fond domestique 5 dB et
+voix française synthétique de type enfant à 5 dB.
+
+| Mesure | Résultat |
+|---|---:|
+| Plage exacte parmi les récitations | 10/18 — 55,6 % |
+| Bonne sourate parmi les récitations | 16/18 — 88,9 % |
+| Mauvaise sourate | 0/18 |
+| Négatifs correctement rejetés | 11/11 — 100 % |
+| Faux positifs négatifs | 0/11 |
+| Erreurs techniques | 0/29 |
+| Latence moyenne / p50 / p95 | 17,44 s / 22,62 s / 32,49 s |
+
+Les deux faux négatifs correspondent aux deux mélanges où la voix française
+synthétique domine suffisamment la récitation. Le pipeline refuse ces cas au
+lieu d'inventer une sourate. Le corpus reste petit, limité à Al-Fatiha pour les
+positifs et à trois enregistrements : ces chiffres constituent un garde-fou de
+non-régression, pas une estimation générale sur les 114 sourates ni sur toutes
+les voix réelles d'enfants.
+
+Les enregistrements publics du run local proviennent de Wikimedia Commons :
+[001Fatiha (CC0)](https://commons.wikimedia.org/wiki/File:001Fatiha.ogg),
+[AlFātiḥatulKitāb (CC0)](https://commons.wikimedia.org/wiki/File:AlF%C4%81tihatulKit%C4%81b.ogg),
+[Al-Fatiha Mujawwad (CC BY-SA 4.0)](https://commons.wikimedia.org/wiki/File:Chapter_1,_Al-Fatiha_(Mujawwad)_-_Recitation_of_the_Holy_Qur%27an.mp3),
+[Twinkle Twinkle vocal (CC BY-SA 3.0)](https://commons.wikimedia.org/wiki/File:Twinkle_twinkle_little_star_(vocal).ogg) et
+[article Wikipédia arabe parlé (CC BY-SA 3.0/GFDL)](https://commons.wikimedia.org/wiki/File:University_Article_Spoken_Arabic_Wikipedia.ogg).
+Le manifeste privé local conserve l'URL, l'auteur et la licence de chaque
+source ; aucune copie audio n'est versionnée.

@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "measured_on": "2026-07-15",
+  "runtime": {
+    "whisper_model": "turbo",
+    "faster_whisper_version": "1.1.1",
+    "device": "cpu",
+    "compute_type": "int8"
+  },
+  "corpus": {
+    "total_cases": 29,
+    "positive_cases": 18,
+    "positive_source_cases": 3,
+    "noisy_positive_cases": 15,
+    "negative_cases": 11,
+    "vocal_negative_source_cases": 5,
+    "errors": 0
+  },
+  "metrics": {
+    "positive_exact_accuracy": 0.5555555555555556,
+    "macro_positive_exact_accuracy": 0.5555555555555555,
+    "positive_surah_accuracy": 0.8888888888888888,
+    "macro_positive_surah_accuracy": 0.888888888888889,
+    "wrong_surah_count": 0,
+    "false_negative_count": 2,
+    "negative_rejection_rate": 1.0,
+    "macro_negative_rejection_rate": 1.0,
+    "false_positive_rate": 0.0,
+    "macro_false_positive_rate": 0.0,
+    "average_latency_ms": 17438.589070896527,
+    "p50_latency_ms": 22618.60770599742,
+    "p95_latency_ms": 32494.103647000884
+  },
+  "release_gates": {
+    "min_macro_positive_exact_accuracy": 0.5,
+    "min_macro_positive_surah_accuracy": 0.85,
+    "min_macro_negative_rejection_rate": 1.0,
+    "max_macro_false_positive_rate": 0.0,
+    "max_errors": 0
+  },
+  "limitations": [
+    "Positive cases cover Al-Fatiha only.",
+    "Only three independent positive recordings are represented.",
+    "Child-background variants use synthetic French speech, not real children.",
+    "Two child-background variants are conservatively rejected."
+  ]
+}

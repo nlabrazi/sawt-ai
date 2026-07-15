@@ -108,8 +108,11 @@ docker compose up --build
 3. The UI sends the audio to `POST /recognize` on the API
 4. The API returns:
    - Arabic transcription
-   - Best matching Quran verse
+   - A Quran passage only when the evidence is sufficient
    - Imam predictions if enabled
+
+French speech, conversations, songs, silence, and uncertain audio are expected
+to return no Quran passage instead of a low-confidence guess.
 
 ### 🔧 Local Notes
 
@@ -177,7 +180,7 @@ Example API variables are available in [`api/.env.example`](api/.env.example):
 
 ```env
 ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
-WHISPER_MODEL_NAME=base
+WHISPER_MODEL_NAME=turbo
 QURAN_VERSETS_PATH=/app/assets/quran_versets.json
 TAJWID_DATA_PATH=/app/assets/quran_tajwid.json
 TAJWID_BACKUP_URL=https://<project-ref>.supabase.co/storage/v1/object/public/assets/quran_tajwid.json
@@ -233,10 +236,8 @@ See the full license in [`LICENSE.txt`](https://en.wikipedia.org/wiki/MIT_Licens
 <!-- CONTACT -->
 ### 📬 Contact
 
-- 👤 [Linkedin][linkedin-url]
-- 🐦 [@Nabil](https://twitter.com/Nabil71405502)
-- 📧 na.labrazi@gmail.com
-- 🔗 [Portfolio](https://nabster.dev)
+- 🛟 [Support and bug reports][issues-url]
+- 📧 Configure `NUXT_PUBLIC_CONTACT_EMAIL` with the branded Sawt mailbox before deployment; no personal email is bundled in the application
 - 📁 [Project Repository](https://github.com/nlabrazi/sawt-ai)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
