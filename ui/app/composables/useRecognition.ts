@@ -40,6 +40,9 @@ export type VerseDetectionMetadata = {
     | 'score_too_low'
     | 'transcription_too_short'
     | 'ambiguous_match'
+    | 'insufficient_speech'
+    | 'non_arabic_speech'
+    | 'low_transcription_confidence'
     | null
 }
 
@@ -199,7 +202,7 @@ export function useRecognition() {
   function acceptResult(response: RecognizeResponse) {
     probeController?.abort()
     probeController = null
-    error.value = response.verse ? null : 'Aucun verset fiable trouvé pour cet audio.'
+    error.value = null
     result.value = response
   }
 
@@ -251,10 +254,6 @@ export function useRecognition() {
       }
 
       result.value = response
-
-      if (!hasVerse) {
-        error.value = 'Aucun verset fiable trouvé pour cet audio.'
-      }
     } catch (err) {
       if (!isActiveRequest(requestId) || isAbortError(err)) {
         return

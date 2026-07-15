@@ -36,6 +36,22 @@ const successfulResponse = {
   imam_detection_enabled: true,
 }
 
+const rejectedResponse = {
+  ...successfulResponse,
+  transcription_text: '',
+  verse: null,
+  detection: {
+    ...successfulResponse.detection,
+    status: 'insufficient' as const,
+    score: null,
+    score_margin: null,
+    matched_word_count: 0,
+    rejection_reason: 'non_arabic_speech' as const,
+  },
+  imam_status: 'disabled' as const,
+  imam_detection_enabled: false,
+}
+
 describe('useRecognition', () => {
   it('stores the API result after the loading sequence', async () => {
     vi.useFakeTimers()
@@ -58,6 +74,23 @@ describe('useRecognition', () => {
     expect(loadingStep.value).toBe('done')
     expect(error.value).toBeNull()
     expect(result.value?.transcription_text).toBe('قل هو الله احد')
+  })
+
+  it('keeps a valid rejection as a result instead of a technical error', async () => {
+    vi.useFakeTimers()
+    vi.mocked($fetch).mockResolvedValueOnce(rejectedResponse)
+
+    const { loading, error, result, recognizeAudio } = useRecognition()
+    const audioFile = new File(['audio'], 'french.webm', { type: 'audio/webm' })
+    const pending = recognizeAudio(audioFile)
+
+    await vi.runAllTimersAsync()
+    await pending
+
+    expect(loading.value).toBe(false)
+    expect(error.value).toBeNull()
+    expect(result.value?.verse).toBeNull()
+    expect(result.value?.detection?.rejection_reason).toBe('non_arabic_speech')
   })
 
   it('disables imam detection by default in recognition requests', async () => {

@@ -1,3 +1,12 @@
+<script setup lang="ts">
+import { useRuntimeConfig } from '#app'
+
+const contactEmail = String(useRuntimeConfig().public.contactEmail ?? '').trim()
+const contactHref = contactEmail
+  ? `mailto:${contactEmail}`
+  : 'https://github.com/nlabrazi/sawt-ai/issues/new'
+</script>
+
 <template>
   <footer class="app-footer">
     <div class="footer-inner">
@@ -12,7 +21,11 @@
         <a href="https://nabster.dev" target="_blank" rel="noreferrer">
           Portfolio
         </a>
-        <a href="mailto:na.labrazi@gmail.com">
+        <a
+          :href="contactHref"
+          :target="contactEmail ? undefined : '_blank'"
+          :rel="contactEmail ? undefined : 'noreferrer'"
+        >
           Contact
         </a>
       </nav>

@@ -104,12 +104,20 @@ docker compose up --build
 ### ▶️ Usage
 
 1. Open `http://localhost:3000`
-2. Record audio with the microphone or upload an audio file
-3. The UI sends the audio to `POST /recognize` on the API
-4. The API returns:
+2. Press the central microphone once to start recording
+3. Recite a Quran passage, then press the same button again to stop and analyze
+4. Alternatively, upload an existing audio file
+5. The UI sends the completed audio to `POST /recognize` on the API
+6. The API returns:
    - Arabic transcription
-   - Best matching Quran verse
+   - A confirmed Quran passage when the evidence is sufficient
+   - An explicitly labelled proposal when two neighbouring passages remain plausible
    - Imam predictions if enabled
+
+French speech, conversations, songs, silence, and uncertain audio are expected
+to return no Quran passage instead of a low-confidence guess.
+The application does not listen continuously: recording ends only after the
+second press or when the 90-second safety limit is reached.
 
 ### 🔧 Local Notes
 
@@ -153,12 +161,24 @@ Add transcriptions observed from real audio to this file before tuning detection
 thresholds. This benchmark measures exact passage accuracy, precision, recall,
 false positives, and matching latency; it does not measure Whisper accuracy.
 
+End-to-end backend audio smoke benchmark (generated locally, with no downloaded corpus):
+
+```bash
+api/.venv/bin/python api/scripts/build_audio_evaluation_corpus.py
+docker compose exec api python scripts/evaluate_audio_recognition.py
+```
+
+See [`api/evaluation/AUDIO_BENCHMARK.md`](api/evaluation/AUDIO_BENCHMARK.md) for
+the private-recitation injection point, consent rules, noisy SNR variants,
+offline model setup, quality metrics, and CI-style quality gates.
+
 The current test suite covers:
 
 - FastAPI routes for `recognize`, `feedback`, and `tajwid`
-- Python utility and service logic
-- Frontend composables for recognition, feedback, and tajwid loading
-- Frontend utility parsing and a core UI button component
+- language screening, transcription policy, passage ranking, and rejection reasons
+- reproducible text and audio evaluation metrics with manual release gates
+- frontend recording transitions, double-click protection, result/rejection screens, and navigation
+- feedback, tajwid loading, confidence rendering, accessibility, and utility parsing
 
 ### 🌍 Environment Variables
 
@@ -166,7 +186,7 @@ Example API variables are available in [`api/.env.example`](api/.env.example):
 
 ```env
 ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
-WHISPER_MODEL_NAME=base
+WHISPER_MODEL_NAME=turbo
 QURAN_VERSETS_PATH=/app/assets/quran_versets.json
 TAJWID_DATA_PATH=/app/assets/quran_tajwid.json
 TAJWID_BACKUP_URL=https://<project-ref>.supabase.co/storage/v1/object/public/assets/quran_tajwid.json
@@ -222,10 +242,8 @@ See the full license in [`LICENSE.txt`](https://en.wikipedia.org/wiki/MIT_Licens
 <!-- CONTACT -->
 ### 📬 Contact
 
-- 👤 [Linkedin][linkedin-url]
-- 🐦 [@Nabil](https://twitter.com/Nabil71405502)
-- 📧 na.labrazi@gmail.com
-- 🔗 [Portfolio](https://nabster.dev)
+- 🛟 [Support and bug reports][issues-url]
+- 📧 Configure `NUXT_PUBLIC_CONTACT_EMAIL` with the branded Sawt mailbox before deployment; no personal email is bundled in the application
 - 📁 [Project Repository](https://github.com/nlabrazi/sawt-ai)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

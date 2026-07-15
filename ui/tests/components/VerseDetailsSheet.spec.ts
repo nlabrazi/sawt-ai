@@ -25,12 +25,25 @@ const result = {
   imam_detection_enabled: true,
 }
 
+const ambiguousResult = {
+  ...result,
+  detection: {
+    status: 'ambiguous' as const,
+    score: 0.92,
+    score_margin: 0.03,
+    matched_word_count: 4,
+    rejection_reason: 'ambiguous_match' as const,
+    analyzed_duration_seconds: 8,
+    analysis_attempts: 1,
+  },
+}
+
 describe('VerseDetailsSheet', () => {
   beforeEach(() => {
     clearTajwidCache()
   })
 
-  it('uses icon actions for close and copy', async () => {
+  it('offers a visible return action and icon actions', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined)
     Object.defineProperty(navigator, 'clipboard', {
       configurable: true,
@@ -49,12 +62,12 @@ describe('VerseDetailsSheet', () => {
       },
     })
 
-    expect(wrapper.get('.close-btn').attributes('aria-label')).toBe('Fermer')
+    expect(wrapper.get('.close-btn').attributes('aria-label')).toBe('Retour au résultat')
+    expect(wrapper.get('.close-btn').text()).toBe('Retour au résultat')
     expect(wrapper.get('.sheet-btn').text()).toBe('Copier')
-    expect(wrapper.find('.lucide-x').exists()).toBe(true)
+    expect(wrapper.find('.lucide-arrow-left').exists()).toBe(true)
     expect(wrapper.find('.lucide-copy').exists()).toBe(true)
     expect(wrapper.find('.lucide-book-open').exists()).toBe(true)
-    expect(wrapper.text()).not.toContain('Fermer')
     expect(wrapper.text()).not.toContain('Texte coranique')
     expect(wrapper.text()).toContain('Transcription brute')
     expect(wrapper.get('.sheet-subtitle').text()).toBe('Sourate Al-Ikhlas · Versets 1 à 4')
@@ -74,6 +87,25 @@ describe('VerseDetailsSheet', () => {
     await wrapper.get('.close-btn').trigger('click')
 
     expect(wrapper.emitted('close')).toHaveLength(1)
+    wrapper.unmount()
+  })
+
+  it('labels an ambiguous match as a proposal to verify', () => {
+    const wrapper = mount(VerseDetailsSheet, {
+      props: {
+        open: true,
+        result: ambiguousResult,
+      },
+      global: {
+        stubs: {
+          teleport: true,
+        },
+      },
+    })
+
+    expect(wrapper.get('.sheet').attributes('aria-label')).toBe('Passage proposé')
+    expect(wrapper.get('.sheet-kicker').text()).toBe('Passage proposé')
+
     wrapper.unmount()
   })
 

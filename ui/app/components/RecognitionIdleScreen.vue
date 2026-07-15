@@ -1,21 +1,28 @@
 <script setup lang="ts">
 import FlaskConical from '@lucide/vue/dist/esm/icons/flask-conical.mjs'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+
 import RecognitionActionButton from '~/components/RecognitionActionButton.vue'
 
-const props = defineProps<{
-  uploadError?: string | null
-  micError?: string | null
-  isRecording?: boolean
-  recordingSeconds?: number
-  maxRecordingSeconds?: number | null
-  audioLevel?: number
-  uploadAccept?: string
-  uploadHint?: string | null
-  detectImam?: boolean
-  imamDetectionAvailable?: boolean
-  imamDetectionMessage?: string | null
-}>()
+const props = withDefaults(
+  defineProps<{
+    uploadError?: string | null
+    micError?: string | null
+    isRecording?: boolean
+    isFinalizingRecording?: boolean
+    recordingSeconds?: number
+    maxRecordingSeconds?: number | null
+    audioLevel?: number
+    uploadAccept?: string
+    uploadHint?: string | null
+    detectImam?: boolean
+    imamDetectionAvailable?: boolean
+    imamDetectionMessage?: string | null
+  }>(),
+  {
+    imamDetectionAvailable: true,
+  },
+)
 
 const emit = defineEmits<{
   'micro-click': []
@@ -23,26 +30,32 @@ const emit = defineEmits<{
   'update:detect-imam': [value: boolean]
 }>()
 
-const fileInputId = 'recognition-audio-file-input'
-
-const eyebrow = computed(() => {
-  return props.isRecording ? 'Écoute en direct' : 'Sawt AI'
-})
+const fileInput = ref<HTMLInputElement | null>(null)
 
 const title = computed(() => {
-  return props.isRecording ? 'Enregistrement' : 'Touchez pour réciter'
+  if (props.isFinalizingRecording) return 'Préparation de l’audio'
+  return props.isRecording ? 'Je vous écoute' : 'Récitez un passage du Coran'
 })
 
 const subtitle = computed(() => {
+  if (props.isFinalizingRecording) {
+    return 'Votre enregistrement est terminé. L’analyse va commencer.'
+  }
+
   return props.isRecording
-    ? 'Touchez à nouveau pour arrêter et lancer l’analyse.'
-    : 'Récitez quelques secondes. Sawt AI reconnaît le passage.'
+    ? 'Récitez naturellement, dans un environnement aussi calme que possible.'
+    : 'Sawt AI vous propose la sourate et les versets correspondants.'
 })
 
-const recordingTime = computed(() => {
-  if (!props.isRecording) return ''
-  return `${props.recordingSeconds ?? 0}s`
+const recognitionActionHint = computed(() => {
+  if (props.isFinalizingRecording) return 'Quelques instants…'
+
+  return props.isRecording
+    ? 'Appuyez à nouveau pour arrêter et analyser.'
+    : 'Appuyez pour commencer, puis une seconde fois pour arrêter et analyser.'
 })
+
+const recordingTime = computed(() => `${props.recordingSeconds ?? 0}s`)
 
 const recordingProgressPercent = computed(() => {
   const maxSeconds = props.maxRecordingSeconds
@@ -74,10 +87,7 @@ const recordingError = computed(() => {
 })
 
 const fileError = computed(() => {
-  if (recordingError.value) {
-    return null
-  }
-
+  if (recordingError.value) return null
   return props.uploadError ?? null
 })
 
@@ -86,20 +96,13 @@ const micErrorHint = computed(() => {
 
   const normalizedError = props.micError.toLowerCase()
 
-  if (normalizedError.includes('https')) {
-    return 'Ouvrez Sawt AI en HTTPS.'
-  }
-
-  if (normalizedError.includes('navigateur')) {
-    return 'Essayez un navigateur récent.'
-  }
-
+  if (normalizedError.includes('https')) return 'Ouvrez Sawt AI en HTTPS.'
+  if (normalizedError.includes('navigateur')) return 'Essayez un navigateur récent.'
   return 'Autorisez le micro dans votre navigateur.'
 })
 
 const recordingErrorHint = computed(() => {
   if (!recordingError.value) return ''
-
   return 'Relancez une prise courte.'
 })
 
@@ -108,18 +111,9 @@ const fileErrorHint = computed(() => {
 
   const normalizedError = fileError.value.toLowerCase()
 
-  if (normalizedError.includes('format')) {
-    return 'Utilisez wav, mp3, m4a, ogg ou webm.'
-  }
-
-  if (normalizedError.includes('volumineux')) {
-    return 'Choisissez un extrait plus léger.'
-  }
-
-  if (normalizedError.includes('trop long')) {
-    return 'Gardez un extrait plus court.'
-  }
-
+  if (normalizedError.includes('format')) return 'Utilisez wav, mp3, m4a, ogg ou webm.'
+  if (normalizedError.includes('volumineux')) return 'Choisissez un extrait plus léger.'
+  if (normalizedError.includes('trop long')) return 'Gardez un extrait plus court.'
   return 'Essayez un autre fichier audio.'
 })
 
@@ -131,6 +125,10 @@ function onDetectImamChange(event: Event) {
   if (props.imamDetectionAvailable === false) return
   const input = event.target as HTMLInputElement
   emit('update:detect-imam', input.checked)
+}
+
+function openFilePicker() {
+  fileInput.value?.click()
 }
 
 function onFileChange(event: Event) {
@@ -145,24 +143,40 @@ function onFileChange(event: Event) {
 </script>
 
 <template>
-  <section class="screen idle-screen" :class="{ 'is-recording': isRecording }">
-    <div class="brand">
-      <p class="brand-kicker">{{ eyebrow }}</p>
-    </div>
+  <section
+    class="screen idle-screen"
+    :class="{ 'is-recording': isRecording }"
+    aria-labelledby="recognition-title"
+  >
+    <header class="brand" aria-label="Sawt AI">
+      <span class="brand-name">Sawt</span>
+      <span class="brand-mark">AI</span>
+    </header>
 
     <div class="hero-shell">
       <div class="hero-copy">
-        <p v-if="isRecording" class="section-label">Analyse du passage</p>
+        <p class="state-label">
+          <span v-if="isRecording" class="recording-dot" aria-hidden="true" />
+          {{ isFinalizingRecording
+            ? 'Enregistrement terminé'
+            : isRecording
+              ? 'Enregistrement en cours'
+              : 'Reconnaissance coranique' }}
+        </p>
 
-        <h1 class="main-title">{{ title }}</h1>
+        <h1 id="recognition-title" class="main-title">{{ title }}</h1>
 
-        <p class="main-subtitle">
+        <p id="recognition-guidance" class="main-subtitle">
           {{ subtitle }}
         </p>
 
-        <div v-if="isRecording" class="recording-time">
-          <span class="pulse-dot" />
-          <span>{{ recordingTime }}</span>
+        <div
+          v-if="isRecording"
+          class="recording-time"
+          role="timer"
+          :aria-label="`Durée de l’enregistrement : ${recordingTime}`"
+        >
+          {{ recordingTime }}
         </div>
 
         <div v-if="isRecording && maxRecordingSeconds" class="recording-progress">
@@ -184,55 +198,85 @@ function onFileChange(event: Event) {
         </div>
       </div>
 
-      <div class="action-panel">
-        <div class="hero-action">
-          <RecognitionActionButton :is-recording="isRecording" :audio-level="audioLevel" @click="onMicroButtonClick" />
+      <div class="hero-action">
+        <RecognitionActionButton
+          :is-recording="isRecording"
+          :loading="isFinalizingRecording"
+          :disabled="isFinalizingRecording"
+          loading-label="Préparation de l’audio"
+          :audio-level="audioLevel"
+          aria-describedby="recognition-guidance recognition-action-hint"
+          @click="onMicroButtonClick"
+        />
 
-          <div v-if="micError || recordingError" class="status-message is-error action-error" role="alert">
-            <p class="status-title">{{ micError ?? recordingError }}</p>
-            <p class="status-hint">{{ micError ? micErrorHint : recordingErrorHint }}</p>
-          </div>
+        <p id="recognition-action-hint" class="recognition-action-hint">
+          {{ recognitionActionHint }}
+        </p>
+
+        <div v-if="micError || recordingError" class="status-message is-error" role="alert">
+          <p class="status-title">{{ micError ?? recordingError }}</p>
+          <p class="status-hint">{{ micError ? micErrorHint : recordingErrorHint }}</p>
+        </div>
+      </div>
+
+      <div v-if="!isRecording && !isFinalizingRecording" class="secondary-actions">
+        <button class="file-button" type="button" @click="openFilePicker">
+          Importer un fichier audio
+        </button>
+
+        <p class="upload-hint">
+          {{ uploadHint ?? 'wav, mp3, m4a, ogg ou webm · 12 Mo et 90 sec maximum' }}
+        </p>
+
+        <div v-if="fileError" class="status-message is-error" role="alert">
+          <p class="status-title">{{ fileError }}</p>
+          <p class="status-hint">{{ fileErrorHint }}</p>
         </div>
 
-        <div class="upload-action">
-          <label class="file-button" :for="fileInputId">
-            Importer un audio
-          </label>
+        <details class="options-shell">
+          <summary>Options de reconnaissance</summary>
 
-          <p class="upload-hint">
-            {{ uploadHint ?? 'Formats : wav, mp3, m4a, ogg, webm · max 12 Mo · max 90 sec' }}
-          </p>
+          <div class="option-content">
+            <label
+              class="imam-toggle"
+              :class="{ 'is-disabled': imamDetectionAvailable === false }"
+              :title="imamDetectionAvailable === false ? (imamDetectionMessage ?? undefined) : undefined"
+            >
+              <input
+                type="checkbox"
+                class="imam-toggle-checkbox"
+                :checked="detectImam"
+                :disabled="imamDetectionAvailable === false"
+                @change="onDetectImamChange"
+              >
+              <span class="imam-toggle-text">Reconnaître l’imam</span>
+              <span class="imam-beta-badge">
+                <FlaskConical class="imam-beta-icon" :stroke-width="1.9" aria-hidden="true" />
+                Bêta
+              </span>
+            </label>
 
-          <div v-if="fileError" class="status-message is-error action-error" role="alert">
-            <p class="status-title">{{ fileError }}</p>
-            <p class="status-hint">{{ fileErrorHint }}</p>
+            <p
+              class="imam-toggle-hint"
+              :class="{ 'is-unavailable': imamDetectionAvailable === false }"
+            >
+              {{ imamDetectionAvailable === false
+                ? (imamDetectionMessage ?? 'La reconnaissance de l’imam est temporairement indisponible.')
+                : 'Analyse du réciteur en plus du passage proposé.' }}
+            </p>
           </div>
-        </div>
+        </details>
       </div>
     </div>
 
-    <div class="options-shell">
-      <label class="imam-toggle" :class="{ 'is-disabled': imamDetectionAvailable === false }"
-        :title="imamDetectionAvailable === false ? (imamDetectionMessage ?? undefined) : undefined">
-        <input type="checkbox" class="imam-toggle-checkbox" :checked="detectImam"
-          :disabled="imamDetectionAvailable === false" @change="onDetectImamChange" />
-        <span class="imam-toggle-text">Reconnaître l’imam</span>
-        <span class="imam-beta-badge">
-          <FlaskConical class="imam-beta-icon" :stroke-width="1.9" aria-hidden="true" />
-          Bêta
-        </span>
-      </label>
-
-      <p class="imam-toggle-hint" :class="{ 'is-unavailable': imamDetectionAvailable === false }">
-        {{ imamDetectionAvailable === false
-          ? (imamDetectionMessage ?? 'La reconnaissance de l’imam est temporairement indisponible.')
-          : 'Analyse du réciteur en plus du verset détecté.' }}
-      </p>
-
-    </div>
-
-    <input :id="fileInputId" class="hidden-input" type="file" :accept="uploadAccept ?? 'audio/*'"
-      @change="onFileChange">
+    <input
+      ref="fileInput"
+      class="hidden-input"
+      type="file"
+      :accept="uploadAccept ?? 'audio/*'"
+      tabindex="-1"
+      @change="onFileChange"
+    >
   </section>
 </template>
 
@@ -243,198 +287,227 @@ function onFileChange(event: Event) {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 22px 16px 30px;
   box-sizing: border-box;
 }
 
 .idle-screen {
-  max-width: 980px;
-  width: 100%;
+  width: min(100%, 860px);
   margin: 0 auto;
+  padding: 26px 20px 34px;
 }
 
 .brand {
-  display: flex;
+  display: inline-flex;
+  align-items: baseline;
   justify-content: center;
+  gap: 5px;
+  color: #f8fafc;
+  font-size: 17px;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: -0.02em;
 }
 
-.brand-kicker,
-.section-label {
-  margin: 0;
-  font-size: 13px;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
-  color: #93c5fd;
+.brand-mark {
+  color: #60a5fa;
+  font-size: 12px;
+  letter-spacing: 0.04em;
 }
 
 .hero-shell {
+  width: 100%;
+  min-width: 0;
   flex: 1;
   display: grid;
-  align-content: center;
+  grid-template-columns: minmax(0, 1fr);
   justify-items: center;
-  gap: 22px;
-  padding: 24px 0 18px;
+  align-content: center;
+  gap: 14px;
+  padding: 34px 0 24px;
   text-align: center;
 }
 
 .hero-copy {
+  width: 100%;
+  min-width: 0;
   display: grid;
   justify-items: center;
 }
 
+.state-label {
+  margin: 0;
+  min-height: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #93c5fd;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.recording-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #60a5fa;
+  box-shadow: 0 0 0 5px rgba(96, 165, 250, 0.1);
+}
+
 .main-title {
+  width: 100%;
   margin: 14px 0 0;
-  max-width: 9ch;
-  font-size: clamp(48px, 8vw, 82px);
-  line-height: 0.94;
+  max-width: 720px;
+  font-size: clamp(38px, 6vw, 60px);
+  line-height: 1.02;
   font-weight: 800;
-  letter-spacing: -0.055em;
+  letter-spacing: -0.052em;
   text-wrap: balance;
 }
 
 .main-subtitle {
   margin: 16px 0 0;
-  max-width: 560px;
-  font-size: 20px;
+  max-width: 520px;
+  color: #bac7d8;
+  font-size: clamp(17px, 2vw, 19px);
   line-height: 1.55;
-  color: #dbe4f0;
   text-wrap: balance;
 }
 
 .recording-time {
   margin-top: 18px;
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 46px;
-  padding: 0 16px;
-  border-radius: 999px;
-  background: rgba(15, 23, 42, 0.34);
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  font-size: 28px;
-  font-weight: 700;
-  color: #dbeafe;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-.pulse-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: #93c5fd;
-  box-shadow: 0 0 0 0 rgba(147, 197, 253, 0.54);
-  animation: pulseDot 1.4s ease-in-out infinite;
+  color: #f8fafc;
+  font-variant-numeric: tabular-nums;
+  font-size: 34px;
+  line-height: 1;
+  font-weight: 750;
+  letter-spacing: -0.03em;
 }
 
 .recording-progress {
-  width: min(100%, 320px);
+  width: min(76vw, 280px);
   margin-top: 14px;
   display: grid;
-  gap: 8px;
+  gap: 7px;
 }
 
 .recording-progress-track {
   width: 100%;
-  height: 8px;
+  height: 4px;
   overflow: hidden;
   border-radius: 999px;
-  background: rgba(148, 163, 184, 0.14);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  background: rgba(148, 163, 184, 0.18);
 }
 
 .recording-progress-fill {
   display: block;
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, #60a5fa 0%, #38bdf8 100%);
-  box-shadow: 0 0 18px rgba(56, 189, 248, 0.38);
-  transition: width 0.24s ease;
+  background: #60a5fa;
+  transition: width 0.24s linear;
 }
 
 .recording-progress-label {
   margin: 0;
-  font-size: 13px;
-  font-weight: 700;
-  color: #93c5fd;
-}
-
-.action-panel {
-  width: min(100%, 440px);
-  display: grid;
-  justify-items: center;
-  gap: 24px;
+  color: #7f91a8;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
 }
 
 .hero-action {
+  width: min(100%, 420px);
   display: grid;
-  place-items: center;
-  gap: 14px;
-  min-height: 214px;
-}
-
-.upload-action {
-  width: 100%;
-  display: grid;
-  gap: 12px;
   justify-items: center;
+  gap: 8px;
 }
 
-.options-shell {
-  width: min(100%, 520px);
-  margin: 0 auto;
-  padding: 16px 18px;
-  border-radius: 22px;
-  border: 1px solid rgba(148, 163, 184, 0.12);
-  background:
-    linear-gradient(180deg, rgba(9, 18, 34, 0.62) 0%, rgba(7, 15, 29, 0.54) 100%);
-  backdrop-filter: blur(14px);
-  text-align: center;
+.recognition-action-hint {
+  margin: -2px 0 0;
+  max-width: 390px;
+  color: #91a2b8;
+  font-size: 14px;
+  line-height: 1.5;
+  text-wrap: balance;
+}
+
+.secondary-actions {
+  width: min(100%, 420px);
+  min-width: 0;
+  margin-top: 6px;
+  display: grid;
+  justify-items: center;
+  gap: 9px;
 }
 
 .file-button {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  min-height: 56px;
-  padding: 0 24px;
+  min-height: 42px;
+  padding: 0 16px;
+  border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 999px;
-  border: 1px solid rgba(96, 165, 250, 0.18);
-  background:
-    linear-gradient(180deg, rgba(30, 64, 175, 0.3) 0%, rgba(30, 41, 59, 0.42) 100%);
-  color: #eff6ff;
-  font-size: 18px;
+  background: rgba(15, 23, 42, 0.38);
+  color: #dbeafe;
+  font: inherit;
+  font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   transition:
-    transform 0.22s ease,
-    border-color 0.22s ease,
-    background 0.22s ease,
-    box-shadow 0.22s ease;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, 0.14);
+    color 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
 }
 
 .file-button:hover {
-  transform: translateY(-1px);
-  border-color: rgba(147, 197, 253, 0.34);
-  background:
-    linear-gradient(180deg, rgba(37, 99, 235, 0.36) 0%, rgba(30, 41, 59, 0.5) 100%);
+  border-color: rgba(147, 197, 253, 0.36);
+  background: rgba(30, 41, 59, 0.58);
+  color: #fff;
+}
+
+.file-button:focus-visible,
+.options-shell summary:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 3px;
 }
 
 .upload-hint {
+  max-width: 100%;
   margin: 0;
-  max-width: 320px;
-  font-size: 14px;
-  line-height: 1.6;
-  color: #8ea1b9;
+  color: #708198;
+  font-size: 12px;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.options-shell {
+  width: 100%;
+  margin-top: 4px;
+  border-top: 1px solid rgba(148, 163, 184, 0.11);
+  color: #aebdd0;
+}
+
+.options-shell summary {
+  width: fit-content;
+  margin: 0 auto;
+  padding: 13px 8px 4px;
+  color: #91a2b8;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.option-content {
+  margin-top: 10px;
+  padding: 14px 16px;
+  border: 1px solid rgba(148, 163, 184, 0.12);
+  border-radius: 18px;
+  background: rgba(8, 17, 32, 0.46);
 }
 
 .imam-toggle {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  margin: 0 auto;
+  gap: 9px;
+  min-height: 36px;
   cursor: pointer;
   user-select: none;
 }
@@ -456,39 +529,37 @@ function onFileChange(event: Event) {
 }
 
 .imam-toggle-text {
-  font-size: 16px;
+  color: #dce6f2;
+  font-size: 14px;
   font-weight: 700;
-  color: #e6edf7;
 }
 
 .imam-beta-badge {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
   gap: 4px;
-  min-height: 24px;
-  padding: 0 8px;
-  border: 1px solid rgba(147, 197, 253, 0.24);
+  min-height: 21px;
+  padding: 0 7px;
+  border: 1px solid rgba(147, 197, 253, 0.22);
   border-radius: 999px;
-  background: rgba(59, 130, 246, 0.12);
+  background: rgba(59, 130, 246, 0.1);
   color: #bfdbfe;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 800;
-  line-height: 1;
   text-transform: uppercase;
 }
 
 .imam-beta-icon {
-  width: 12px;
-  height: 12px;
+  width: 11px;
+  height: 11px;
 }
 
 .imam-toggle-hint {
-  margin: 10px auto 0;
+  margin: 7px auto 0;
   max-width: 330px;
-  font-size: 14px;
-  line-height: 1.55;
-  color: #8ea1b9;
+  color: #7f91a8;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .imam-toggle-hint.is-unavailable {
@@ -496,22 +567,18 @@ function onFileChange(event: Event) {
 }
 
 .status-message {
-  margin: 14px 0 0;
-  border-radius: 18px;
+  width: min(100%, 380px);
+  margin-top: 4px;
   padding: 12px 14px;
-  font-size: 14px;
-  line-height: 1.55;
-}
-
-.action-error {
-  width: min(100%, 360px);
-  margin-top: 0;
+  border-radius: 14px;
   text-align: left;
+  font-size: 13px;
+  line-height: 1.5;
 }
 
 .status-message.is-error {
-  background: rgba(127, 29, 29, 0.22);
-  border: 1px solid rgba(248, 113, 113, 0.16);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  background: rgba(127, 29, 29, 0.2);
   color: #fecaca;
 }
 
@@ -521,116 +588,71 @@ function onFileChange(event: Event) {
 }
 
 .status-title {
-  font-weight: 700;
+  font-weight: 750;
 }
 
 .status-hint {
-  margin-top: 4px;
-  color: #fee2e2;
+  margin-top: 3px;
+  color: #fda4af;
 }
 
 .hidden-input {
   position: absolute;
-  opacity: 0;
-  pointer-events: none;
-  inset: auto;
   width: 1px;
   height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
-@keyframes pulseDot {
-
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(147, 197, 253, 0.54);
-    transform: scale(0.94);
-  }
-
-  50% {
-    box-shadow: 0 0 0 10px rgba(147, 197, 253, 0);
-    transform: scale(1.08);
-  }
-}
-
-@media (max-width: 768px) {
-  .screen {
-    padding: 16px 14px 24px;
+@media (max-width: 640px) {
+  .idle-screen {
+    padding: 20px 16px 26px;
   }
 
   .hero-shell {
-    gap: 18px;
-    padding: 16px 0 16px;
+    gap: 10px;
+    padding: 28px 0 18px;
   }
 
   .main-title {
-    max-width: 8.5ch;
-    font-size: clamp(42px, 13vw, 62px);
+    margin-top: 12px;
+    font-size: clamp(34px, 10vw, 46px);
   }
 
   .main-subtitle {
-    margin-top: 14px;
-    font-size: 17px;
-    max-width: 330px;
+    margin-top: 13px;
+    font-size: 16px;
   }
 
   .recording-time {
-    font-size: 22px;
-    min-height: 42px;
+    margin-top: 15px;
+    font-size: 30px;
   }
 
-  .options-shell {
-    width: 100%;
-    padding: 14px 16px;
-  }
-}
-
-@media (min-width: 860px) {
-  .action-panel {
-    width: min(100%, 500px);
-    gap: 28px;
-  }
-
-  .hero-action {
-    min-height: 204px;
-  }
-}
-
-@media (max-width: 430px) {
-  .screen {
-    padding-inline: 12px;
-  }
-
-  .main-title {
-    font-size: 40px;
-  }
-
-  .hero-action {
-    min-height: 198px;
-  }
-
-  .file-button {
-    min-height: 52px;
-    font-size: 17px;
-  }
-
-  .upload-hint,
-  .imam-toggle-hint {
+  .recognition-action-hint {
+    max-width: 320px;
     font-size: 13px;
   }
 }
 
-@media (min-width: 1040px) {
-  .idle-screen {
-    max-width: 1040px;
-  }
-
+@media (max-height: 760px) and (min-width: 641px) {
   .hero-shell {
-    gap: 26px;
-    padding-top: 32px;
+    align-content: start;
+    padding-top: 26px;
   }
 
-  .options-shell {
-    width: min(100%, 560px);
+  .main-title {
+    font-size: 46px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .recording-progress-fill {
+    transition: none;
   }
 }
 </style>

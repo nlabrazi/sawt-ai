@@ -73,17 +73,16 @@ const originalMediaDevices = Object.getOwnPropertyDescriptor(navigator, 'mediaDe
 
 function setupRecorderEnvironment() {
   const stopTrack = vi.fn()
-  const fakeStream = {
+  const getUserMedia = vi.fn().mockResolvedValue({
     getTracks: () => [{ stop: stopTrack }],
-  } as unknown as MediaStream
-
+  } as unknown as MediaStream)
   Object.defineProperty(window, 'isSecureContext', {
     value: true,
     configurable: true,
   })
   Object.defineProperty(navigator, 'mediaDevices', {
     value: {
-      getUserMedia: vi.fn().mockResolvedValue(fakeStream),
+      getUserMedia,
     },
     configurable: true,
   })
@@ -96,7 +95,7 @@ function setupRecorderEnvironment() {
   )
   vi.stubGlobal('cancelAnimationFrame', vi.fn())
 
-  return { stopTrack }
+  return { stopTrack, getUserMedia }
 }
 
 describe('useMicrophoneRecorder', () => {
@@ -113,7 +112,7 @@ describe('useMicrophoneRecorder', () => {
   it('returns the same pending file when stopRecording is called twice', async () => {
     vi.useFakeTimers()
 
-    const { stopTrack } = setupRecorderEnvironment()
+    const { stopTrack, getUserMedia } = setupRecorderEnvironment()
     const recorder = useMicrophoneRecorder(ref(90))
 
     await recorder.startRecording()
@@ -122,6 +121,11 @@ describe('useMicrophoneRecorder', () => {
     const secondStop = recorder.stopRecording()
 
     expect(firstStop).toBe(secondStop)
+    expect(recorder.isFinalizingRecording.value).toBe(true)
+
+    await recorder.startRecording()
+
+    expect(getUserMedia).toHaveBeenCalledTimes(1)
 
     await vi.runAllTimersAsync()
 
@@ -136,6 +140,7 @@ describe('useMicrophoneRecorder', () => {
     expect(recorder.isRecording.value).toBe(false)
     expect(recorder.recordingSeconds.value).toBe(0)
     expect(recorder.maxDurationReached.value).toBe(false)
+    expect(recorder.isFinalizingRecording.value).toBe(false)
     expect(stopTrack).toHaveBeenCalledTimes(1)
   })
 
