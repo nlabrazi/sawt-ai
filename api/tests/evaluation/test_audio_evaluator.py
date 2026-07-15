@@ -79,15 +79,21 @@ def test_evaluate_audio_corpus_separates_positive_and_negative_failures():
         "false_negative": 1,
         "true_negative": 1,
         "false_positive": 1,
+        "confident_positive_predictions": 3,
+        "confident_exact_match": 1,
+        "confident_correct_surah": 2,
         "overall_exact_accuracy": 2 / 6,
         "positive_exact_accuracy": 0.25,
         "positive_surah_accuracy": 0.5,
+        "positive_confident_exact_accuracy": 0.25,
+        "positive_confident_surah_accuracy": 0.5,
         "negative_rejection_rate": 0.5,
         "false_positive_rate": 0.5,
         "exact_precision": 0.25,
         "exact_recall": 0.25,
         "unique_source_cases": 6,
         "positive_source_cases": 4,
+        "distinct_positive_surahs": 1,
         "negative_source_cases": 2,
         "vocal_negative_cases": 0,
         "vocal_negative_source_cases": 0,
@@ -95,6 +101,8 @@ def test_evaluate_audio_corpus_separates_positive_and_negative_failures():
         "noisy_positive_source_cases": 0,
         "macro_positive_exact_accuracy": 0.25,
         "macro_positive_surah_accuracy": 0.5,
+        "macro_positive_confident_exact_accuracy": 0.25,
+        "macro_positive_confident_surah_accuracy": 0.5,
         "macro_negative_rejection_rate": 0.5,
         "macro_false_positive_rate": 0.5,
         "average_latency_ms": pytest.approx(1),
@@ -176,6 +184,39 @@ def test_variants_from_one_recording_count_as_one_source():
     assert report["summary"]["macro_positive_surah_accuracy"] == 0.5
 
 
+def test_confident_metrics_exclude_ambiguous_hypotheses():
+    expected = ExpectedVerse(1, 1, 7)
+    ambiguous = replace(
+        make_case("ambiguous_exact", expected),
+        source_case_id="fatiha_reciter",
+    )
+    confident = replace(
+        make_case("confident_range", expected),
+        source_case_id="fatiha_reciter",
+    )
+    corpus = BuiltAudioCorpus(Path("manifest.json"), 16_000, (ambiguous, confident), ())
+
+    report = evaluate_audio_corpus(
+        corpus,
+        lambda case: pipeline_result(
+            {
+                "sourate_id": 1,
+                "start_verse": 1,
+                "end_verse": 7 if case.case_id == "ambiguous_exact" else 6,
+            },
+            status="ambiguous" if case.case_id == "ambiguous_exact" else "confident",
+        ),
+    )
+
+    assert report["summary"]["positive_exact_accuracy"] == 0.5
+    assert report["summary"]["confident_positive_predictions"] == 1
+    assert report["summary"]["confident_exact_match"] == 0
+    assert report["summary"]["confident_correct_surah"] == 1
+    assert report["summary"]["positive_confident_exact_accuracy"] == 0.0
+    assert report["summary"]["positive_confident_surah_accuracy"] == 0.5
+    assert report["summary"]["macro_positive_confident_surah_accuracy"] == 0.5
+
+
 def test_quality_gates_report_missing_sets_and_threshold_failures():
     failures = evaluate_quality_gates(
         {
@@ -183,20 +224,26 @@ def test_quality_gates_report_missing_sets_and_threshold_failures():
             "positive_cases": 0,
             "negative_cases": 2,
             "positive_source_cases": 0,
+            "distinct_positive_surahs": 0,
             "negative_source_cases": 2,
             "noisy_positive_source_cases": 0,
             "vocal_negative_source_cases": 0,
             "macro_positive_exact_accuracy": 0.0,
             "macro_positive_surah_accuracy": 0.25,
+            "macro_positive_confident_exact_accuracy": 0.0,
+            "macro_positive_confident_surah_accuracy": 0.0,
             "macro_negative_rejection_rate": 0.5,
             "macro_false_positive_rate": 0.5,
         },
         categories={"french_speech": {"negative_source_cases": 1}},
         min_macro_positive_exact_accuracy=0.9,
         min_macro_positive_surah_accuracy=0.85,
+        min_macro_positive_confident_exact_accuracy=0.5,
+        min_macro_positive_confident_surah_accuracy=0.6,
         min_macro_negative_rejection_rate=0.95,
         max_macro_false_positive_rate=0.01,
         min_positive_sources=3,
+        min_distinct_positive_surahs=3,
         min_noisy_positive_sources=3,
         min_vocal_negative_sources=2,
         required_negative_categories=(
@@ -210,6 +257,7 @@ def test_quality_gates_report_missing_sets_and_threshold_failures():
     assert failures == [
         "errors=1 dépasse la limite 0",
         "positive_source_cases=0 < 3",
+        "distinct_positive_surahs=0 < 3",
         "noisy_positive_source_cases=0 < 3",
         "vocal_negative_source_cases=0 < 2",
         "negative_category_source_cases[arabic_non_quran]=0 < 1",
@@ -217,6 +265,8 @@ def test_quality_gates_report_missing_sets_and_threshold_failures():
         "negative_category_source_cases[vocal_music]=0 < 1",
         "aucune source positive évaluée",
         "aucune source positive évaluée pour la sourate",
+        "aucune source positive évaluée avec statut confident",
+        "aucune source positive évaluée avec statut confident pour la sourate",
         "macro_negative_rejection_rate=0.500 < 0.950",
         "macro_false_positive_rate=0.500 > 0.010",
     ]

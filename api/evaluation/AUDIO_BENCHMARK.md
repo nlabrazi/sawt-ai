@@ -145,6 +145,9 @@ Le pipeline de production utilise le VAD uniquement pour isoler la parole et
 échantillonner jusqu'à trois fenêtres de langue réparties entre début, milieu et
 fin. Si l'arabe reste plausible, il décode ensuite le signal complet en arabe,
 sans VAD : les modulations longues d'une récitation ne sont ainsi pas coupées.
+Un dither blanc déterministe et imperceptible à 40 dB est appliqué uniquement à
+ce second décodage. Il évite qu'un signal propre et très modulé soit tronqué par
+Whisper ; le filtrage parole/langue a déjà eu lieu sur le signal original.
 
 Il s'agit d'un E2E **backend**. Les permissions du microphone, l'arrêt explicite
 de l'enregistrement et les écrans de résultat restent couverts par les tests
@@ -158,6 +161,14 @@ Les résultats positifs distinguent :
 - `correct_surah_wrong_range` : bonne sourate, mauvais versets ;
 - `wrong_surah` ;
 - `false_negative` : aucun passage proposé.
+
+Une proposition n'est comptée dans les métriques `confident_*` que si le
+pipeline renvoie simultanément un passage et `detection.status=confident`. Les
+taux `positive_confident_exact_accuracy` et
+`positive_confident_surah_accuracy` gardent **toutes** les récitations positives
+au dénominateur : les hypothèses `ambiguous` ne sont donc pas présentées comme
+des succès confiants. Leurs équivalents macro par source empêchent aussi les
+variantes d'un même enregistrement de gonfler ces résultats.
 
 Les négatifs distinguent `true_negative` et `false_positive`. Le rapport expose
 notamment `positive_exact_accuracy`, `positive_surah_accuracy`,
@@ -177,9 +188,9 @@ le rapport contient aussi l'empreinte du manifeste de corpus.
 Le mode par défaut est un **smoke test**. Avec le seul manifeste public,
 `quality_gate.evaluated` reste à `false` : six sons non vocaux correctement
 rejetés ne prouvent ni le rappel coranique ni le rejet de conversations. Le mode
-qualité exige par défaut au moins trois sources positives et trois sources
-négatives marquées `vocal`. Les trois sources positives doivent chacune posséder
-au moins une variante bruitée. Les catégories négatives `french_speech`,
+qualité exige par défaut au moins six enregistrements positifs couvrant quatre
+sourates et quatre sources négatives marquées `vocal`. Les six enregistrements
+positifs doivent chacun posséder au moins une variante bruitée. Les catégories négatives `french_speech`,
 `french_conversation`, `vocal_music` et `arabic_non_quran` doivent toutes être
 représentées par au moins une source. `--required-negative-category` permet
 d'ajouter une catégorie obligatoire.
@@ -187,13 +198,21 @@ d'ajouter une catégorie obligatoire.
 Les seuils bloquants portent sur les **macro-métriques par source**, pas sur le
 nombre de variantes : `macro_positive_exact_accuracy`,
 `macro_positive_surah_accuracy`,
+`macro_positive_confident_exact_accuracy`,
+`macro_positive_confident_surah_accuracy`,
 `macro_negative_rejection_rate` et `macro_false_positive_rate`. Une récitation
 déclinée sous six bruits ne peut donc pas masquer l'échec d'un autre locuteur.
 
+Le rapport expose également `distinct_positive_surahs`. Le minimum par défaut
+est désormais quatre : il empêche une régression vers un benchmark limité à
+Al-Fatiha, sans prétendre représenter les 114 sourates.
+
 Le mode qualité applique par défaut les planchers de non-régression mesurés sur
-le corpus de référence : `0.50` pour la plage exacte, `0.85` pour la bonne
-sourate, `1.0` pour le rejet des négatifs et `0.0` faux positif. Ce sont des
-seuils de livraison, pas la cible finale : ils doivent monter à mesure que le
+le corpus de référence : `0.65` pour la plage exacte, `0.85` pour la bonne
+sourate, `0.33` pour une plage exacte **confidente**, `0.38` pour une bonne
+sourate **confidente**, `1.0` pour le rejet des négatifs et `0.0` faux positif.
+Les faibles seuils confiants reflètent honnêtement le point de départ ; ils ne
+sont pas une cible produit. Tous ces seuils doivent monter à mesure que le
 corpus gagne en diversité et que le pipeline progresse.
 
 Exemple de garde qualité pour une itération avancée :
@@ -203,11 +222,14 @@ docker compose exec api python scripts/evaluate_audio_recognition.py \
   --mode quality \
   --min-macro-positive-exact-accuracy 0.90 \
   --min-macro-positive-surah-accuracy 0.95 \
+  --min-macro-positive-confident-exact-accuracy 0.80 \
+  --min-macro-positive-confident-surah-accuracy 0.90 \
   --min-macro-negative-rejection-rate 1.0 \
   --max-macro-false-positive-rate 0.0 \
-  --min-positive-sources 3 \
-  --min-noisy-positive-sources 3 \
-  --min-vocal-negative-sources 3 \
+  --min-positive-sources 6 \
+  --min-distinct-positive-surahs 4 \
+  --min-noisy-positive-sources 6 \
+  --min-vocal-negative-sources 4 \
   --max-errors 0
 ```
 
@@ -219,33 +241,46 @@ même corpus avant toute nouvelle modification.
 ## Baseline mesurée le 15 juillet 2026
 
 La baseline structurée et expurgée est versionnée dans
-`audio_quality_baseline.json`. Le rapport détaillé et les audios restent locaux.
+`audio_quality_baseline.json`. C'est un **snapshot d'un run local manuel**. Le
+test automatisé associé vérifie uniquement la cohérence interne du JSON et de
+ses seuils ; il ne recharge pas Whisper et ne rejoue aucun WAV. Pour revalider
+la chaîne réelle, il faut relancer explicitement le runner E2E puis comparer et
+mettre à jour le snapshot. Le rapport détaillé et les audios restent locaux.
 Le run de référence utilise faster-whisper `1.1.1`, le modèle `turbo` sur CPU
-`int8`, trois récitations complètes d'Al-Fatiha et six variantes par source :
-propre, bruits blanc 20 dB et 10 dB, bruit rose 10 dB, fond domestique 5 dB et
-voix française synthétique de type enfant à 5 dB.
+`int8`, six enregistrements couvrant Al-Fatiha, Al-Ikhlas, Al-Falaq et An-Nas,
+avec six variantes par source : propre, bruits blanc 20 dB et 10 dB, bruit rose
+10 dB, fond domestique 5 dB et voix française synthétique de type enfant à
+5 dB.
 
 | Mesure | Résultat |
 |---|---:|
-| Plage exacte parmi les récitations | 10/18 — 55,6 % |
-| Bonne sourate parmi les récitations | 16/18 — 88,9 % |
-| Mauvaise sourate | 0/18 |
-| Négatifs correctement rejetés | 11/11 — 100 % |
-| Faux positifs négatifs | 0/11 |
-| Erreurs techniques | 0/29 |
-| Latence moyenne / p50 / p95 | 17,44 s / 22,62 s / 32,49 s |
+| Plage exacte proposée, ambigu inclus | 25/36 — 69,4 % |
+| Bonne sourate proposée, ambigu inclus | 31/36 — 86,1 % |
+| Passage proposé avec statut `confident` | 15/36 — 41,7 % |
+| Plage exacte avec statut `confident` | 13/36 — 36,1 % |
+| Bonne sourate avec statut `confident` | 15/36 — 41,7 % |
+| Hypothèses avec statut `ambiguous` | 16/36 — 44,4 % |
+| Mauvaise sourate | 0/36 |
+| Faux négatifs conservateurs | 5/36 |
+| Négatifs correctement rejetés | 10/10 — 100 % |
+| Faux positifs négatifs | 0/10 |
+| Erreurs techniques | 0/46 |
+| Latence moyenne / p50 / p95 | 15,83 s / 15,98 s / 27,29 s |
 
-Les deux faux négatifs correspondent aux deux mélanges où la voix française
+Les cinq faux négatifs correspondent aux mélanges où la voix française
 synthétique domine suffisamment la récitation. Le pipeline refuse ces cas au
-lieu d'inventer une sourate. Le corpus reste petit, limité à Al-Fatiha pour les
-positifs et à trois enregistrements : ces chiffres constituent un garde-fou de
-non-régression, pas une estimation générale sur les 114 sourates ni sur toutes
-les voix réelles d'enfants.
+lieu d'inventer une sourate. Les six enregistrements ne représentent que trois
+identités de réciteurs et quatre sourates : ces chiffres constituent un
+garde-fou de non-régression, pas une estimation générale sur les 114 sourates ni
+sur de vraies voix d'enfants.
 
 Les enregistrements publics du run local proviennent de Wikimedia Commons :
 [001Fatiha (CC0)](https://commons.wikimedia.org/wiki/File:001Fatiha.ogg),
 [AlFātiḥatulKitāb (CC0)](https://commons.wikimedia.org/wiki/File:AlF%C4%81tihatulKit%C4%81b.ogg),
 [Al-Fatiha Mujawwad (CC BY-SA 4.0)](https://commons.wikimedia.org/wiki/File:Chapter_1,_Al-Fatiha_(Mujawwad)_-_Recitation_of_the_Holy_Qur%27an.mp3),
+[Al-Ikhlas Murattal (CC BY-SA 4.0)](https://commons.wikimedia.org/wiki/File:Chapter_112,_Al-Ikhlas_(Murattal)_-_Recitation_of_the_Holy_Qur%27an.mp3),
+[Al-Falaq Murattal (CC BY-SA 4.0)](https://commons.wikimedia.org/wiki/File:Chapter_113,_Al-Falaq_(Murattal)_v2_-_Recitation_of_the_Holy_Qur%27an.mp3),
+[An-Nas Murattal (CC BY-SA 4.0)](https://commons.wikimedia.org/wiki/File:Chapter_114,_Al-Nas_(Murattal)_v2_-_Recitation_of_the_Holy_Qur%27an.mp3),
 [Twinkle Twinkle vocal (CC BY-SA 3.0)](https://commons.wikimedia.org/wiki/File:Twinkle_twinkle_little_star_(vocal).ogg) et
 [article Wikipédia arabe parlé (CC BY-SA 3.0/GFDL)](https://commons.wikimedia.org/wiki/File:University_Article_Spoken_Arabic_Wikipedia.ogg).
 Le manifeste privé local conserve l'URL, l'auteur et la licence de chaque

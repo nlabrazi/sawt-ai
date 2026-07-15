@@ -53,12 +53,15 @@ def quality_ready_report():
     return {
         "summary": {
             "errors": 0,
-            "positive_source_cases": 3,
+            "positive_source_cases": 6,
+            "distinct_positive_surahs": 4,
             "negative_source_cases": 4,
-            "noisy_positive_source_cases": 3,
+            "noisy_positive_source_cases": 6,
             "vocal_negative_source_cases": 4,
             "macro_positive_exact_accuracy": 0.95,
             "macro_positive_surah_accuracy": 0.98,
+            "macro_positive_confident_exact_accuracy": 0.90,
+            "macro_positive_confident_surah_accuracy": 0.95,
             "macro_negative_rejection_rate": 1.0,
             "macro_false_positive_rate": 0.0,
         },
@@ -124,6 +127,19 @@ def test_private_quality_report_is_0600_and_stdout_is_redacted(
     assert output_path.stat().st_mode & 0o777 == 0o600
     assert output_path.parent.stat().st_mode & 0o777 == 0o700
     assert console_report["quality_gate"]["passed"] is True
+    assert console_report["coverage"]["distinct_positive_surahs"] == 4
+    assert console_report["coverage"]["requirements"] == {
+        "min_positive_sources": 6,
+        "min_distinct_positive_surahs": 4,
+        "min_noisy_positive_sources": 6,
+        "min_vocal_negative_sources": 4,
+        "required_negative_categories": [
+            "arabic_non_quran",
+            "french_conversation",
+            "french_speech",
+            "vocal_music",
+        ],
+    }
     assert console_report["coverage"]["negative_category_source_cases"] == {
         "arabic_non_quran": 1,
         "french_conversation": 1,
@@ -134,9 +150,17 @@ def test_private_quality_report_is_0600_and_stdout_is_redacted(
     assert "corpus_manifest_sha256" not in console_report
     assert "private-audio-hash" not in json.dumps(console_report)
     assert private_report["cases"][0]["audio_sha256"] == "private-audio-hash"
+    assert private_report["configuration"]["transcription"]["quran_dither_snr_db"] == 40
+    assert private_report["configuration"]["matching_policy"] == {
+        "min_strong_evidence_similarity": 0.97,
+        "min_strong_evidence_word_count": 12,
+        "min_confident_inferred_passage_similarity": 0.97,
+    }
     assert private_report["quality_gate"]["metrics"] == {
         "macro_positive_exact_accuracy": 0.95,
         "macro_positive_surah_accuracy": 0.98,
+        "macro_positive_confident_exact_accuracy": 0.90,
+        "macro_positive_confident_surah_accuracy": 0.95,
         "macro_negative_rejection_rate": 1.0,
         "macro_false_positive_rate": 0.0,
     }

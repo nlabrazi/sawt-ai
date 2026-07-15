@@ -20,7 +20,7 @@ if str(API_DIR) not in sys.path:
 
 from app.core.detection_policy import build_detection_policy
 from app.core.model_loader import WHISPER_MODEL_NAME, load_all_models
-from app.services import transcription_service
+from app.services import transcription_service, verse_detection_service
 from app.services.inference_pipeline import run_inference_pipeline
 from evaluation.audio_benchmark.corpus import BuiltAudioCase, load_built_corpus
 from evaluation.audio_benchmark.evaluator import (
@@ -98,10 +98,19 @@ def main() -> None:
     )
     parser.add_argument("--min-macro-positive-exact-accuracy", type=_ratio)
     parser.add_argument("--min-macro-positive-surah-accuracy", type=_ratio)
+    parser.add_argument(
+        "--min-macro-positive-confident-exact-accuracy",
+        type=_ratio,
+    )
+    parser.add_argument(
+        "--min-macro-positive-confident-surah-accuracy",
+        type=_ratio,
+    )
     parser.add_argument("--min-macro-negative-rejection-rate", type=_ratio)
     parser.add_argument("--max-macro-false-positive-rate", type=_ratio)
     parser.add_argument("--max-errors", type=_non_negative_integer, default=0)
     parser.add_argument("--min-positive-sources", type=_non_negative_integer)
+    parser.add_argument("--min-distinct-positive-surahs", type=_non_negative_integer)
     parser.add_argument("--min-noisy-positive-sources", type=_non_negative_integer)
     parser.add_argument("--min-vocal-negative-sources", type=_non_negative_integer)
     parser.add_argument(
@@ -172,12 +181,30 @@ def main() -> None:
             "quran_vad_filter": (
                 transcription_service.QURAN_TRANSCRIPTION_VAD_FILTER
             ),
+            "quran_dither_snr_db": (
+                transcription_service.QURAN_TRANSCRIPTION_DITHER_SNR_DB
+            ),
+            "quran_dither_seed": (
+                transcription_service.QURAN_TRANSCRIPTION_DITHER_SEED
+            ),
             "vad_min_silence_duration_ms": (
                 transcription_service.VAD_MIN_SILENCE_DURATION_MS
             ),
             "vad_speech_pad_ms": transcription_service.VAD_SPEECH_PAD_MS,
         },
         "detection_policy": build_detection_policy(),
+        "matching_policy": {
+            "min_strong_evidence_similarity": (
+                verse_detection_service.MIN_STRONG_EVIDENCE_SIMILARITY / 100
+            ),
+            "min_strong_evidence_word_count": (
+                verse_detection_service.MIN_STRONG_EVIDENCE_WORD_COUNT
+            ),
+            "min_confident_inferred_passage_similarity": (
+                verse_detection_service.MIN_CONFIDENT_INFERRED_PASSAGE_SIMILARITY
+                / 100
+            ),
+        },
         "transcription_policy": _build_transcription_policy_configuration(),
     }
     explicit_quality_gate = any(
@@ -185,9 +212,12 @@ def main() -> None:
         for value in (
             args.min_macro_positive_exact_accuracy,
             args.min_macro_positive_surah_accuracy,
+            args.min_macro_positive_confident_exact_accuracy,
+            args.min_macro_positive_confident_surah_accuracy,
             args.min_macro_negative_rejection_rate,
             args.max_macro_false_positive_rate,
             args.min_positive_sources,
+            args.min_distinct_positive_surahs,
             args.min_noisy_positive_sources,
             args.min_vocal_negative_sources,
             *args.required_negative_category,
@@ -195,15 +225,20 @@ def main() -> None:
     )
     run_mode = "quality" if args.mode == "quality" or explicit_quality_gate else "smoke"
     required_positive_sources = (
-        3 if args.min_positive_sources is None else args.min_positive_sources
+        6 if args.min_positive_sources is None else args.min_positive_sources
+    )
+    required_distinct_positive_surahs = (
+        4
+        if args.min_distinct_positive_surahs is None
+        else args.min_distinct_positive_surahs
     )
     required_noisy_positive_sources = (
-        3
+        6
         if args.min_noisy_positive_sources is None
         else args.min_noisy_positive_sources
     )
     required_vocal_negative_sources = (
-        3
+        4
         if args.min_vocal_negative_sources is None
         else args.min_vocal_negative_sources
     )
@@ -223,6 +258,11 @@ def main() -> None:
     missing_coverage = []
     if report["summary"]["positive_source_cases"] < required_positive_sources:
         missing_coverage.append("positive_sources")
+    if (
+        report["summary"]["distinct_positive_surahs"]
+        < required_distinct_positive_surahs
+    ):
+        missing_coverage.append("distinct_positive_surahs")
     if report["summary"]["noisy_positive_source_cases"] < required_noisy_positive_sources:
         missing_coverage.append("noisy_positive_sources")
     if report["summary"]["vocal_negative_source_cases"] < required_vocal_negative_sources:
@@ -236,6 +276,7 @@ def main() -> None:
         "status": "quality_ready" if not missing_coverage else "smoke_incomplete",
         "missing": missing_coverage,
         "positive_source_cases": report["summary"]["positive_source_cases"],
+        "distinct_positive_surahs": report["summary"]["distinct_positive_surahs"],
         "noisy_positive_source_cases": report["summary"][
             "noisy_positive_source_cases"
         ],
@@ -245,6 +286,7 @@ def main() -> None:
         "negative_category_source_cases": negative_category_source_cases,
         "requirements": {
             "min_positive_sources": required_positive_sources,
+            "min_distinct_positive_surahs": required_distinct_positive_surahs,
             "min_noisy_positive_sources": required_noisy_positive_sources,
             "min_vocal_negative_sources": required_vocal_negative_sources,
             "required_negative_categories": list(required_negative_categories),
@@ -268,12 +310,22 @@ def main() -> None:
             min_macro_positive_exact_accuracy=(
                 args.min_macro_positive_exact_accuracy
                 if args.min_macro_positive_exact_accuracy is not None
-                else 0.50
+                else 0.65
             ),
             min_macro_positive_surah_accuracy=(
                 args.min_macro_positive_surah_accuracy
                 if args.min_macro_positive_surah_accuracy is not None
                 else 0.85
+            ),
+            min_macro_positive_confident_exact_accuracy=(
+                args.min_macro_positive_confident_exact_accuracy
+                if args.min_macro_positive_confident_exact_accuracy is not None
+                else 0.33
+            ),
+            min_macro_positive_confident_surah_accuracy=(
+                args.min_macro_positive_confident_surah_accuracy
+                if args.min_macro_positive_confident_surah_accuracy is not None
+                else 0.38
             ),
             min_macro_negative_rejection_rate=(
                 args.min_macro_negative_rejection_rate
@@ -287,6 +339,7 @@ def main() -> None:
             ),
             max_errors=args.max_errors,
             min_positive_sources=required_positive_sources,
+            min_distinct_positive_surahs=required_distinct_positive_surahs,
             min_noisy_positive_sources=required_noisy_positive_sources,
             min_vocal_negative_sources=required_vocal_negative_sources,
             required_negative_categories=required_negative_categories,
@@ -301,6 +354,12 @@ def main() -> None:
                 ],
                 "macro_positive_surah_accuracy": report["summary"][
                     "macro_positive_surah_accuracy"
+                ],
+                "macro_positive_confident_exact_accuracy": report["summary"][
+                    "macro_positive_confident_exact_accuracy"
+                ],
+                "macro_positive_confident_surah_accuracy": report["summary"][
+                    "macro_positive_confident_surah_accuracy"
                 ],
                 "macro_negative_rejection_rate": report["summary"][
                     "macro_negative_rejection_rate"

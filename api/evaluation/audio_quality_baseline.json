@@ -1,47 +1,87 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "measured_on": "2026-07-15",
+  "verification": {
+    "kind": "manual_measured_snapshot",
+    "automated_test_scope": "json_integrity_only",
+    "whisper_replayed_in_ci": false
+  },
   "runtime": {
     "whisper_model": "turbo",
     "faster_whisper_version": "1.1.1",
     "device": "cpu",
-    "compute_type": "int8"
+    "compute_type": "int8",
+    "quran_dither_snr_db": 40.0,
+    "matching_policy": {
+      "min_strong_evidence_similarity": 0.97,
+      "min_strong_evidence_word_count": 12,
+      "min_confident_inferred_passage_similarity": 0.97
+    }
   },
   "corpus": {
-    "total_cases": 29,
-    "positive_cases": 18,
-    "positive_source_cases": 3,
-    "noisy_positive_cases": 15,
-    "negative_cases": 11,
-    "vocal_negative_source_cases": 5,
+    "total_cases": 46,
+    "positive_cases": 36,
+    "positive_source_cases": 6,
+    "distinct_positive_surahs": 4,
+    "positive_surahs": [1, 112, 113, 114],
+    "positive_scope": "four_surah_regression",
+    "noisy_positive_cases": 30,
+    "noisy_positive_source_cases": 6,
+    "negative_cases": 10,
+    "vocal_negative_source_cases": 4,
     "errors": 0
   },
   "metrics": {
-    "positive_exact_accuracy": 0.5555555555555556,
-    "macro_positive_exact_accuracy": 0.5555555555555555,
-    "positive_surah_accuracy": 0.8888888888888888,
-    "macro_positive_surah_accuracy": 0.888888888888889,
+    "exact_match_count": 25,
+    "correct_surah_wrong_range_count": 6,
     "wrong_surah_count": 0,
-    "false_negative_count": 2,
+    "false_negative_count": 5,
+    "true_negative_count": 10,
+    "false_positive_count": 0,
+    "positive_exact_accuracy": 0.6944444444444444,
+    "macro_positive_exact_accuracy": 0.6944444444444445,
+    "positive_surah_accuracy": 0.8611111111111112,
+    "macro_positive_surah_accuracy": 0.8611111111111112,
+    "confident_positive_predictions": 15,
+    "confident_exact_match": 13,
+    "confident_correct_surah": 15,
+    "positive_confident_exact_accuracy": 0.3611111111111111,
+    "macro_positive_confident_exact_accuracy": 0.3611111111111111,
+    "positive_confident_surah_accuracy": 0.4166666666666667,
+    "macro_positive_confident_surah_accuracy": 0.4166666666666667,
+    "detection_status_counts": {
+      "insufficient": 14,
+      "ambiguous": 16,
+      "confident": 15,
+      "probable": 1
+    },
     "negative_rejection_rate": 1.0,
     "macro_negative_rejection_rate": 1.0,
     "false_positive_rate": 0.0,
     "macro_false_positive_rate": 0.0,
-    "average_latency_ms": 17438.589070896527,
-    "p50_latency_ms": 22618.60770599742,
-    "p95_latency_ms": 32494.103647000884
+    "average_latency_ms": 15829.889381934863,
+    "p50_latency_ms": 15976.802725999733,
+    "p95_latency_ms": 27294.941023999854
   },
   "release_gates": {
-    "min_macro_positive_exact_accuracy": 0.5,
+    "min_macro_positive_exact_accuracy": 0.65,
     "min_macro_positive_surah_accuracy": 0.85,
+    "min_macro_positive_confident_exact_accuracy": 0.33,
+    "min_macro_positive_confident_surah_accuracy": 0.38,
+    "min_positive_source_cases": 6,
+    "min_distinct_positive_surahs": 4,
+    "min_noisy_positive_source_cases": 6,
+    "min_vocal_negative_source_cases": 4,
     "min_macro_negative_rejection_rate": 1.0,
     "max_macro_false_positive_rate": 0.0,
     "max_errors": 0
   },
   "limitations": [
-    "Positive cases cover Al-Fatiha only.",
-    "Only three independent positive recordings are represented.",
+    "Positive cases cover only Al-Fatiha, Al-Ikhlas, Al-Falaq, and An-Nas out of 114 surahs.",
+    "Sixteen of thirty-six positive cases are exposed only as ambiguous hypotheses.",
+    "Six recordings represent only three reciter identities; one reciter supplies four surahs.",
     "Child-background variants use synthetic French speech, not real children.",
-    "Two child-background variants are conservatively rejected."
+    "Five child-background variants are conservatively rejected.",
+    "The negative corpus contains Arabic prose and an English vocal song, but no Arabic vocal song."
   ]
 }

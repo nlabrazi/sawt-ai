@@ -104,6 +104,11 @@ def _quality_summary(counters: Counter) -> dict[str, int | float]:
         "false_negative": counters["false_negative"],
         "true_negative": counters["true_negative"],
         "false_positive": counters["false_positive"],
+        "confident_positive_predictions": counters[
+            "confident_positive_predictions"
+        ],
+        "confident_exact_match": counters["confident_exact_match"],
+        "confident_correct_surah": counters["confident_correct_surah"],
         "overall_exact_accuracy": _safe_ratio(
             counters["exact_match"] + counters["true_negative"],
             evaluated_cases,
@@ -114,6 +119,16 @@ def _quality_summary(counters: Counter) -> dict[str, int | float]:
         ),
         "positive_surah_accuracy": _safe_ratio(
             correct_surah,
+            counters["positive_cases"],
+        ),
+        # Le dénominateur reste l'ensemble des récitations attendues : une
+        # hypothèse ambiguë ne peut donc pas gonfler la qualité « confident ».
+        "positive_confident_exact_accuracy": _safe_ratio(
+            counters["confident_exact_match"],
+            counters["positive_cases"],
+        ),
+        "positive_confident_surah_accuracy": _safe_ratio(
+            counters["confident_correct_surah"],
             counters["positive_cases"],
         ),
         "negative_rejection_rate": _safe_ratio(
@@ -211,17 +226,34 @@ def evaluate_audio_corpus(
                 latency_ms,
                 include_transcriptions=include_transcriptions,
             )
-            counters[case.label + "_cases"] += 1
-            counters[classification] += 1
-            category_counters[case.category][case.label + "_cases"] += 1
-            category_counters[case.category][classification] += 1
             source_case_id = case.source_case_id or case.case_id
-            source_counters[source_case_id][case.label + "_cases"] += 1
-            source_counters[source_case_id][classification] += 1
             category_source_ids[case.category][case.label].add(source_case_id)
             variant_id = str(case.variant.get("id", "unknown"))
-            variant_counters[variant_id][case.label + "_cases"] += 1
-            variant_counters[variant_id][classification] += 1
+            quality_counters = (
+                counters,
+                category_counters[case.category],
+                source_counters[source_case_id],
+                variant_counters[variant_id],
+            )
+            for quality_counter in quality_counters:
+                quality_counter[case.label + "_cases"] += 1
+                quality_counter[classification] += 1
+
+            is_confident_positive_prediction = (
+                case.label == "positive"
+                and result["predicted_verse"] is not None
+                and result["detection_status"] == "confident"
+            )
+            if is_confident_positive_prediction:
+                for quality_counter in quality_counters:
+                    quality_counter["confident_positive_predictions"] += 1
+                    if classification == "exact_match":
+                        quality_counter["confident_exact_match"] += 1
+                    if classification in {
+                        "exact_match",
+                        "correct_surah_wrong_range",
+                    }:
+                        quality_counter["confident_correct_surah"] += 1
             if case.label == "negative" and "vocal" in case.tags:
                 counters["vocal_negative_cases"] += 1
                 source_counters[source_case_id]["vocal_negative_cases"] += 1
@@ -275,6 +307,11 @@ def evaluate_audio_corpus(
         source_counter["noisy_positive_cases"] > 0
         for source_counter in source_counters.values()
     )
+    distinct_positive_surahs = {
+        case.expected_verse.sourate_id
+        for case in corpus.cases
+        if case.label == "positive" and case.expected_verse is not None
+    }
 
     summary = {
         "total_cases": len(corpus.cases),
@@ -283,6 +320,7 @@ def evaluate_audio_corpus(
         **_quality_summary(counters),
         "unique_source_cases": len(source_counters),
         "positive_source_cases": len(positive_source_summaries),
+        "distinct_positive_surahs": len(distinct_positive_surahs),
         "negative_source_cases": len(negative_source_summaries),
         "vocal_negative_cases": counters["vocal_negative_cases"],
         "vocal_negative_source_cases": vocal_negative_sources,
@@ -296,6 +334,24 @@ def evaluate_audio_corpus(
         ),
         "macro_positive_surah_accuracy": (
             sum(item["positive_surah_accuracy"] for item in positive_source_summaries)
+            / len(positive_source_summaries)
+            if positive_source_summaries
+            else 0.0
+        ),
+        "macro_positive_confident_exact_accuracy": (
+            sum(
+                item["positive_confident_exact_accuracy"]
+                for item in positive_source_summaries
+            )
+            / len(positive_source_summaries)
+            if positive_source_summaries
+            else 0.0
+        ),
+        "macro_positive_confident_surah_accuracy": (
+            sum(
+                item["positive_confident_surah_accuracy"]
+                for item in positive_source_summaries
+            )
             / len(positive_source_summaries)
             if positive_source_summaries
             else 0.0
@@ -353,10 +409,13 @@ def evaluate_quality_gates(
     categories: Mapping[str, Mapping[str, Any]] | None = None,
     min_macro_positive_exact_accuracy: float | None = None,
     min_macro_positive_surah_accuracy: float | None = None,
+    min_macro_positive_confident_exact_accuracy: float | None = None,
+    min_macro_positive_confident_surah_accuracy: float | None = None,
     min_macro_negative_rejection_rate: float | None = None,
     max_macro_false_positive_rate: float | None = None,
     max_errors: int = 0,
     min_positive_sources: int = 0,
+    min_distinct_positive_surahs: int = 0,
     min_noisy_positive_sources: int = 0,
     min_vocal_negative_sources: int = 0,
     required_negative_categories: Iterable[str] = (),
@@ -372,6 +431,13 @@ def evaluate_quality_gates(
         failures.append(
             "positive_source_cases="
             f"{summary.get('positive_source_cases', 0)} < {min_positive_sources}"
+        )
+
+    if int(summary.get("distinct_positive_surahs", 0)) < min_distinct_positive_surahs:
+        failures.append(
+            "distinct_positive_surahs="
+            f"{summary.get('distinct_positive_surahs', 0)} < "
+            f"{min_distinct_positive_surahs}"
         )
 
     if int(summary.get("noisy_positive_source_cases", 0)) < min_noisy_positive_sources:
@@ -419,6 +485,34 @@ def evaluate_quality_gates(
                 "macro_positive_surah_accuracy="
                 f"{summary.get('macro_positive_surah_accuracy'):.3f} < "
                 f"{min_macro_positive_surah_accuracy:.3f}"
+            )
+
+    if min_macro_positive_confident_exact_accuracy is not None:
+        if int(summary.get("positive_source_cases", 0)) == 0:
+            failures.append("aucune source positive évaluée avec statut confident")
+        elif (
+            float(summary.get("macro_positive_confident_exact_accuracy", 0))
+            < min_macro_positive_confident_exact_accuracy
+        ):
+            failures.append(
+                "macro_positive_confident_exact_accuracy="
+                f"{summary.get('macro_positive_confident_exact_accuracy', 0):.3f} < "
+                f"{min_macro_positive_confident_exact_accuracy:.3f}"
+            )
+
+    if min_macro_positive_confident_surah_accuracy is not None:
+        if int(summary.get("positive_source_cases", 0)) == 0:
+            failures.append(
+                "aucune source positive évaluée avec statut confident pour la sourate"
+            )
+        elif (
+            float(summary.get("macro_positive_confident_surah_accuracy", 0))
+            < min_macro_positive_confident_surah_accuracy
+        ):
+            failures.append(
+                "macro_positive_confident_surah_accuracy="
+                f"{summary.get('macro_positive_confident_surah_accuracy', 0):.3f} < "
+                f"{min_macro_positive_confident_surah_accuracy:.3f}"
             )
 
     if min_macro_negative_rejection_rate is not None:
