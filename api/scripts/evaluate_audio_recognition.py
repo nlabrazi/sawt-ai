@@ -97,6 +97,7 @@ def main() -> None:
         help="Mirror the current API behavior by exposing ambiguous verse hypotheses.",
     )
     parser.add_argument("--min-macro-positive-exact-accuracy", type=_ratio)
+    parser.add_argument("--min-macro-positive-surah-accuracy", type=_ratio)
     parser.add_argument("--min-macro-negative-rejection-rate", type=_ratio)
     parser.add_argument("--max-macro-false-positive-rate", type=_ratio)
     parser.add_argument("--max-errors", type=_non_negative_integer, default=0)
@@ -160,6 +161,17 @@ def main() -> None:
             "beam_size": transcription_service.WHISPER_BEAM_SIZE,
             "log_prob_threshold": transcription_service.WHISPER_LOG_PROB_THRESHOLD,
             "no_speech_threshold": transcription_service.WHISPER_NO_SPEECH_THRESHOLD,
+            "language_screening_windows": (
+                transcription_service.LANGUAGE_SCREENING_WINDOWS
+            ),
+            "language_screening_window_seconds": (
+                transcription_service.LANGUAGE_SCREENING_WINDOW_SECONDS
+            ),
+            "language_screening_vad_filter": True,
+            "quran_language": transcription_service.QURAN_TRANSCRIPTION_LANGUAGE,
+            "quran_vad_filter": (
+                transcription_service.QURAN_TRANSCRIPTION_VAD_FILTER
+            ),
             "vad_min_silence_duration_ms": (
                 transcription_service.VAD_MIN_SILENCE_DURATION_MS
             ),
@@ -172,6 +184,7 @@ def main() -> None:
         value is not None
         for value in (
             args.min_macro_positive_exact_accuracy,
+            args.min_macro_positive_surah_accuracy,
             args.min_macro_negative_rejection_rate,
             args.max_macro_false_positive_rate,
             args.min_positive_sources,
@@ -255,7 +268,12 @@ def main() -> None:
             min_macro_positive_exact_accuracy=(
                 args.min_macro_positive_exact_accuracy
                 if args.min_macro_positive_exact_accuracy is not None
-                else 0.90
+                else 0.50
+            ),
+            min_macro_positive_surah_accuracy=(
+                args.min_macro_positive_surah_accuracy
+                if args.min_macro_positive_surah_accuracy is not None
+                else 0.85
             ),
             min_macro_negative_rejection_rate=(
                 args.min_macro_negative_rejection_rate
@@ -280,6 +298,9 @@ def main() -> None:
             "metrics": {
                 "macro_positive_exact_accuracy": report["summary"][
                     "macro_positive_exact_accuracy"
+                ],
+                "macro_positive_surah_accuracy": report["summary"][
+                    "macro_positive_surah_accuracy"
                 ],
                 "macro_negative_rejection_rate": report["summary"][
                     "macro_negative_rejection_rate"

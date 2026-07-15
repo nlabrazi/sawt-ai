@@ -58,6 +58,7 @@ def quality_ready_report():
             "noisy_positive_source_cases": 3,
             "vocal_negative_source_cases": 4,
             "macro_positive_exact_accuracy": 0.95,
+            "macro_positive_surah_accuracy": 0.98,
             "macro_negative_rejection_rate": 1.0,
             "macro_false_positive_rate": 0.0,
         },
@@ -135,6 +136,7 @@ def test_private_quality_report_is_0600_and_stdout_is_redacted(
     assert private_report["cases"][0]["audio_sha256"] == "private-audio-hash"
     assert private_report["quality_gate"]["metrics"] == {
         "macro_positive_exact_accuracy": 0.95,
+        "macro_positive_surah_accuracy": 0.98,
         "macro_negative_rejection_rate": 1.0,
         "macro_false_positive_rate": 0.0,
     }

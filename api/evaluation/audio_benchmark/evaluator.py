@@ -294,6 +294,12 @@ def evaluate_audio_corpus(
             if positive_source_summaries
             else 0.0
         ),
+        "macro_positive_surah_accuracy": (
+            sum(item["positive_surah_accuracy"] for item in positive_source_summaries)
+            / len(positive_source_summaries)
+            if positive_source_summaries
+            else 0.0
+        ),
         "macro_negative_rejection_rate": (
             sum(item["negative_rejection_rate"] for item in negative_source_summaries)
             / len(negative_source_summaries)
@@ -346,6 +352,7 @@ def evaluate_quality_gates(
     *,
     categories: Mapping[str, Mapping[str, Any]] | None = None,
     min_macro_positive_exact_accuracy: float | None = None,
+    min_macro_positive_surah_accuracy: float | None = None,
     min_macro_negative_rejection_rate: float | None = None,
     max_macro_false_positive_rate: float | None = None,
     max_errors: int = 0,
@@ -399,6 +406,19 @@ def evaluate_quality_gates(
                 "macro_positive_exact_accuracy="
                 f"{summary.get('macro_positive_exact_accuracy'):.3f} < "
                 f"{min_macro_positive_exact_accuracy:.3f}"
+            )
+
+    if min_macro_positive_surah_accuracy is not None:
+        if int(summary.get("positive_source_cases", 0)) == 0:
+            failures.append("aucune source positive évaluée pour la sourate")
+        elif (
+            float(summary.get("macro_positive_surah_accuracy", 0))
+            < min_macro_positive_surah_accuracy
+        ):
+            failures.append(
+                "macro_positive_surah_accuracy="
+                f"{summary.get('macro_positive_surah_accuracy'):.3f} < "
+                f"{min_macro_positive_surah_accuracy:.3f}"
             )
 
     if min_macro_negative_rejection_rate is not None:

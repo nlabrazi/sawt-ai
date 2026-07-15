@@ -94,6 +94,7 @@ def test_evaluate_audio_corpus_separates_positive_and_negative_failures():
         "noisy_positive_cases": 0,
         "noisy_positive_source_cases": 0,
         "macro_positive_exact_accuracy": 0.25,
+        "macro_positive_surah_accuracy": 0.5,
         "macro_negative_rejection_rate": 0.5,
         "macro_false_positive_rate": 0.5,
         "average_latency_ms": pytest.approx(1),
@@ -172,6 +173,7 @@ def test_variants_from_one_recording_count_as_one_source():
     assert report["summary"]["positive_source_cases"] == 1
     assert report["summary"]["noisy_positive_source_cases"] == 1
     assert report["summary"]["macro_positive_exact_accuracy"] == 0.5
+    assert report["summary"]["macro_positive_surah_accuracy"] == 0.5
 
 
 def test_quality_gates_report_missing_sets_and_threshold_failures():
@@ -185,11 +187,13 @@ def test_quality_gates_report_missing_sets_and_threshold_failures():
             "noisy_positive_source_cases": 0,
             "vocal_negative_source_cases": 0,
             "macro_positive_exact_accuracy": 0.0,
+            "macro_positive_surah_accuracy": 0.25,
             "macro_negative_rejection_rate": 0.5,
             "macro_false_positive_rate": 0.5,
         },
         categories={"french_speech": {"negative_source_cases": 1}},
         min_macro_positive_exact_accuracy=0.9,
+        min_macro_positive_surah_accuracy=0.85,
         min_macro_negative_rejection_rate=0.95,
         max_macro_false_positive_rate=0.01,
         min_positive_sources=3,
@@ -212,6 +216,25 @@ def test_quality_gates_report_missing_sets_and_threshold_failures():
         "negative_category_source_cases[french_conversation]=0 < 1",
         "negative_category_source_cases[vocal_music]=0 < 1",
         "aucune source positive évaluée",
+        "aucune source positive évaluée pour la sourate",
         "macro_negative_rejection_rate=0.500 < 0.950",
         "macro_false_positive_rate=0.500 > 0.010",
+    ]
+
+
+def test_quality_gate_blocks_a_wrong_surah_regression():
+    failures = evaluate_quality_gates(
+        {
+            "errors": 0,
+            "positive_source_cases": 3,
+            "negative_source_cases": 1,
+            "macro_positive_exact_accuracy": 0.6,
+            "macro_positive_surah_accuracy": 0.8,
+        },
+        min_macro_positive_exact_accuracy=0.5,
+        min_macro_positive_surah_accuracy=0.85,
+    )
+
+    assert failures == [
+        "macro_positive_surah_accuracy=0.800 < 0.850",
     ]
