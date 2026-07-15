@@ -1,0 +1,95 @@
+{
+  "schema_version": 1,
+  "privacy": "public",
+  "description": "Cas négatifs 100 % synthétiques, reproductibles et sans voix réelle.",
+  "sample_rate": 16000,
+  "seed": 20260715,
+  "cases": [
+    {
+      "id": "silence_6s",
+      "label": "negative",
+      "category": "silence",
+      "expected_verse": null,
+      "source": {
+        "type": "synthetic",
+        "generator": "silence",
+        "duration_seconds": 6
+      },
+      "tags": ["public-safe", "synthetic"]
+    },
+    {
+      "id": "white_noise_6s",
+      "label": "negative",
+      "category": "noise",
+      "expected_verse": null,
+      "source": {
+        "type": "synthetic",
+        "generator": "white_noise",
+        "duration_seconds": 6
+      },
+      "tags": ["public-safe", "synthetic", "white-noise"]
+    },
+    {
+      "id": "pink_noise_6s",
+      "label": "negative",
+      "category": "noise",
+      "expected_verse": null,
+      "source": {
+        "type": "synthetic",
+        "generator": "pink_noise",
+        "duration_seconds": 6
+      },
+      "tags": ["public-safe", "synthetic", "pink-noise"]
+    },
+    {
+      "id": "domestic_background_8s",
+      "label": "negative",
+      "category": "background_noise",
+      "expected_verse": null,
+      "source": {
+        "type": "synthetic",
+        "generator": "background_noise",
+        "duration_seconds": 8
+      },
+      "tags": ["public-safe", "synthetic", "non-vocal"]
+    },
+    {
+      "id": "pure_tone_6s",
+      "label": "negative",
+      "category": "tone",
+      "expected_verse": null,
+      "source": {
+        "type": "synthetic",
+        "generator": "tone",
+        "duration_seconds": 6,
+        "frequency_hz": 440
+      },
+      "tags": ["public-safe", "synthetic", "non-speech"]
+    },
+    {
+      "id": "synthetic_song_10s",
+      "label": "negative",
+      "category": "music",
+      "expected_verse": null,
+      "source": {
+        "type": "synthetic",
+        "generator": "synthetic_song",
+        "duration_seconds": 10,
+        "tempo_bpm": 108
+      },
+      "tags": ["public-safe", "synthetic", "instrumental"]
+    },
+    {
+      "id": "french_tts_local",
+      "label": "negative",
+      "category": "french_speech",
+      "expected_verse": null,
+      "optional": true,
+      "source": {
+        "type": "french_tts",
+        "text": "Cette phrase française ne provient pas du Coran et ne doit produire aucun passage."
+      },
+      "tags": ["public-safe", "synthetic", "offline-tts", "vocal"]
+    }
+  ]
+}

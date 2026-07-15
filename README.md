@@ -153,6 +153,17 @@ Add transcriptions observed from real audio to this file before tuning detection
 thresholds. This benchmark measures exact passage accuracy, precision, recall,
 false positives, and matching latency; it does not measure Whisper accuracy.
 
+End-to-end backend audio smoke benchmark (generated locally, with no downloaded corpus):
+
+```bash
+api/.venv/bin/python api/scripts/build_audio_evaluation_corpus.py
+docker compose exec api python scripts/evaluate_audio_recognition.py
+```
+
+See [`api/evaluation/AUDIO_BENCHMARK.md`](api/evaluation/AUDIO_BENCHMARK.md) for
+the private-recitation injection point, consent rules, noisy SNR variants,
+offline model setup, quality metrics, and CI-style quality gates.
+
 The current test suite covers:
 
 - FastAPI routes for `recognize`, `feedback`, and `tajwid`

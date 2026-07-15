@@ -22,6 +22,12 @@ api/data/*.jsonl
 .venv
 training/*
 
+# Audio evaluation artifacts and consented recordings
+api/evaluation/generated/
+api/evaluation/reports/
+api/evaluation/private/
+api/evaluation/*.private.json
+
 # Local env files
 .env
 .env.*
