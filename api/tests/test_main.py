@@ -38,6 +38,12 @@ def test_openapi_documents_recognize_response_contract():
     assert recognize_response == {"$ref": "#/components/schemas/RecognizeResponse"}
     assert "imam_detection_enabled" in schema["components"]["schemas"]["RecognizeResponse"]["required"]
     assert "detection" in schema["components"]["schemas"]["RecognizeResponse"]["required"]
+    rejection_reasons = schema["components"]["schemas"]["VerseDetectionMetadata"][
+        "properties"
+    ]["rejection_reason"]["anyOf"][0]["enum"]
+    assert "insufficient_speech" in rejection_reasons
+    assert "non_arabic_speech" in rejection_reasons
+    assert "low_transcription_confidence" in rejection_reasons
 
 
 def test_health_reports_imam_detection_service_status(monkeypatch):
