@@ -15,6 +15,18 @@ defineEmits<{
   reset: []
 }>()
 
+const heading = computed(() => {
+  if (props.error) return 'Analyse interrompue'
+  if (props.result?.verse) return 'Passage proposé'
+  return 'Aucun passage reconnu'
+})
+
+const introduction = computed(() => {
+  if (props.error) return 'La récitation n’a pas pu être analysée cette fois-ci.'
+  if (props.result?.verse) return 'Vérifiez la sourate et les versets avant de valider le résultat.'
+  return 'Essayez un extrait un peu plus long, avec moins de bruit autour de vous.'
+})
+
 const statusPanel = computed(() => {
   if (props.error) {
     return {
@@ -35,9 +47,20 @@ const statusPanel = computed(() => {
 </script>
 
 <template>
-  <section class="screen result-screen">
+  <section class="screen result-screen" aria-labelledby="result-title">
+    <header class="brand" aria-label="Sawt AI">
+      <span class="brand-name">Sawt</span>
+      <span class="brand-mark">AI</span>
+    </header>
+
+    <div class="result-intro">
+      <p class="eyebrow">Résultat de l’analyse</p>
+      <h1 id="result-title" class="main-title">{{ heading }}</h1>
+      <p class="main-subtitle">{{ introduction }}</p>
+    </div>
+
     <div class="content-stack">
-      <div v-if="statusPanel" class="status-panel">
+      <div v-if="statusPanel" class="status-panel" role="alert">
         <p class="status-label">{{ statusPanel.label }}</p>
         <p class="status-text">{{ statusPanel.text }}</p>
       </div>
@@ -46,9 +69,9 @@ const statusPanel = computed(() => {
       <FeedbackForm v-if="result?.verse" :result="result" />
     </div>
 
-    <button class="reset-action" type="button" aria-label="Recommencer la détection" @click="$emit('reset')">
+    <button class="reset-action" type="button" @click="$emit('reset')">
       <RotateCcw class="reset-icon" :stroke-width="2" aria-hidden="true" />
-      Recommencer
+      Nouvelle récitation
     </button>
   </section>
 </template>
@@ -59,93 +82,149 @@ const statusPanel = computed(() => {
   z-index: 1;
   flex: 1;
   min-height: 0;
-  padding: 24px 16px 36px;
   box-sizing: border-box;
 }
 
 .result-screen {
-  max-width: 980px;
-  width: 100%;
+  width: min(100%, 780px);
   margin: 0 auto;
+  padding: 26px 20px 42px;
   display: grid;
   align-content: start;
-  gap: 22px;
+  gap: 24px;
 }
 
-.status-panel {
-  border-radius: 24px;
-  padding: 18px 20px;
-  border: 1px solid rgba(148, 163, 184, 0.14);
-  background: linear-gradient(180deg, rgba(127, 29, 29, 0.24) 0%, rgba(49, 18, 18, 0.2) 100%);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 18px 46px rgba(2, 6, 23, 0.12);
-}
-
-.status-label {
-  margin: 0;
-  font-size: 13px;
+.brand {
+  display: inline-flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 5px;
+  color: #f8fafc;
+  font-size: 17px;
+  line-height: 1;
   font-weight: 800;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: #fecaca;
+  letter-spacing: -0.02em;
 }
 
-.status-text {
-  margin: 8px 0 0;
-  line-height: 1.65;
-  color: #e2e8f0;
+.brand-mark {
+  color: #60a5fa;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+}
+
+.result-intro {
+  margin-top: 22px;
+  text-align: center;
+}
+
+.eyebrow {
+  margin: 0;
+  color: #93c5fd;
+  font-size: 12px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.main-title {
+  margin: 12px 0 0;
+  font-size: clamp(36px, 6vw, 54px);
+  line-height: 1.04;
+  font-weight: 800;
+  letter-spacing: -0.05em;
+  text-wrap: balance;
+}
+
+.main-subtitle {
+  margin: 14px auto 0;
+  max-width: 540px;
+  color: #9fb0c4;
+  font-size: 16px;
+  line-height: 1.55;
+  text-wrap: balance;
 }
 
 .content-stack {
   display: grid;
-  gap: 22px;
+  gap: 18px;
+}
+
+.status-panel {
+  padding: 16px 18px;
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  border-radius: 18px;
+  background: rgba(127, 29, 29, 0.2);
+}
+
+.status-label {
+  margin: 0;
+  color: #fecaca;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.status-text {
+  margin: 6px 0 0;
+  color: #e2e8f0;
+  line-height: 1.55;
 }
 
 .reset-action {
   justify-self: center;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(15, 23, 42, 0.56);
-  color: #e2e8f0;
-  border-radius: 999px;
   min-height: 46px;
   padding: 0 18px;
-  cursor: pointer;
-  font-weight: 700;
-  backdrop-filter: blur(10px);
+  border: 1px solid rgba(147, 197, 253, 0.22);
+  border-radius: 999px;
+  background: rgba(30, 64, 175, 0.18);
+  color: #dbeafe;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 750;
+  cursor: pointer;
   transition:
-    transform 0.2s ease,
-    background 0.2s ease,
-    border-color 0.2s ease;
+    color 180ms ease,
+    border-color 180ms ease,
+    background 180ms ease;
 }
 
 .reset-action:hover {
-  transform: translateY(-1px);
-  background: rgba(30, 41, 59, 0.78);
-  border-color: rgba(147, 197, 253, 0.28);
+  border-color: rgba(147, 197, 253, 0.4);
+  background: rgba(37, 99, 235, 0.24);
+  color: #fff;
+}
+
+.reset-action:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 3px;
 }
 
 .reset-icon {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
 }
 
-@media (max-width: 768px) {
-  .screen {
-    padding: 14px 12px 28px;
+@media (max-width: 640px) {
+  .result-screen {
+    padding: 20px 14px 30px;
+    gap: 18px;
   }
 
-  .result-screen,
+  .result-intro {
+    margin-top: 14px;
+  }
+
+  .main-title {
+    font-size: clamp(34px, 10vw, 44px);
+  }
+
   .content-stack {
-    gap: 16px;
-  }
-
-  .status-panel {
-    border-radius: 22px;
-    padding: 16px;
+    gap: 14px;
   }
 
   .reset-action {

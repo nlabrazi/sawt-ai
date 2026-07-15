@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import ArrowLeft from '@lucide/vue/dist/esm/icons/arrow-left.mjs'
 import BookOpen from '@lucide/vue/dist/esm/icons/book-open.mjs'
 import Copy from '@lucide/vue/dist/esm/icons/copy.mjs'
-import X from '@lucide/vue/dist/esm/icons/x.mjs'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
 import MiniToast from '~/components/MiniToast.vue'
@@ -192,10 +192,11 @@ async function copyVerse() {
             ref="closeButtonRef"
             class="close-btn"
             type="button"
-            aria-label="Fermer"
+            aria-label="Retour au résultat"
             @click="$emit('close')"
           >
-            <X class="close-icon" :stroke-width="2" aria-hidden="true" />
+            <ArrowLeft class="close-icon" :stroke-width="2" aria-hidden="true" />
+            Retour au résultat
           </button>
         </div>
 
@@ -366,8 +367,9 @@ async function copyVerse() {
 }
 
 .close-btn {
-  width: 46px;
-  padding: 0;
+  flex: 0 0 auto;
+  padding: 0 14px;
+  white-space: nowrap;
   border: 1px solid #b8c4d1;
   background: #e8edf2;
   color: #27364a;

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import LoaderCircle from '@lucide/vue/dist/esm/icons/loader-circle.mjs'
 import Mic from '@lucide/vue/dist/esm/icons/mic.mjs'
 import Square from '@lucide/vue/dist/esm/icons/square.mjs'
 import { computed, ref } from 'vue'
@@ -24,39 +25,36 @@ const emit = defineEmits<{
 
 const isPressed = ref(false)
 
-const safeLevel = computed(() => {
-  return Math.max(0, Math.min(1, props.audioLevel))
+const safeLevel = computed(() => Math.max(0, Math.min(1, props.audioLevel)))
+
+const visualScale = computed(() => {
+  if (!props.isRecording) return 1
+  return 1 + safeLevel.value * 0.06
 })
 
-const coreScale = computed(() => {
-  if (props.loading) return 1
-  if (props.isRecording) return 1 + safeLevel.value * 0.08
-  return 1
-})
-
-const haloOpacity = computed(() => {
-  if (props.loading) return 0.42
-  if (props.isRecording) return 0.34 + safeLevel.value * 0.3
-  return 0.26
-})
-
-const auraOpacity = computed(() => {
-  if (props.loading) return 0.28
-  if (props.isRecording) return 0.28 + safeLevel.value * 0.22
-  return 0.16
+const signalOpacity = computed(() => {
+  if (props.loading) return 0.5
+  if (props.isRecording) return 0.32 + safeLevel.value * 0.36
+  return 0.2
 })
 
 const actionLabel = computed(() => {
-  return props.isRecording ? 'Arrêter l’enregistrement' : 'Démarrer l’enregistrement'
+  if (props.loading) return 'Analyse en cours'
+  return props.isRecording ? 'Arrêter et analyser' : 'Commencer la récitation'
+})
+
+const visibleLabel = computed(() => {
+  if (props.loading) return 'Analyse en cours'
+  return props.isRecording ? 'Arrêter et analyser' : 'Commencer'
 })
 
 function handleClick() {
-  if (props.disabled) return
+  if (props.disabled || props.loading) return
   emit('click')
 }
 
 function handlePressStart() {
-  if (props.disabled) return
+  if (props.disabled || props.loading) return
   isPressed.value = true
 }
 
@@ -66,380 +64,253 @@ function handlePressEnd() {
 </script>
 
 <template>
-  <button class="action-button" :class="{
-    'is-loading': loading,
-    'is-recording': isRecording,
-    'is-pressed': isPressed,
-  }" :style="{
-      '--core-scale': String(coreScale),
-      '--halo-opacity': String(haloOpacity),
-      '--aura-opacity': String(auraOpacity),
-    }" :aria-busy="loading" :aria-label="actionLabel" :aria-pressed="isRecording" :disabled="disabled" type="button"
-    @click="handleClick" @mousedown="handlePressStart" @mouseup="handlePressEnd" @mouseleave="handlePressEnd"
-    @touchstart="handlePressStart" @touchend="handlePressEnd" @touchcancel="handlePressEnd">
-    <span class="button-aura" aria-hidden="true" />
-    <span class="button-halo" aria-hidden="true" />
-    <span class="button-ring ring-1" aria-hidden="true" />
-    <span class="button-ring ring-2" aria-hidden="true" />
-
-    <span v-if="isRecording || loading" class="record-wave wave-1" aria-hidden="true" />
-    <span v-if="isRecording || loading" class="record-wave wave-2" aria-hidden="true" />
-    <span v-if="isRecording || loading" class="record-wave wave-3" aria-hidden="true" />
-
-    <span class="button-core">
-      <span class="button-shine" aria-hidden="true" />
-      <Square v-if="isRecording" class="button-icon" :stroke-width="1.8" aria-hidden="true" />
-      <Mic v-else class="button-icon" :stroke-width="1.6" aria-hidden="true" />
+  <button
+    class="action-button"
+    :class="{
+      'is-loading': loading,
+      'is-recording': isRecording,
+      'is-pressed': isPressed,
+    }"
+    :style="{
+      '--visual-scale': String(visualScale),
+      '--signal-opacity': String(signalOpacity),
+    }"
+    :aria-busy="loading"
+    :aria-label="actionLabel"
+    :aria-pressed="isRecording"
+    :disabled="disabled || loading"
+    type="button"
+    @click="handleClick"
+    @mousedown="handlePressStart"
+    @mouseup="handlePressEnd"
+    @mouseleave="handlePressEnd"
+    @touchstart="handlePressStart"
+    @touchend="handlePressEnd"
+    @touchcancel="handlePressEnd"
+  >
+    <span class="button-visual" aria-hidden="true">
+      <span class="button-signal" />
+      <span class="button-ring" />
+      <span class="button-core">
+        <LoaderCircle v-if="loading" class="button-icon loading-icon" :stroke-width="1.9" />
+        <Square v-else-if="isRecording" class="button-icon stop-icon" :stroke-width="2" />
+        <Mic v-else class="button-icon" :stroke-width="1.8" />
+      </span>
     </span>
+
+    <span class="button-label">{{ visibleLabel }}</span>
   </button>
 </template>
 
 <style scoped>
 .action-button {
-  position: relative;
-  width: 220px;
-  height: 220px;
-  padding: 0;
-  border: none;
+  --visual-size: 172px;
+  width: 230px;
+  min-height: 224px;
+  padding: 8px 12px 4px;
+  border: 0;
+  border-radius: 32px;
   background: transparent;
-  border-radius: 999px;
+  color: #f8fafc;
+  display: inline-grid;
+  justify-items: center;
+  align-content: center;
+  gap: 18px;
   cursor: pointer;
-  overflow: visible;
-  isolation: isolate;
-  transition: transform 0.24s ease, filter 0.24s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
-.action-button:hover {
-  transform: translateY(-2px) scale(1.03);
-  filter: saturate(1.06);
-}
-
-.action-button.is-pressed {
-  transform: scale(0.97);
+.action-button:focus-visible {
+  outline: 3px solid rgba(147, 197, 253, 0.9);
+  outline-offset: 5px;
 }
 
 .action-button:disabled {
   cursor: default;
 }
 
-.action-button:disabled:hover {
-  transform: none;
-  filter: none;
+.button-visual {
+  position: relative;
+  width: var(--visual-size);
+  height: var(--visual-size);
+  display: grid;
+  place-items: center;
+  transform: scale(var(--visual-scale, 1));
+  transition: transform 90ms linear;
 }
 
-.button-aura,
-.button-halo,
+.button-signal,
 .button-ring,
-.record-wave,
-.button-core,
-.button-shine {
+.button-core {
   position: absolute;
   border-radius: 999px;
 }
 
-.button-aura {
-  inset: -26px;
-  z-index: 0;
-  opacity: var(--aura-opacity, 0.16);
-  background:
-    radial-gradient(circle, rgba(59, 130, 246, 0.34) 0%, rgba(14, 165, 233, 0.14) 42%, transparent 72%);
-  filter: blur(22px);
-  animation: auraFloat 6s ease-in-out infinite;
-}
-
-.button-halo {
-  inset: -8px;
-  z-index: 1;
-  opacity: var(--halo-opacity, 0.26);
-  background:
-    radial-gradient(circle, rgba(96, 165, 250, 0.48) 0%, rgba(37, 99, 235, 0.16) 52%, transparent 74%);
-  animation: haloBreath 3s ease-in-out infinite;
+.button-signal {
+  inset: -14px;
+  opacity: var(--signal-opacity, 0.2);
+  background: rgba(59, 130, 246, 0.3);
+  filter: blur(16px);
+  transition: opacity 120ms linear;
 }
 
 .button-ring {
-  inset: -2px;
-  z-index: 2;
-  border: 1px solid rgba(125, 211, 252, 0.14);
-  pointer-events: none;
-}
-
-.ring-1 {
-  animation: ringDrift 5s ease-in-out infinite;
-}
-
-.ring-2 {
-  inset: -14px;
-  border-color: rgba(96, 165, 250, 0.1);
-  animation: ringDrift 5.8s ease-in-out infinite reverse;
-}
-
-.record-wave {
-  inset: -10px;
-  z-index: 1;
-  border: 1.5px solid rgba(125, 211, 252, 0.28);
-  opacity: 0;
-  pointer-events: none;
-  animation: recordWave 2.3s linear infinite;
-}
-
-.wave-2 {
-  animation-delay: 0.65s;
-}
-
-.wave-3 {
-  animation-delay: 1.3s;
+  inset: 0;
+  border: 1px solid rgba(147, 197, 253, 0.3);
+  background: rgba(37, 99, 235, 0.08);
+  transition:
+    border-color 180ms ease,
+    transform 180ms ease;
 }
 
 .button-core {
-  inset: 18px;
-  z-index: 3;
+  inset: 10px;
   display: grid;
   place-items: center;
   overflow: hidden;
-  transform: scale(var(--core-scale, 1));
-  background:
-    radial-gradient(circle at 30% 24%, rgba(147, 197, 253, 0.9) 0%, rgba(96, 165, 250, 0.72) 20%, transparent 42%),
-    linear-gradient(180deg, #60a5fa 0%, #3b82f6 34%, #2563eb 72%, #0ea5e9 100%);
+  background: #2563eb;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    inset 0 -24px 38px rgba(2, 6, 23, 0.16),
-    0 24px 70px rgba(37, 99, 235, 0.32);
+    inset 0 1px 0 rgba(255, 255, 255, 0.24),
+    0 18px 48px rgba(37, 99, 235, 0.3);
   transition:
-    transform 80ms linear,
+    background 180ms ease,
     box-shadow 180ms ease,
-    filter 180ms ease;
-}
-
-.action-button:hover .button-core {
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.34),
-    inset 0 -24px 38px rgba(2, 6, 23, 0.16),
-    0 28px 84px rgba(37, 99, 235, 0.38);
-}
-
-.is-recording .button-core {
-  background:
-    radial-gradient(circle at 30% 24%, rgba(191, 219, 254, 0.92) 0%, rgba(96, 165, 250, 0.78) 18%, transparent 42%),
-    linear-gradient(180deg, #60a5fa 0%, #2563eb 48%, #1d4ed8 70%, #0284c7 100%);
-}
-
-.is-loading .button-aura {
-  animation: loadingAura 1.8s ease-in-out infinite;
-}
-
-.is-loading .button-halo {
-  animation: loadingHalo 1.4s ease-in-out infinite;
-}
-
-.is-loading .ring-1 {
-  animation: loadingRing 1.7s ease-in-out infinite;
-}
-
-.is-loading .ring-2 {
-  animation: loadingRing 1.7s ease-in-out infinite 0.25s;
-}
-
-.is-loading .button-core {
-  animation: loadingPulse 1.45s ease-in-out infinite;
-}
-
-.button-shine {
-  inset: auto auto 54% -10%;
-  width: 86%;
-  height: 42%;
-  opacity: 0.28;
-  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.34) 50%, transparent 100%);
-  transform: rotate(-18deg);
-  animation: shineMove 4.6s ease-in-out infinite;
+    transform 180ms ease;
 }
 
 .button-icon {
-  position: relative;
-  z-index: 2;
-  width: 78px;
-  height: 78px;
-  color: #eff6ff;
-  transform: translateY(2px);
-  filter: drop-shadow(0 10px 18px rgba(255, 255, 255, 0.08));
+  width: 60px;
+  height: 60px;
+  color: #fff;
+}
+
+.stop-icon {
+  width: 44px;
+  height: 44px;
+  fill: currentColor;
+}
+
+.button-label {
+  font-size: 17px;
+  line-height: 1.2;
+  font-weight: 750;
+  letter-spacing: -0.01em;
+}
+
+.action-button:hover:not(:disabled) .button-ring {
+  border-color: rgba(191, 219, 254, 0.58);
+  transform: scale(1.025);
+}
+
+.action-button:hover:not(:disabled) .button-core {
+  background: #1d4ed8;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    0 22px 58px rgba(37, 99, 235, 0.36);
+}
+
+.action-button.is-pressed .button-core {
+  transform: scale(0.96);
+}
+
+.is-recording .button-signal {
+  animation: listeningPulse 1.8s ease-out infinite;
+}
+
+.is-recording .button-ring {
+  border-color: rgba(226, 232, 240, 0.44);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.is-recording .button-core {
+  background: #f8fafc;
+  box-shadow: 0 18px 48px rgba(2, 6, 23, 0.28);
+}
+
+.is-recording:hover:not(:disabled) .button-core {
+  background: #fff;
+  box-shadow: 0 22px 58px rgba(2, 6, 23, 0.34);
 }
 
 .is-recording .button-icon {
+  color: #0f172a;
+}
+
+.is-loading .button-signal {
+  animation: loadingPulse 1.7s ease-in-out infinite;
+}
+
+.is-loading .button-core {
+  background: rgba(37, 99, 235, 0.9);
+}
+
+.loading-icon {
   width: 52px;
   height: 52px;
-  color: #eff6ff;
-  fill: currentColor;
-  transform: translateY(0);
+  animation: loadingSpin 1.1s linear infinite;
 }
 
-@keyframes loadingPulse {
-
-  0%,
-  100% {
-    transform: scale(1);
-    filter: brightness(1);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.3),
-      inset 0 -24px 38px rgba(2, 6, 23, 0.16),
-      0 24px 70px rgba(37, 99, 235, 0.32);
-  }
-
-  50% {
-    transform: scale(1.08);
-    filter: brightness(1.16);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.35),
-      inset 0 -24px 38px rgba(2, 6, 23, 0.12),
-      0 32px 88px rgba(56, 189, 248, 0.44);
-  }
-}
-
-@keyframes loadingHalo {
-
-  0%,
-  100% {
-    transform: scale(0.96);
-    opacity: 0.28;
-  }
-
-  50% {
-    transform: scale(1.08);
-    opacity: 0.52;
-  }
-}
-
-@keyframes loadingAura {
-
-  0%,
-  100% {
-    transform: scale(0.96);
-    opacity: 0.18;
-  }
-
-  50% {
-    transform: scale(1.08);
-    opacity: 0.34;
-  }
-}
-
-@keyframes loadingRing {
-
-  0%,
-  100% {
-    transform: scale(0.98);
-    opacity: 0.55;
-  }
-
-  50% {
-    transform: scale(1.08);
-    opacity: 1;
-  }
-}
-
-@keyframes haloBreath {
-
-  0%,
-  100% {
-    transform: scale(0.98);
-    opacity: calc(var(--halo-opacity, 0.26) * 0.82);
-  }
-
-  50% {
-    transform: scale(1.05);
-    opacity: var(--halo-opacity, 0.26);
-  }
-}
-
-@keyframes auraFloat {
-
-  0%,
-  100% {
-    transform: scale(0.98) translateY(0);
-  }
-
-  50% {
-    transform: scale(1.04) translateY(-3px);
-  }
-}
-
-@keyframes ringDrift {
-
-  0%,
-  100% {
-    transform: scale(0.99);
-    opacity: 0.72;
-  }
-
-  50% {
-    transform: scale(1.03);
-    opacity: 1;
-  }
-}
-
-@keyframes recordWave {
+@keyframes listeningPulse {
   0% {
-    transform: scale(0.88);
-    opacity: 0.62;
+    transform: scale(0.92);
+    opacity: var(--signal-opacity, 0.32);
   }
 
-  55% {
-    opacity: 0.18;
-  }
-
+  75%,
   100% {
-    transform: scale(1.28);
+    transform: scale(1.2);
     opacity: 0;
   }
 }
 
-@keyframes shineMove {
-
+@keyframes loadingPulse {
   0%,
   100% {
-    transform: translateX(-8%) rotate(-18deg);
-    opacity: 0.2;
+    transform: scale(0.94);
+    opacity: 0.22;
   }
 
   50% {
-    transform: translateX(12%) rotate(-18deg);
-    opacity: 0.36;
+    transform: scale(1.08);
+    opacity: 0.48;
   }
 }
 
-@media (max-width: 768px) {
-  .action-button {
-    width: 196px;
-    height: 196px;
+@keyframes loadingSpin {
+  to {
+    transform: rotate(360deg);
   }
+}
 
-  .button-core {
-    inset: 16px;
+@media (max-width: 640px) {
+  .action-button {
+    --visual-size: 150px;
+    width: 204px;
+    min-height: 202px;
+    gap: 16px;
   }
 
   .button-icon {
-    width: 68px;
-    height: 68px;
+    width: 52px;
+    height: 52px;
   }
 
-  .is-recording .button-icon {
-    width: 46px;
-    height: 46px;
+  .stop-icon {
+    width: 38px;
+    height: 38px;
   }
 
-  .button-aura {
-    inset: -20px;
+  .button-label {
+    font-size: 16px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-
-  .action-button,
-  .button-aura,
-  .button-halo,
+  .button-visual,
+  .button-signal,
   .button-ring,
-  .record-wave,
   .button-core,
-  .button-shine {
+  .loading-icon {
     animation: none !important;
     transition: none !important;
   }

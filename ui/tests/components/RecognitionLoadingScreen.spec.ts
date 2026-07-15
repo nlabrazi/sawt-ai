@@ -11,8 +11,10 @@ describe('RecognitionLoadingScreen', () => {
       },
     })
 
-    expect(wrapper.text()).toContain('Détection')
-    expect(wrapper.get('.loading-step.is-active').text()).toContain('Reconnaissance du passage')
+    expect(wrapper.text()).toContain('Étape 2 sur 3')
+    expect(wrapper.text()).toContain('Nous comparons le passage aux versets du Coran.')
+    expect(wrapper.get('.loading-step.is-active').text()).toContain('Recherche')
+    expect(wrapper.get('.loading-step.is-active').attributes('aria-current')).toBe('step')
   })
 
   it('marks previous steps as done when finalizing', () => {
@@ -23,8 +25,9 @@ describe('RecognitionLoadingScreen', () => {
       },
     })
 
-    expect(wrapper.text()).toContain('Finalisation')
+    expect(wrapper.text()).toContain('Étape 3 sur 3')
+    expect(wrapper.text()).toContain('Votre résultat est presque prêt.')
     expect(wrapper.findAll('.loading-step.is-done')).toHaveLength(2)
-    expect(wrapper.get('.loading-step.is-active').text()).toContain('Préparation du résultat')
+    expect(wrapper.get('.loading-step.is-active').text()).toContain('Résultat')
   })
 })

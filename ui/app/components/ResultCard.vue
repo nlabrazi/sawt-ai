@@ -26,6 +26,14 @@ const verseLabel = computed(() => {
 })
 
 const topImam = computed(() => props.result.imam_predictions?.[0] ?? null)
+const resultKicker = computed(() => {
+  return props.result.detection?.status === 'ambiguous'
+    ? 'Hypothèse à vérifier'
+    : 'Correspondance trouvée'
+})
+const showImam = computed(() => {
+  return Boolean(props.result.imam_detection_enabled)
+})
 const confidenceUi = computed(() => {
   if (props.result.detection?.status === 'ambiguous') {
     return {
@@ -93,7 +101,7 @@ const imamStatusText = computed(() => {
   <article class="result-card">
     <template v-if="result.verse">
       <section class="hero-panel">
-        <p class="hero-kicker">Passage détecté</p>
+        <p class="hero-kicker">{{ resultKicker }}</p>
 
         <div class="hero-main">
           <p class="surah-arabic">
@@ -117,12 +125,12 @@ const imamStatusText = computed(() => {
             </span>
           </div>
 
-          <div class="imam-chip">
+          <div v-if="showImam" class="imam-chip">
             {{ imamName }}
           </div>
         </div>
 
-        <p v-if="imamStatusText" class="imam-status-text">
+        <p v-if="showImam && imamStatusText" class="imam-status-text">
           {{ imamStatusText }}
         </p>
 
@@ -168,13 +176,11 @@ const imamStatusText = computed(() => {
 }
 
 .hero-panel {
-  border-radius: 32px;
+  border-radius: 24px;
   border: 1px solid rgba(148, 163, 184, 0.14);
-  background:
-    linear-gradient(180deg, rgba(10, 20, 37, 0.76) 0%, rgba(7, 15, 30, 0.68) 100%);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 24px 80px rgba(2, 6, 23, 0.22);
-  padding: 28px;
+  background: rgba(9, 18, 32, 0.66);
+  box-shadow: 0 18px 52px rgba(2, 6, 23, 0.18);
+  padding: 26px;
 }
 
 .hero-kicker {
@@ -192,7 +198,7 @@ const imamStatusText = computed(() => {
 
 .surah-arabic {
   margin: 0;
-  font-size: 56px;
+  font-size: 50px;
   line-height: 1.1;
   font-family: 'Amiri', serif;
   direction: rtl;
@@ -202,7 +208,7 @@ const imamStatusText = computed(() => {
 
 .surah-transliteration {
   margin: 12px 0 0;
-  font-size: 28px;
+  font-size: 25px;
   font-weight: 800;
   text-align: center;
   color: #eff6ff;
@@ -319,7 +325,7 @@ const imamStatusText = computed(() => {
 }
 
 .primary-btn {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: #2563eb;
   color: #fff;
   box-shadow: 0 10px 30px rgba(37, 99, 235, 0.22);
   display: inline-flex;

@@ -91,6 +91,7 @@ describe('ResultCard', () => {
 
     const confidenceDetail = wrapper.get('.confidence-detail')
 
+    expect(wrapper.get('.hero-kicker').text()).toBe('Hypothèse à vérifier')
     expect(confidenceDetail.text()).toContain('92%')
     expect(confidenceDetail.text()).toContain('Correspondance à confirmer')
     expect(confidenceDetail.text()).not.toContain('Résultat fiable')
@@ -183,5 +184,30 @@ describe('ResultCard', () => {
     expect(wrapper.text()).toContain('Imam indisponible')
     expect(wrapper.text()).toContain('Identification de l’imam temporairement indisponible.')
     expect(wrapper.text()).not.toContain('Imam non reconnu pour cet extrait.')
+  })
+
+  it('hides imam metadata when the optional detection was disabled', () => {
+    const wrapper = mount(ResultCard, {
+      props: {
+        result: {
+          transcription_text: 'قل هو الله احد',
+          verse: {
+            sourate_id: 112,
+            sourate_name: 'الإخلاص',
+            transliteration: 'Al-Ikhlas',
+            start_verse: 1,
+            end_verse: 4,
+            text: 'قل هو الله احد',
+            similarity: 0.93,
+          },
+          imam_predictions: [],
+          imam_status: 'disabled',
+          imam_detection_enabled: false,
+        },
+      },
+    })
+
+    expect(wrapper.find('.imam-chip').exists()).toBe(false)
+    expect(wrapper.text()).not.toContain('Détection imam désactivée')
   })
 })

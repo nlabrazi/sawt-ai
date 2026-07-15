@@ -30,7 +30,7 @@ describe('VerseDetailsSheet', () => {
     clearTajwidCache()
   })
 
-  it('uses icon actions for close and copy', async () => {
+  it('offers a visible return action and icon actions', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined)
     Object.defineProperty(navigator, 'clipboard', {
       configurable: true,
@@ -49,12 +49,12 @@ describe('VerseDetailsSheet', () => {
       },
     })
 
-    expect(wrapper.get('.close-btn').attributes('aria-label')).toBe('Fermer')
+    expect(wrapper.get('.close-btn').attributes('aria-label')).toBe('Retour au résultat')
+    expect(wrapper.get('.close-btn').text()).toBe('Retour au résultat')
     expect(wrapper.get('.sheet-btn').text()).toBe('Copier')
-    expect(wrapper.find('.lucide-x').exists()).toBe(true)
+    expect(wrapper.find('.lucide-arrow-left').exists()).toBe(true)
     expect(wrapper.find('.lucide-copy').exists()).toBe(true)
     expect(wrapper.find('.lucide-book-open').exists()).toBe(true)
-    expect(wrapper.text()).not.toContain('Fermer')
     expect(wrapper.text()).not.toContain('Texte coranique')
     expect(wrapper.text()).toContain('Transcription brute')
     expect(wrapper.get('.sheet-subtitle').text()).toBe('Sourate Al-Ikhlas · Versets 1 à 4')

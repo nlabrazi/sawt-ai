@@ -12,17 +12,20 @@ describe('RecognitionIdleScreen', () => {
     expect(wrapper.find('.lucide-flask-conical').exists()).toBe(true)
   })
 
-  it('keeps the idle copy short and action-led', () => {
+  it('explains the Quran recognition purpose before the primary action', () => {
     const wrapper = mount(RecognitionIdleScreen, {
       props: {
         detectImam: true,
       },
     })
 
-    expect(wrapper.text()).toContain('Touchez pour réciter')
-    expect(wrapper.text()).toContain('Récitez quelques secondes. Sawt AI reconnaît le passage.')
-    expect(wrapper.text()).toContain('Importer un audio')
-    expect(wrapper.text()).not.toContain('Lancez le micro')
+    expect(wrapper.text()).toContain('Récitez un passage du Coran')
+    expect(wrapper.text()).toContain(
+      'Sawt AI vous propose la sourate et les versets correspondants.',
+    )
+    expect(wrapper.text()).toContain('laisser l’analyse démarrer automatiquement')
+    expect(wrapper.text()).toContain('Importer un fichier audio')
+    expect(wrapper.get('.button-label').text()).toBe('Commencer')
     expect(wrapper.find('.record-action').exists()).toBe(false)
   })
 
@@ -36,6 +39,16 @@ describe('RecognitionIdleScreen', () => {
     await wrapper.get('.hero-action button').trigger('click')
 
     expect(wrapper.emitted('micro-click')).toHaveLength(1)
+  })
+
+  it('opens the hidden file input from a keyboard-accessible button', async () => {
+    const wrapper = mount(RecognitionIdleScreen)
+    const fileInput = wrapper.get('input[type="file"]')
+    const clickSpy = vi.spyOn(fileInput.element as HTMLInputElement, 'click')
+
+    await wrapper.get('.file-button').trigger('click')
+
+    expect(clickSpy).toHaveBeenCalledOnce()
   })
 
   it('shows recording progress while recording', () => {
@@ -55,6 +68,9 @@ describe('RecognitionIdleScreen', () => {
     expect(progress.attributes('aria-valuenow')).toBe('30')
     expect(progress.attributes('aria-valuemax')).toBe('90')
     expect(progressFill.attributes('style')).toContain('width: 33.3333')
+    expect(wrapper.get('.button-label').text()).toBe('Arrêter et analyser')
+    expect(wrapper.text()).toContain('L’analyse démarre automatiquement')
+    expect(wrapper.find('.secondary-actions').exists()).toBe(false)
   })
 
   it('hides recording progress before recording starts', () => {
@@ -93,7 +109,7 @@ describe('RecognitionIdleScreen', () => {
       },
     })
 
-    const alert = wrapper.get('.upload-action [role="alert"]')
+    const alert = wrapper.get('.secondary-actions [role="alert"]')
 
     expect(alert.text()).toContain('Format audio non pris en charge.')
     expect(alert.text()).toContain('Utilisez wav, mp3, m4a, ogg ou webm.')
