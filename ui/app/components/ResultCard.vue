@@ -31,6 +31,9 @@ const resultKicker = computed(() => {
     ? 'Hypothèse à vérifier'
     : 'Correspondance trouvée'
 })
+const detailsActionLabel = computed(() =>
+  props.result.detection?.status === 'ambiguous' ? 'Vérifier le passage' : 'Voir le verset',
+)
 const showImam = computed(() => {
   return Boolean(props.result.imam_detection_enabled)
 })
@@ -49,17 +52,6 @@ const confidenceUi = computed(() => {
     detectionPolicy.value.min_probable_similarity,
   )
 })
-const confidenceScoreLabel = computed(() => {
-  return `${formatSimilarityPercent(props.result.verse?.similarity ?? 0)}%`
-})
-
-function formatSimilarityPercent(similarity: number) {
-  const percent = similarity <= 1 ? similarity * 100 : similarity
-  const safePercent = Math.max(0, Math.min(100, percent))
-
-  return Math.round(safePercent)
-}
-
 const imamName = computed(() => {
   if (!topImam.value?.name) {
     switch (props.result.imam_status) {
@@ -119,7 +111,6 @@ const imamStatusText = computed(() => {
 
         <div class="result-meta">
           <div class="confidence-detail" :class="confidenceUi.className">
-            <span class="confidence-score">{{ confidenceScoreLabel }}</span>
             <span class="confidence-label">
               {{ confidenceUi.label }}
             </span>
@@ -144,7 +135,7 @@ const imamStatusText = computed(() => {
             @click="isDetailsOpen = true"
           >
             <Eye class="action-icon" :stroke-width="2" aria-hidden="true" />
-            Voir le verset
+            {{ detailsActionLabel }}
           </button>
         </div>
       </section>
@@ -245,8 +236,7 @@ const imamStatusText = computed(() => {
 }
 
 .confidence-detail {
-  gap: 8px;
-  padding: 4px 14px 4px 6px;
+  padding: 0 16px;
 }
 
 .confidence-detail.banner-success {
@@ -262,20 +252,6 @@ const imamStatusText = computed(() => {
 .confidence-detail.banner-error {
   border-color: rgba(239, 68, 68, 0.18);
   background: rgba(239, 68, 68, 0.1);
-}
-
-.confidence-score {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 48px;
-  min-height: 30px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  font-size: 16px;
-  line-height: 1;
-  font-weight: 800;
-  color: #eff6ff;
 }
 
 .confidence-label {

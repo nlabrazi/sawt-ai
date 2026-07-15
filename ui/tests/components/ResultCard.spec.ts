@@ -31,7 +31,7 @@ describe('ResultCard', () => {
     expect(wrapper.text()).not.toContain('قل هو الله احد')
   })
 
-  it('shows a compact confidence score in the result card', () => {
+  it('shows qualitative confidence without presenting similarity as reliability', () => {
     const wrapper = mount(ResultCard, {
       props: {
         result: {
@@ -54,8 +54,9 @@ describe('ResultCard', () => {
 
     const confidenceDetail = wrapper.get('.confidence-detail')
 
-    expect(confidenceDetail.text()).toContain('74%')
     expect(confidenceDetail.text()).toContain('Correspondance probable')
+    expect(confidenceDetail.text()).not.toContain('74%')
+    expect(wrapper.find('.confidence-score').exists()).toBe(false)
     expect(confidenceDetail.text()).not.toContain('Une correspondance a été trouvée')
   })
 
@@ -92,9 +93,10 @@ describe('ResultCard', () => {
     const confidenceDetail = wrapper.get('.confidence-detail')
 
     expect(wrapper.get('.hero-kicker').text()).toBe('Hypothèse à vérifier')
-    expect(confidenceDetail.text()).toContain('92%')
     expect(confidenceDetail.text()).toContain('Correspondance à confirmer')
+    expect(confidenceDetail.text()).not.toContain('92%')
     expect(confidenceDetail.text()).not.toContain('Résultat fiable')
+    expect(wrapper.get('.primary-btn').text()).toBe('Vérifier le passage')
   })
 
   it('keeps verse details as the only passage action', () => {
