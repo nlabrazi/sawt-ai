@@ -48,20 +48,22 @@ const rejectionCopy = computed(() => {
   }
 })
 
+const hasTechnicalError = computed(() => !!props.error && !props.result)
+
 const heading = computed(() => {
-  if (props.error) return 'Analyse interrompue'
+  if (hasTechnicalError.value) return 'Analyse interrompue'
   if (props.result?.verse) return 'Passage proposé'
   return rejectionCopy.value.heading
 })
 
 const introduction = computed(() => {
-  if (props.error) return 'La récitation n’a pas pu être analysée cette fois-ci.'
+  if (hasTechnicalError.value) return 'La récitation n’a pas pu être analysée cette fois-ci.'
   if (props.result?.verse) return 'Vérifiez la sourate et les versets avant de valider le résultat.'
   return rejectionCopy.value.introduction
 })
 
 const statusPanel = computed(() => {
-  if (props.error) {
+  if (hasTechnicalError.value) {
     return {
       label: 'Analyse incomplète',
       text: props.error,

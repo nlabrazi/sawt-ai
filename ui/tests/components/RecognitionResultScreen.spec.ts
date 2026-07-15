@@ -119,4 +119,31 @@ describe('RecognitionResultScreen', () => {
     expect(wrapper.text()).toContain(hint)
     expect(wrapper.find('.result-card-stub').exists()).toBe(false)
   })
+
+  it('prioritizes a valid rejection over a stale technical error', () => {
+    const wrapper = mount(RecognitionResultScreen, {
+      props: {
+        result: {
+          transcription_text: '',
+          verse: null,
+          detection: {
+            status: 'insufficient',
+            score: null,
+            score_margin: null,
+            matched_word_count: 0,
+            analyzed_duration_seconds: 5,
+            analysis_attempts: 1,
+            rejection_reason: 'non_arabic_speech',
+          },
+          imam_predictions: [],
+          imam_status: 'disabled',
+          imam_detection_enabled: false,
+        },
+        error: 'Aucun verset fiable trouvé pour cet audio.',
+      },
+    })
+
+    expect(wrapper.text()).toContain('Récitation en arabe non détectée')
+    expect(wrapper.text()).not.toContain('Analyse interrompue')
+  })
 })
