@@ -55,11 +55,6 @@ def test_compute_imam_status_uses_score_thresholds():
     assert compute_imam_status([{"name": "A", "score": 0.4}], detect_imam=True) == "low"
 
 
-def test_build_progressive_analysis_endpoints_includes_full_duration():
-    assert inference_pipeline.build_progressive_analysis_endpoints(12.5) == [5, 10, 12.5]
-    assert inference_pipeline.build_progressive_analysis_endpoints(5) == [5]
-
-
 def test_audio_quality_rejects_empty_transcription():
     quality = inference_pipeline.assess_audio_quality(build_transcription(None))
 
@@ -143,42 +138,50 @@ def test_audio_quality_rejection_happens_before_verse_matching(monkeypatch):
     assert detection.rejection_reason == "non_arabic_speech"
 
 
-def test_detect_verse_progressively_stops_after_confident_match(monkeypatch):
+def test_detect_verse_progressively_analyzes_complete_audio_once(monkeypatch):
     transcription_calls = []
-    outcomes = iter([
-        VerseDetectionOutcome(None, "probable", 0.72, 0.04, 4, "score_too_low"),
-        VerseDetectionOutcome(
-            {"similarity": 0.91},
-            "confident",
-            0.91,
-            0.12,
-            7,
-            None,
-        ),
-    ])
+    ambiguous_result_flags = []
 
     def fake_transcribe(_audio_path, clip_end_seconds=None):
         transcription_calls.append(clip_end_seconds)
-        return [{"text": "قل هو الله احد"}]
+        return [{"text": "بسم الله الرحمن الرحيم الحمد لله رب العالمين"}]
+
+    def fake_detect(_segments, include_ambiguous_verse=False):
+        ambiguous_result_flags.append(include_ambiguous_verse)
+        return VerseDetectionOutcome(
+            {
+                "start_verse": 1,
+                "end_verse": 7,
+                "similarity": 0.91,
+            },
+            "confident",
+            0.91,
+            0.12,
+            29,
+            None,
+        )
 
     monkeypatch.setattr(inference_pipeline, "transcribe_audio", fake_transcribe)
     monkeypatch.setattr(
         inference_pipeline,
         "detect_verse_with_metadata",
-        lambda _segments, include_ambiguous_verse=False: next(outcomes),
+        fake_detect,
     )
 
     _segments, detection, analyzed_duration, attempts = (
-        inference_pipeline.detect_verse_progressively("/tmp/audio.wav", 18)
+        inference_pipeline.detect_verse_progressively("/tmp/audio.wav", 48.4)
     )
 
-    assert transcription_calls == [5, 10]
+    assert transcription_calls == [None]
+    assert ambiguous_result_flags == [True]
     assert detection.status == "confident"
-    assert analyzed_duration == 10
-    assert attempts == 2
+    assert detection.verse["start_verse"] == 1
+    assert detection.verse["end_verse"] == 7
+    assert analyzed_duration == 48.4
+    assert attempts == 1
 
 
-def test_detect_verse_progressively_falls_back_to_full_audio(monkeypatch):
+def test_detect_verse_progressively_propagates_ambiguous_result_policy(monkeypatch):
     transcription_calls = []
     ambiguous_result_flags = []
 
@@ -205,49 +208,38 @@ def test_detect_verse_progressively_falls_back_to_full_audio(monkeypatch):
     )
 
     _segments, detection, analyzed_duration, attempts = (
-        inference_pipeline.detect_verse_progressively("/tmp/audio.wav", 12)
+        inference_pipeline.detect_verse_progressively(
+            "/tmp/audio.wav",
+            12,
+            allow_ambiguous_result=False,
+        )
     )
 
-    assert transcription_calls == [5, 10, None]
-    assert ambiguous_result_flags == [False, False, True]
+    assert transcription_calls == [None]
+    assert ambiguous_result_flags == [False]
     assert detection.status == "insufficient"
     assert analyzed_duration == 12
-    assert attempts == 3
+    assert attempts == 1
 
 
-def test_detect_verse_progressively_retries_after_a_low_quality_prefix(monkeypatch):
+def test_detect_verse_progressively_rejects_low_quality_complete_audio(monkeypatch):
     transcription_calls = []
-    transcriptions = iter([
-        build_transcription(average_log_probability=-1.2),
-        build_transcription(),
-    ])
 
     def fake_transcribe(_audio_path, clip_end_seconds=None):
         transcription_calls.append(clip_end_seconds)
-        return next(transcriptions)
+        return build_transcription(average_log_probability=-1.2)
 
     monkeypatch.setattr(inference_pipeline, "transcribe_audio", fake_transcribe)
-    monkeypatch.setattr(
-        inference_pipeline,
-        "detect_verse_with_metadata",
-        lambda _segments, include_ambiguous_verse=False: VerseDetectionOutcome(
-            {"similarity": 0.9},
-            "confident",
-            0.9,
-            0.2,
-            4,
-            None,
-        ),
-    )
 
     _segments, detection, analyzed_duration, attempts = (
         inference_pipeline.detect_verse_progressively("/tmp/audio.wav", 8)
     )
 
-    assert transcription_calls == [5, None]
-    assert detection.status == "confident"
+    assert transcription_calls == [None]
+    assert detection.status == "insufficient"
+    assert detection.rejection_reason == "low_transcription_confidence"
     assert analyzed_duration == 8
-    assert attempts == 2
+    assert attempts == 1
 
 
 def test_run_inference_pipeline_returns_unavailable_when_imam_prediction_fails(monkeypatch):

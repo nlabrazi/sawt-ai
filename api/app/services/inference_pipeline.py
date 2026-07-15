@@ -4,11 +4,9 @@
 # transcription -> détection verset -> détection imam
 
 import logging
-import math
 from dataclasses import dataclass
 from typing import Literal
 
-from app.core.detection_policy import PROGRESSIVE_ANALYSIS_STEP_SECONDS
 from app.core.transcription_policy import (
     HIGH_COMPRESSION_MAX_LOG_PROBABILITY,
     HIGH_COMPRESSION_RATIO,
@@ -141,21 +139,6 @@ def detect_verse_after_audio_quality_check(
     )
 
 
-def build_progressive_analysis_endpoints(duration_seconds: float) -> list[float]:
-    if not math.isfinite(duration_seconds) or duration_seconds <= 0:
-        return []
-
-    endpoints = []
-    endpoint = float(PROGRESSIVE_ANALYSIS_STEP_SECONDS)
-
-    while endpoint < duration_seconds:
-        endpoints.append(endpoint)
-        endpoint += PROGRESSIVE_ANALYSIS_STEP_SECONDS
-
-    endpoints.append(duration_seconds)
-    return endpoints
-
-
 def detect_verse_progressively(
     audio_path: str,
     audio_duration_seconds: float | None,
@@ -166,34 +149,9 @@ def detect_verse_progressively(
     float | None,
     int,
 ]:
-    if audio_duration_seconds is None:
-        segments = transcribe_audio(audio_path)
-        return (
-            segments,
-            detect_verse_after_audio_quality_check(
-                segments,
-                include_ambiguous_verse=allow_ambiguous_result,
-            ),
-            None,
-            1,
-        )
-
-    endpoints = build_progressive_analysis_endpoints(audio_duration_seconds)
-
-    for attempt, endpoint in enumerate(endpoints, start=1):
-        is_full_audio = endpoint == audio_duration_seconds
-        segments = transcribe_audio(
-            audio_path,
-            clip_end_seconds=None if is_full_audio else endpoint,
-        )
-        detection = detect_verse_after_audio_quality_check(
-            segments,
-            include_ambiguous_verse=allow_ambiguous_result and is_full_audio,
-        )
-
-        if detection.status == "confident" or is_full_audio:
-            return segments, detection, endpoint, attempt
-
+    # /recognize receives a complete audio file, including microphone snapshots.
+    # Re-clipping that file here could accept a confident first verse and discard
+    # the rest of a longer recitation (for example Al-Fatiha 1:1-7).
     segments = transcribe_audio(audio_path)
     return (
         segments,
