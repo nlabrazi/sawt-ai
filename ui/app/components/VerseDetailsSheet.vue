@@ -47,6 +47,10 @@ const verseLabel = computed(() => {
     : `Versets ${start_verse} à ${end_verse}`
 })
 
+const passageStatusLabel = computed(() =>
+  props.result.detection?.status === 'ambiguous' ? 'Passage proposé' : 'Passage détecté',
+)
+
 const topImam = computed(() => props.result.imam_predictions?.[0] ?? null)
 const otherImams = computed(() => props.result.imam_predictions?.slice(1) ?? [])
 const tajwidAyahs = computed(() =>
@@ -174,14 +178,14 @@ async function copyVerse() {
         :style="{ '--tajwid-reading-surface': TAJWID_READING_SURFACE_COLOR }"
         role="dialog"
         aria-modal="true"
-        aria-label="Passage détecté"
+        :aria-label="passageStatusLabel"
         tabindex="-1"
         @keydown="onSheetKeydown"
       >
         <div class="sheet-handle" />
         <div class="sheet-header">
           <div>
-            <p class="sheet-kicker">Passage détecté</p>
+            <p class="sheet-kicker">{{ passageStatusLabel }}</p>
             <h2 class="sheet-title">{{ result.verse?.sourate_name }}</h2>
             <p class="sheet-subtitle">
               Sourate {{ result.verse?.transliteration }} · {{ verseLabel }}

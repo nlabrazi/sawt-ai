@@ -25,6 +25,19 @@ const result = {
   imam_detection_enabled: true,
 }
 
+const ambiguousResult = {
+  ...result,
+  detection: {
+    status: 'ambiguous' as const,
+    score: 0.92,
+    score_margin: 0.03,
+    matched_word_count: 4,
+    rejection_reason: 'ambiguous_match' as const,
+    analyzed_duration_seconds: 8,
+    analysis_attempts: 1,
+  },
+}
+
 describe('VerseDetailsSheet', () => {
   beforeEach(() => {
     clearTajwidCache()
@@ -74,6 +87,25 @@ describe('VerseDetailsSheet', () => {
     await wrapper.get('.close-btn').trigger('click')
 
     expect(wrapper.emitted('close')).toHaveLength(1)
+    wrapper.unmount()
+  })
+
+  it('labels an ambiguous match as a proposal to verify', () => {
+    const wrapper = mount(VerseDetailsSheet, {
+      props: {
+        open: true,
+        result: ambiguousResult,
+      },
+      global: {
+        stubs: {
+          teleport: true,
+        },
+      },
+    })
+
+    expect(wrapper.get('.sheet').attributes('aria-label')).toBe('Passage proposé')
+    expect(wrapper.get('.sheet-kicker').text()).toBe('Passage proposé')
+
     wrapper.unmount()
   })
 
