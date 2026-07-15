@@ -21,6 +21,8 @@ VAD_SPEECH_PAD_MS = 400
 WHISPER_VAD_FILTER = True
 QURAN_TRANSCRIPTION_VAD_FILTER = False
 QURAN_TRANSCRIPTION_LANGUAGE = "ar"
+QURAN_TRANSCRIPTION_DITHER_SNR_DB = 40.0
+QURAN_TRANSCRIPTION_DITHER_SEED = 20_260_715
 LANGUAGE_SCREENING_WINDOWS = 3
 LANGUAGE_SCREENING_WINDOW_SECONDS = 30
 AUDIO_SAMPLE_RATE = 16_000
@@ -357,14 +359,65 @@ def _empty_screened_transcription(
     )
 
 
+def _decode_audio(audio_path: str):
+    from faster_whisper.audio import decode_audio
+
+    return decode_audio(audio_path)
+
+
+def _prepare_dithered_audio(
+    audio_path: str,
+    *,
+    snr_db: float,
+):
+    """Ajoute un dither déterministe très faible pour stabiliser le décodage.
+
+    Certains enregistrements propres et très modulés sont tronqués par Whisper,
+    alors que le même signal avec un bruit imperceptible est décodé en entier.
+    Ce prétraitement intervient uniquement après le filtre parole/langue.
+    """
+    import numpy as np
+
+    if not math.isfinite(snr_db) or snr_db <= 0:
+        raise ValueError("The transcription dither SNR must be positive.")
+
+    audio = np.asarray(_decode_audio(audio_path), dtype=np.float32)
+
+    if audio.size == 0:
+        return audio
+
+    signal_rms = float(np.sqrt(np.mean(np.square(audio, dtype=np.float64))))
+
+    if signal_rms == 0:
+        return audio
+
+    rng = np.random.default_rng(QURAN_TRANSCRIPTION_DITHER_SEED)
+    noise = rng.uniform(-1.0, 1.0, size=audio.shape).astype(np.float32)
+    noise_rms = float(np.sqrt(np.mean(np.square(noise, dtype=np.float64))))
+    target_noise_rms = signal_rms / (10 ** (snr_db / 20))
+    mixed = audio + noise * (target_noise_rms / noise_rms)
+    peak = float(np.max(np.abs(mixed)))
+
+    if peak > 0.98:
+        mixed *= 0.98 / peak
+
+    return mixed.astype(np.float32, copy=False)
+
+
 def transcribe_audio(
     audio_path: str,
     clip_end_seconds: float | None = None,
     *,
     language: str | None = None,
     vad_filter: bool = WHISPER_VAD_FILTER,
+    dither_snr_db: float | None = None,
 ) -> TranscriptionResult:
     model = get_whisper_model()
+    audio_source = (
+        _prepare_dithered_audio(audio_path, snr_db=dither_snr_db)
+        if dither_snr_db is not None
+        else audio_path
+    )
     clip_options = (
         {"clip_timestamps": [0, clip_end_seconds]}
         if clip_end_seconds is not None
@@ -387,7 +440,7 @@ def transcribe_audio(
             "speech_pad_ms": VAD_SPEECH_PAD_MS,
         }
 
-    segments, info = model.transcribe(audio_path, **transcription_options)
+    segments, info = model.transcribe(audio_source, **transcription_options)
 
     result: list[dict[str, str]] = []
     metrics: list[TranscriptionSegmentMetrics] = []
@@ -439,6 +492,7 @@ def transcribe_quran_audio(
         audio_path,
         language=QURAN_TRANSCRIPTION_LANGUAGE,
         vad_filter=QURAN_TRANSCRIPTION_VAD_FILTER,
+        dither_snr_db=QURAN_TRANSCRIPTION_DITHER_SNR_DB,
     )
     screened_metadata = replace(
         transcription.metadata,

@@ -372,6 +372,65 @@ def test_assess_match_acceptance_ignores_overlapping_candidate_window():
     assert acceptance.score_margin_percent == 16
 
 
+def test_assess_match_acceptance_uses_evidence_weighted_margin():
+    long_passage = "un deux trois quatre cinq six sept huit neuf dix onze douze"
+    candidates = (
+        QuranVerseCandidate(113, "Al-Falaq", "Al-Falaq", 1, 5, long_passage),
+        QuranVerseCandidate(1, "Al-Fatihah", "Al-Fatihah", 1, 1, "passage court"),
+    )
+    ranked_matches = [
+        verse_detection_service.RankedVerseCandidate(
+            0,
+            candidates[0],
+            97.5,
+            long_passage,
+            ranking_score_percent=96,
+        ),
+        verse_detection_service.RankedVerseCandidate(
+            1,
+            candidates[1],
+            100,
+            "preuve courte",
+            ranking_score_percent=85,
+        ),
+    ]
+
+    acceptance = verse_detection_service.assess_match_acceptance(ranked_matches)
+
+    assert acceptance.accepted is True
+    assert acceptance.reason is None
+    assert acceptance.score_margin_percent == 11
+
+
+def test_evidence_weighted_margin_cannot_promote_a_short_exact_phrase():
+    candidates = (
+        QuranVerseCandidate(1, "Al-Fatihah", "Al-Fatihah", 1, 1, "mot un deux trois"),
+        QuranVerseCandidate(113, "Al-Falaq", "Al-Falaq", 1, 1, "mot un deux autre"),
+    )
+    ranked_matches = [
+        verse_detection_service.RankedVerseCandidate(
+            0,
+            candidates[0],
+            100,
+            candidates[0].normalized_text,
+            ranking_score_percent=95,
+        ),
+        verse_detection_service.RankedVerseCandidate(
+            1,
+            candidates[1],
+            96,
+            candidates[1].normalized_text,
+            ranking_score_percent=80,
+        ),
+    ]
+
+    acceptance = verse_detection_service.assess_match_acceptance(ranked_matches)
+
+    assert acceptance.accepted is False
+    assert acceptance.reason == "ambiguous_match"
+    assert acceptance.score_margin_percent == 4
+
+
 def test_rank_and_acceptance_prefer_candidate_covering_overlapping_windows():
     candidates = (
         QuranVerseCandidate(113, "Al-Falaq", "Al-Falaq", 1, 1, "قل اعوذ برب الفلق"),
@@ -980,6 +1039,61 @@ def test_passage_inference_preserves_cross_surah_ambiguity():
 
     assert acceptance.reason == "ambiguous_match"
     assert inferred_match is None
+
+
+def test_strong_inferred_passage_can_resolve_internal_ambiguity(monkeypatch):
+    short_candidate = make_fatiha_candidate(5, 7)
+    competing_candidate = make_fatiha_candidate(1, 2)
+    inferred_candidate = make_fatiha_candidate(1, 7)
+    ranked_matches = [
+        verse_detection_service.RankedVerseCandidate(
+            0,
+            short_candidate,
+            96,
+            short_candidate.normalized_text,
+            ranking_score_percent=92,
+        ),
+        verse_detection_service.RankedVerseCandidate(
+            1,
+            competing_candidate,
+            95,
+            competing_candidate.normalized_text,
+            ranking_score_percent=89,
+        ),
+    ]
+    inferred_match = verse_detection_service.RankedVerseCandidate(
+        2,
+        inferred_candidate,
+        98,
+        inferred_candidate.normalized_text,
+        ranking_score_percent=98,
+    )
+    monkeypatch.setattr(
+        verse_detection_service,
+        "get_quran_verse_candidates",
+        lambda: (short_candidate, competing_candidate, inferred_candidate),
+    )
+    monkeypatch.setattr(
+        verse_detection_service,
+        "rank_verse_candidates",
+        lambda *_args, **_kwargs: ranked_matches,
+    )
+    monkeypatch.setattr(
+        verse_detection_service,
+        "infer_enclosing_passage_match",
+        lambda *_args, **_kwargs: inferred_match,
+    )
+
+    outcome = verse_detection_service.detect_verse_with_metadata(
+        [{"text": inferred_candidate.normalized_text}],
+        include_ambiguous_verse=True,
+    )
+
+    assert outcome.status == "confident"
+    assert outcome.rejection_reason is None
+    assert outcome.verse is not None
+    assert outcome.verse["start_verse"] == 1
+    assert outcome.verse["end_verse"] == 7
 
 
 def test_passage_inference_does_not_rescue_unrelated_arabic_text(monkeypatch):

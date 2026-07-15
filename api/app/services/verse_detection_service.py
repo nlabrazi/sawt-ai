@@ -33,6 +33,9 @@ AMBIGUITY_CANDIDATE_LIMIT = 10
 PASSAGE_ANCHOR_MIN_WORD_COUNT = 4
 PASSAGE_ANCHOR_MIN_SIMILARITY = 90.0
 PASSAGE_ANCHOR_MIN_TEXT_COVERAGE = 0.85
+MIN_CONFIDENT_INFERRED_PASSAGE_SIMILARITY = 97.0
+MIN_STRONG_EVIDENCE_SIMILARITY = 97.0
+MIN_STRONG_EVIDENCE_WORD_COUNT = 12
 PASSAGE_ANCHOR_BOUNDARY_TOLERANCE = 1
 MAX_UNSUPPORTED_VERSES_BETWEEN_ANCHORS = 2
 
@@ -608,11 +611,30 @@ def assess_match_acceptance(
         ),
         None,
     )
-    score_margin_percent = (
-        top_match.score_percent - competing_match.score_percent
-        if competing_match is not None
-        else None
-    )
+    score_margin_percent = None
+
+    if competing_match is not None:
+        raw_score_margin_percent = (
+            top_match.score_percent - competing_match.score_percent
+        )
+        ranking_score_margin_percent = (
+            effective_ranking_score(top_match)
+            - effective_ranking_score(competing_match)
+        )
+        top_evidence_word_count = min(
+            len(top_match.matched_window.split()),
+            len(top_match.candidate.normalized_text.split()),
+        )
+        has_strong_length_evidence = (
+            top_match.score_percent >= MIN_STRONG_EVIDENCE_SIMILARITY
+            and top_evidence_word_count >= MIN_STRONG_EVIDENCE_WORD_COUNT
+            and ranking_score_margin_percent >= MIN_SCORE_MARGIN * 100
+        )
+        score_margin_percent = (
+            ranking_score_margin_percent
+            if has_strong_length_evidence
+            else raw_score_margin_percent
+        )
 
     if top_match.score_percent < MIN_ACCEPTED_SIMILARITY * 100:
         reason = "score_too_low"
@@ -742,11 +764,21 @@ def detect_verse_with_metadata(
         if acceptance.accepted and inferred_acceptance.accepted:
             matches_for_outcome = inferred_matches
             outcome_acceptance = inferred_acceptance
+        elif (
+            acceptance.reason == "ambiguous_match"
+            and inferred_acceptance.accepted
+            and inferred_match.score_percent
+            >= MIN_CONFIDENT_INFERRED_PASSAGE_SIMILARITY
+        ):
+            # Une ambiguïté interne peut être levée lorsque plusieurs ancres
+            # uniques reconstruisent un passage long, très similaire, dont le
+            # classement pondéré domine désormais tous les concurrents.
+            matches_for_outcome = inferred_matches
+            outcome_acceptance = inferred_acceptance
         elif acceptance.reason == "ambiguous_match":
             matches_for_outcome = inferred_matches
-            # L'inférence améliore seulement les bornes proposées en revue
-            # manuelle. Elle ne transforme jamais une décision ambiguë en
-            # résultat confiant.
+            # Une inférence plus faible améliore seulement les bornes proposées
+            # en revue manuelle, sans fabriquer une décision confiante.
             outcome_acceptance = MatchAcceptance(
                 accepted=False,
                 reason="ambiguous_match",

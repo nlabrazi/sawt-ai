@@ -57,6 +57,31 @@ def test_transcribe_audio_can_preserve_recitation_when_vad_is_disabled(monkeypat
     assert "vad_parameters" not in model.calls[0][1]
 
 
+def test_transcribe_audio_can_apply_deterministic_dither(monkeypatch):
+    model = FakeWhisperModel([SimpleNamespace(text=" قل اعوذ برب الفلق ")])
+    prepared_audio = object()
+    monkeypatch.setattr(transcription_service, "get_whisper_model", lambda: model)
+    monkeypatch.setattr(
+        transcription_service,
+        "_prepare_dithered_audio",
+        lambda audio_path, *, snr_db: (
+            prepared_audio
+            if (audio_path, snr_db) == ("/tmp/recitation.wav", 40.0)
+            else pytest.fail("unexpected dither options")
+        ),
+    )
+
+    result = transcription_service.transcribe_audio(
+        "/tmp/recitation.wav",
+        language="ar",
+        vad_filter=False,
+        dither_snr_db=40.0,
+    )
+
+    assert result == [{"text": "قل اعوذ برب الفلق"}]
+    assert model.calls[0][0] is prepared_audio
+
+
 def make_metadata():
     return transcription_service.TranscriptionMetadata(
         language="ar",
@@ -194,7 +219,11 @@ def test_quran_transcription_forces_arabic_for_uncertain_audio(monkeypatch):
     assert calls == [
         (
             "/tmp/uncertain.wav",
-            {"language": "ar", "vad_filter": False},
+            {
+                "language": "ar",
+                "vad_filter": False,
+                "dither_snr_db": 40.0,
+            },
         )
     ]
     assert result.metadata.language == "fr"
