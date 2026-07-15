@@ -101,6 +101,7 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
   const recordingSeconds = ref(0)
   const maxDurationReached = ref(false)
   const audioLevel = ref(0)
+  const isFinalizingRecording = ref(false)
   const maxRecordingSeconds = computed(() => {
     const nextLimit = maxRecordingSecondsLimit?.value
 
@@ -247,6 +248,8 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
   }
 
   async function startRecording() {
+    if (isFinalizingRecording.value || stopPromise) return
+
     micError.value = null
     resetRecordingState()
 
@@ -276,11 +279,12 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
         ? new MediaRecorder(mediaStream, { mimeType })
         : new MediaRecorder(mediaStream)
 
-      audioChunks = []
+      const sessionChunks: Blob[] = []
+      audioChunks = sessionChunks
 
       mediaRecorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
-          audioChunks.push(event.data)
+          sessionChunks.push(event.data)
         }
 
         resolveSnapshotData?.()
@@ -332,26 +336,45 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
 
     stopTimer()
     stopAudioLevelTracking()
+    isFinalizingRecording.value = true
 
     const recorderToStop = mediaRecorder
+    const chunksToStop = audioChunks
+    let resolveStop: (file: File | null) => void = () => undefined
 
-    stopPromise = new Promise((resolve) => {
+    const pendingStop = new Promise<File | null>((resolve) => {
+      resolveStop = resolve
       recorderToStop.onstop = async () => {
         const mimeType = recorderToStop.mimeType || 'audio/webm'
-        const blob = new Blob(audioChunks, { type: mimeType })
+        const blob = new Blob(chunksToStop, { type: mimeType })
         const filenameBase = `recording-${Date.now()}`
-        const file = await createRecordedFile(blob, filenameBase)
+        let file: File | null = null
 
-        cleanup()
-        stopPromise = null
-        resolve(file)
+        try {
+          file = await createRecordedFile(blob, filenameBase)
+        } catch (error) {
+          console.error(error)
+        } finally {
+          cleanup()
+          stopPromise = null
+          resolve(file)
+        }
       }
+    })
+    stopPromise = pendingStop
 
+    try {
       recorderToStop.stop()
       isRecording.value = false
-    })
+    } catch (error) {
+      console.error(error)
+      recorderToStop.onstop = null
+      cleanup()
+      stopPromise = null
+      resolveStop(null)
+    }
 
-    return stopPromise
+    return pendingStop
   }
 
   function cleanup() {
@@ -360,6 +383,7 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
 
     mediaRecorder = null
     audioChunks = []
+    isFinalizingRecording.value = false
 
     if (mediaStream) {
       mediaStream.getTracks().forEach((track) => {
@@ -378,6 +402,7 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
     maxDurationReached,
     maxRecordingSeconds,
     audioLevel,
+    isFinalizingRecording,
     startRecording,
     stopRecording,
     snapshotRecording,

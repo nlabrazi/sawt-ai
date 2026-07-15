@@ -1,0 +1,115 @@
+{
+  "schema_version": 1,
+  "privacy": "private",
+  "description": "Modèle à copier vers audio_corpus.private.json, qui est ignoré par Git.",
+  "sample_rate": 16000,
+  "seed": 20260715,
+  "cases": [
+    {
+      "id": "fatiha_reciter_01",
+      "label": "positive",
+      "category": "quran_recitation",
+      "expected_verse": {
+        "sourate_id": 1,
+        "start_verse": 1,
+        "end_verse": 7
+      },
+      "source": {
+        "type": "local_file",
+        "path": "private/sources/fatiha_reciter_01.wav",
+        "consent_confirmed": false,
+        "usage_rights_confirmed": false,
+        "redistributable": false
+      },
+      "variants": [
+        { "id": "clean" },
+        { "id": "white_snr20", "noise": { "type": "white", "snr_db": 20 } },
+        { "id": "white_snr10", "noise": { "type": "white", "snr_db": 10 } },
+        { "id": "pink_snr10", "noise": { "type": "pink", "snr_db": 10 } },
+        { "id": "background_snr5", "noise": { "type": "background", "snr_db": 5 } },
+        {
+          "id": "children_snr5",
+          "noise": {
+            "type": "local_file",
+            "path": "private/sources/children_background_01.wav",
+            "consent_confirmed": false,
+            "usage_rights_confirmed": false,
+            "redistributable": false,
+            "snr_db": 5
+          }
+        }
+      ],
+      "tags": ["private", "requires-consent", "vocal", "fatiha"]
+    },
+    {
+      "id": "french_article_reader_01",
+      "label": "negative",
+      "category": "french_speech",
+      "expected_verse": null,
+      "source": {
+        "type": "local_file",
+        "path": "private/sources/french_article_reader_01.wav",
+        "consent_confirmed": false,
+        "usage_rights_confirmed": false,
+        "redistributable": false
+      },
+      "tags": ["private", "requires-consent", "vocal", "french"]
+    },
+    {
+      "id": "conversation_french_01",
+      "label": "negative",
+      "category": "french_conversation",
+      "expected_verse": null,
+      "source": {
+        "type": "local_file",
+        "path": "private/sources/conversation_french_01.wav",
+        "consent_confirmed": false,
+        "usage_rights_confirmed": false,
+        "redistributable": false
+      },
+      "tags": ["private", "requires-consent", "vocal", "french", "conversation"]
+    },
+    {
+      "id": "french_song_vocal_01",
+      "label": "negative",
+      "category": "vocal_music",
+      "expected_verse": null,
+      "source": {
+        "type": "local_file",
+        "path": "private/sources/french_song_vocal_01.wav",
+        "consent_confirmed": false,
+        "usage_rights_confirmed": false,
+        "redistributable": false
+      },
+      "tags": ["private", "requires-consent", "vocal", "french", "music"]
+    },
+    {
+      "id": "arabic_prose_01",
+      "label": "negative",
+      "category": "arabic_non_quran",
+      "expected_verse": null,
+      "source": {
+        "type": "local_file",
+        "path": "private/sources/arabic_prose_01.wav",
+        "consent_confirmed": false,
+        "usage_rights_confirmed": false,
+        "redistributable": false
+      },
+      "tags": ["private", "requires-consent", "vocal", "arabic", "prose"]
+    },
+    {
+      "id": "arabic_song_vocal_01",
+      "label": "negative",
+      "category": "arabic_non_quran",
+      "expected_verse": null,
+      "source": {
+        "type": "local_file",
+        "path": "private/sources/arabic_song_vocal_01.wav",
+        "consent_confirmed": false,
+        "usage_rights_confirmed": false,
+        "redistributable": false
+      },
+      "tags": ["private", "requires-consent", "vocal", "arabic", "music"]
+    }
+  ]
+}

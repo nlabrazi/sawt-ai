@@ -22,6 +22,16 @@
       "expected_verse": { "sourate_id": 114, "start_verse": 1, "end_verse": 2 }
     },
     {
+      "id": "fatiha_complete",
+      "transcription": "بسم الله الرحمن الرحيم الحمد لله رب العلمين الرحمن الرحيم ملك يوم الدين اياك نعبد واياك نستعين اهدنا الصرط المستقيم صرط الذين انعمت عليهم غير المغضوب عليهم ولا الضالين",
+      "expected_verse": { "sourate_id": 1, "start_verse": 1, "end_verse": 7 }
+    },
+    {
+      "id": "fatiha_complete_with_transcription_error",
+      "transcription": "بسم الله الرحمن الرحيم الحمد لله رب العلمين الرحمن الرحيم ملك يوم الديت اياك نعبد واياك نستعين اهدنا الصرط المستقيم صرط الذين انعمت عليهم غير المغضوب عليهم ولا الضالين",
+      "expected_verse": { "sourate_id": 1, "start_verse": 1, "end_verse": 7 }
+    },
+    {
       "id": "too_short_common_word",
       "transcription": "قل",
       "expected_verse": null
@@ -29,6 +39,11 @@
     {
       "id": "unrelated_arabic_sentence",
       "transcription": "هذا نص عربي عادي لا ينتمي الي التلاوه",
+      "expected_verse": null
+    },
+    {
+      "id": "unrelated_french_sentence",
+      "transcription": "ceci est un texte français sur le travail et la météo",
       "expected_verse": null
     }
   ]

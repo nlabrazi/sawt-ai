@@ -15,6 +15,9 @@ RejectionReason = Literal[
     "score_too_low",
     "transcription_too_short",
     "ambiguous_match",
+    "insufficient_speech",
+    "non_arabic_speech",
+    "low_transcription_confidence",
 ]
 
 

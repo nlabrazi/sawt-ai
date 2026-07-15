@@ -5,6 +5,47 @@ import app.services.verse_detection_service as verse_detection_service
 from app.core.model_loader import QuranVerseCandidate
 
 
+FATIHA_VERSES = (
+    "بسم الله الرحمن الرحيم",
+    "الحمد لله رب العلمين",
+    "الرحمن الرحيم",
+    "ملك يوم الدين",
+    "اياك نعبد واياك نستعين",
+    "اهدنا الصرط المستقيم",
+    "صرط الذين انعمت عليهم غير المغضوب عليهم ولا الضا لين",
+)
+
+
+def make_fatiha_candidate(start_verse: int, end_verse: int):
+    return QuranVerseCandidate(
+        sourate_id=1,
+        sourate_name="الفاتحة",
+        transliteration="Al-Fatihah",
+        start_verse=start_verse,
+        end_verse=end_verse,
+        normalized_text=" ".join(FATIHA_VERSES[start_verse - 1:end_verse]),
+    )
+
+
+def make_fatiha_inference_candidates():
+    return (
+        *(make_fatiha_candidate(verse_id, verse_id) for verse_id in range(1, 8)),
+        make_fatiha_candidate(1, 2),
+        make_fatiha_candidate(5, 7),
+        make_fatiha_candidate(4, 7),
+        make_fatiha_candidate(2, 7),
+        make_fatiha_candidate(1, 7),
+        QuranVerseCandidate(
+            112,
+            "الإخلاص",
+            "Al-Ikhlas",
+            1,
+            4,
+            "قل هو الله احد الله الصمد لم يلد ولم يولد",
+        ),
+    )
+
+
 @pytest.fixture
 def representative_candidates():
     return (
@@ -188,6 +229,23 @@ def test_compute_similarity_score_combines_local_and_token_scores():
     assert fuzz.ratio(transcription, candidate) < score < 100
 
 
+def test_compute_ranking_score_rewards_longer_consistent_evidence():
+    short_score = verse_detection_service.compute_ranking_score(
+        100,
+        "بسم الله الرحمن الرحيم",
+        "بسم الله الرحمن الرحيم",
+    )
+    long_score = verse_detection_service.compute_ranking_score(
+        98,
+        " ".join(["كلمه"] * 24),
+        " ".join(["كلمه"] * 24),
+    )
+
+    assert long_score > short_score
+    assert short_score < 100
+    assert long_score == pytest.approx(98)
+
+
 def test_build_transcription_windows_keeps_full_text_and_overlaps_chunks():
     transcription = " ".join(f"word{index}" for index in range(10))
 
@@ -314,6 +372,65 @@ def test_assess_match_acceptance_ignores_overlapping_candidate_window():
     assert acceptance.score_margin_percent == 16
 
 
+def test_assess_match_acceptance_uses_evidence_weighted_margin():
+    long_passage = "un deux trois quatre cinq six sept huit neuf dix onze douze"
+    candidates = (
+        QuranVerseCandidate(113, "Al-Falaq", "Al-Falaq", 1, 5, long_passage),
+        QuranVerseCandidate(1, "Al-Fatihah", "Al-Fatihah", 1, 1, "passage court"),
+    )
+    ranked_matches = [
+        verse_detection_service.RankedVerseCandidate(
+            0,
+            candidates[0],
+            97.5,
+            long_passage,
+            ranking_score_percent=96,
+        ),
+        verse_detection_service.RankedVerseCandidate(
+            1,
+            candidates[1],
+            100,
+            "preuve courte",
+            ranking_score_percent=85,
+        ),
+    ]
+
+    acceptance = verse_detection_service.assess_match_acceptance(ranked_matches)
+
+    assert acceptance.accepted is True
+    assert acceptance.reason is None
+    assert acceptance.score_margin_percent == 11
+
+
+def test_evidence_weighted_margin_cannot_promote_a_short_exact_phrase():
+    candidates = (
+        QuranVerseCandidate(1, "Al-Fatihah", "Al-Fatihah", 1, 1, "mot un deux trois"),
+        QuranVerseCandidate(113, "Al-Falaq", "Al-Falaq", 1, 1, "mot un deux autre"),
+    )
+    ranked_matches = [
+        verse_detection_service.RankedVerseCandidate(
+            0,
+            candidates[0],
+            100,
+            candidates[0].normalized_text,
+            ranking_score_percent=95,
+        ),
+        verse_detection_service.RankedVerseCandidate(
+            1,
+            candidates[1],
+            96,
+            candidates[1].normalized_text,
+            ranking_score_percent=80,
+        ),
+    ]
+
+    acceptance = verse_detection_service.assess_match_acceptance(ranked_matches)
+
+    assert acceptance.accepted is False
+    assert acceptance.reason == "ambiguous_match"
+    assert acceptance.score_margin_percent == 4
+
+
 def test_rank_and_acceptance_prefer_candidate_covering_overlapping_windows():
     candidates = (
         QuranVerseCandidate(113, "Al-Falaq", "Al-Falaq", 1, 1, "قل اعوذ برب الفلق"),
@@ -342,6 +459,79 @@ def test_rank_and_acceptance_prefer_candidate_covering_overlapping_windows():
     assert acceptance.accepted is True
     assert acceptance.competing_match is not None
     assert acceptance.competing_match.candidate.sourate_id == 114
+
+
+def test_rank_verse_candidates_prefers_complete_fatiha_over_exact_short_window():
+    full_fatiha = (
+        "بسم الله الرحمن الرحيم الحمد لله رب العلمين الرحمن الرحيم ملك يوم الدين "
+        "اياك نعبد واياك نستعين اهدنا الصرط المستقيم صرط الذين انعمت عليهم "
+        "غير المغضوب عليهم ولا الضالين"
+    )
+    candidates = (
+        QuranVerseCandidate(
+            1,
+            "Al-Fatihah",
+            "Al-Fatihah",
+            1,
+            1,
+            "بسم الله الرحمن الرحيم",
+        ),
+        QuranVerseCandidate(
+            1,
+            "Al-Fatihah",
+            "Al-Fatihah",
+            1,
+            7,
+            full_fatiha,
+        ),
+        QuranVerseCandidate(
+            112,
+            "Al-Ikhlas",
+            "Al-Ikhlas",
+            1,
+            4,
+            "قل هو الله احد الله الصمد لم يلد ولم يولد",
+        ),
+    )
+
+    ranked_matches = verse_detection_service.rank_verse_candidates(
+        full_fatiha.replace("الدين", "الديت"),
+        candidates,
+        limit=3,
+    )
+    acceptance = verse_detection_service.assess_match_acceptance(ranked_matches)
+
+    assert ranked_matches[0].candidate.sourate_id == 1
+    assert ranked_matches[0].candidate.start_verse == 1
+    assert ranked_matches[0].candidate.end_verse == 7
+    assert len(ranked_matches[0].matched_window.split()) > 20
+    assert acceptance.accepted is True
+
+
+@pytest.mark.parametrize(
+    "transcription",
+    [
+        "ceci est un texte français sans rapport avec le coran",
+        "هذا حديث يومي عن العمل والطقس وليس تلاوه",
+    ],
+)
+def test_detect_versets_rejects_text_outside_quran(
+    monkeypatch,
+    representative_candidates,
+    transcription,
+):
+    monkeypatch.setattr(
+        verse_detection_service,
+        "get_quran_verse_candidates",
+        lambda: representative_candidates,
+    )
+
+    outcome = verse_detection_service.detect_verse_with_metadata([
+        {"text": transcription},
+    ])
+
+    assert outcome.verse is None
+    assert outcome.status in {"insufficient", "probable"}
 
 
 def test_assess_match_acceptance_rejects_low_score():
@@ -523,3 +713,400 @@ def test_build_detection_outcome_classifies_low_score_as_probable():
     assert outcome.status == "probable"
     assert outcome.score == 0.74
     assert outcome.rejection_reason == "score_too_low"
+
+
+def test_detect_verse_infers_enclosing_fatiha_when_middle_verses_are_missing(
+    monkeypatch,
+):
+    candidates = make_fatiha_inference_candidates()
+    transcription = (
+        "بسم الله الرحمن الرحيم الحمد لله رب العالمين "
+        "وإياك نعبد وإياك نستعين إهدنا الصراط المستقيم "
+        "صراط الذين أن أنت عليهم غير المضب عليهم ولا الضالين"
+    )
+    monkeypatch.setattr(
+        verse_detection_service,
+        "get_quran_verse_candidates",
+        lambda: candidates,
+    )
+
+    hidden_outcome = verse_detection_service.detect_verse_with_metadata([
+        {"text": transcription},
+    ])
+    manual_outcome = verse_detection_service.detect_verse_with_metadata(
+        [{"text": transcription}],
+        include_ambiguous_verse=True,
+    )
+
+    assert hidden_outcome.verse is None
+    assert hidden_outcome.status == "ambiguous"
+    assert hidden_outcome.rejection_reason == "ambiguous_match"
+    assert manual_outcome.verse is not None
+    assert manual_outcome.verse["sourate_id"] == 1
+    assert manual_outcome.verse["start_verse"] == 1
+    assert manual_outcome.verse["end_verse"] == 7
+    assert manual_outcome.status == "ambiguous"
+    assert manual_outcome.rejection_reason == "ambiguous_match"
+    assert 0.8 <= manual_outcome.score < hidden_outcome.score
+    assert manual_outcome.verse["similarity"] == manual_outcome.score
+    assert manual_outcome.matched_word_count == len(transcription.split())
+
+
+def test_detect_verse_uses_ranked_passage_to_bridge_supported_boundaries(
+    monkeypatch,
+):
+    candidates = make_fatiha_inference_candidates()
+    transcription = (
+        "اعوذ بالله من الشيطان الرجيم بسم الله الرحمن الرحيم "
+        "الحمد لله رب العالمين الرحمن الرحيم الرحمن الرحيم ملك يومين "
+        "اياك نعبد واياك نسعين اهدنا الصرط المستقيم "
+        "صرط الذين انعمت عليهم غير المرضوب عليهم ولن ضالين"
+    )
+    monkeypatch.setattr(
+        verse_detection_service,
+        "get_quran_verse_candidates",
+        lambda: candidates,
+    )
+
+    outcome = verse_detection_service.detect_verse_with_metadata(
+        [{"text": transcription}],
+        include_ambiguous_verse=True,
+    )
+
+    assert outcome.status == "ambiguous"
+    assert outcome.rejection_reason == "ambiguous_match"
+    assert outcome.verse is not None
+    assert outcome.verse["start_verse"] == 1
+    assert outcome.verse["end_verse"] == 7
+
+
+def test_passage_inference_does_not_expand_from_a_single_outside_anchor():
+    outside_anchor = make_fatiha_candidate(1, 1)
+    top_candidate = make_fatiha_candidate(5, 7)
+    candidates = (
+        outside_anchor,
+        top_candidate,
+        make_fatiha_candidate(1, 7),
+    )
+    ranked_matches = [
+        verse_detection_service.RankedVerseCandidate(
+            1,
+            top_candidate,
+            94,
+            top_candidate.normalized_text,
+        ),
+    ]
+    acceptance = verse_detection_service.assess_match_acceptance(ranked_matches)
+
+    inferred_match = verse_detection_service.infer_enclosing_passage_match(
+        outside_anchor.normalized_text,
+        ranked_matches,
+        candidates,
+        acceptance,
+    )
+
+    assert acceptance.accepted is True
+    assert inferred_match is None
+
+
+def test_passage_inference_rejects_verse_evidence_recited_out_of_order():
+    first_verse = make_fatiha_candidate(1, 1)
+    fifth_verse = make_fatiha_candidate(5, 5)
+    top_candidate = make_fatiha_candidate(5, 7)
+    candidates = (
+        first_verse,
+        fifth_verse,
+        top_candidate,
+        make_fatiha_candidate(1, 7),
+    )
+    ranked_matches = [
+        verse_detection_service.RankedVerseCandidate(
+            2,
+            top_candidate,
+            94,
+            top_candidate.normalized_text,
+        ),
+    ]
+    acceptance = verse_detection_service.assess_match_acceptance(ranked_matches)
+    reversed_transcription = (
+        f"{fifth_verse.normalized_text} {first_verse.normalized_text}"
+    )
+
+    inferred_match = verse_detection_service.infer_enclosing_passage_match(
+        reversed_transcription,
+        ranked_matches,
+        candidates,
+        acceptance,
+    )
+
+    assert inferred_match is None
+
+
+def test_passage_inference_does_not_count_repeated_verse_as_multiple_evidence():
+    repeated_verse = make_fatiha_candidate(1, 1)
+    top_candidate = make_fatiha_candidate(5, 7)
+    candidates = (
+        repeated_verse,
+        top_candidate,
+        make_fatiha_candidate(1, 7),
+    )
+    ranked_matches = [
+        verse_detection_service.RankedVerseCandidate(
+            1,
+            top_candidate,
+            94,
+            top_candidate.normalized_text,
+        ),
+    ]
+    acceptance = verse_detection_service.assess_match_acceptance(ranked_matches)
+    repeated_transcription = " ".join([repeated_verse.normalized_text] * 3)
+
+    inferred_match = verse_detection_service.infer_enclosing_passage_match(
+        repeated_transcription,
+        ranked_matches,
+        candidates,
+        acceptance,
+    )
+
+    assert inferred_match is None
+
+
+def test_passage_inference_ignores_refrain_shared_by_multiple_verses():
+    refrain = "فباي الاء ربكما تكذبان"
+    first_refrain = QuranVerseCandidate(55, "الرحمن", "Ar-Rahman", 13, 13, refrain)
+    second_refrain = QuranVerseCandidate(55, "الرحمن", "Ar-Rahman", 16, 16, refrain)
+    top_candidate = QuranVerseCandidate(
+        55,
+        "الرحمن",
+        "Ar-Rahman",
+        16,
+        17,
+        f"{refrain} خلق الانسان من صلصال كالفخار",
+    )
+    enclosing_candidate = QuranVerseCandidate(
+        55,
+        "الرحمن",
+        "Ar-Rahman",
+        13,
+        17,
+        f"{refrain} وله الجوار المنشات في البحر كالاعلم {refrain} "
+        "خلق الانسان من صلصال كالفخار",
+    )
+    candidates = (
+        first_refrain,
+        second_refrain,
+        top_candidate,
+        enclosing_candidate,
+    )
+    ranked_matches = [
+        verse_detection_service.RankedVerseCandidate(
+            2,
+            top_candidate,
+            96,
+            top_candidate.normalized_text,
+        ),
+    ]
+    acceptance = verse_detection_service.assess_match_acceptance(ranked_matches)
+
+    inferred_match = verse_detection_service.infer_enclosing_passage_match(
+        f"{refrain} {refrain}",
+        ranked_matches,
+        candidates,
+        acceptance,
+    )
+
+    assert inferred_match is None
+
+
+def test_passage_inference_requires_anchor_unique_across_the_quran():
+    duplicated_text = FATIHA_VERSES[0]
+    candidates = (
+        make_fatiha_candidate(1, 1),
+        QuranVerseCandidate(
+            2,
+            "البقرة",
+            "Al-Baqarah",
+            1,
+            1,
+            duplicated_text,
+        ),
+        make_fatiha_candidate(5, 5),
+    )
+
+    evidence = verse_detection_service.extract_passage_verse_evidence(
+        f"{duplicated_text} {FATIHA_VERSES[4]}",
+        candidates,
+        sourate_id=1,
+    )
+
+    assert [item.candidate.start_verse for item in evidence] == [5]
+
+
+def test_inferred_passage_does_not_inherit_confidence_from_shorter_match(
+    monkeypatch,
+):
+    top_candidate = make_fatiha_candidate(5, 7)
+    inferred_candidate = make_fatiha_candidate(1, 7)
+    competing_candidate = QuranVerseCandidate(
+        2,
+        "البقرة",
+        "Al-Baqarah",
+        255,
+        255,
+        "الله لا اله الا هو الحي القيوم",
+    )
+    ranked_matches = [
+        verse_detection_service.RankedVerseCandidate(
+            0,
+            top_candidate,
+            94,
+            top_candidate.normalized_text,
+        ),
+        verse_detection_service.RankedVerseCandidate(
+            2,
+            competing_candidate,
+            80,
+            competing_candidate.normalized_text,
+        ),
+    ]
+    inferred_match = verse_detection_service.RankedVerseCandidate(
+        1,
+        inferred_candidate,
+        75,
+        inferred_candidate.normalized_text,
+    )
+    monkeypatch.setattr(
+        verse_detection_service,
+        "get_quran_verse_candidates",
+        lambda: (top_candidate, inferred_candidate, competing_candidate),
+    )
+    monkeypatch.setattr(
+        verse_detection_service,
+        "rank_verse_candidates",
+        lambda *_args, **_kwargs: ranked_matches,
+    )
+    monkeypatch.setattr(
+        verse_detection_service,
+        "infer_enclosing_passage_match",
+        lambda *_args, **_kwargs: inferred_match,
+    )
+
+    outcome = verse_detection_service.detect_verse_with_metadata(
+        [{"text": top_candidate.normalized_text}],
+        include_ambiguous_verse=True,
+    )
+
+    assert outcome.status == "confident"
+    assert outcome.verse is not None
+    assert outcome.verse["start_verse"] == 5
+    assert outcome.verse["end_verse"] == 7
+    assert outcome.score == 0.94
+    assert outcome.score_margin == 0.14
+
+
+def test_passage_inference_preserves_cross_surah_ambiguity():
+    top_candidate = make_fatiha_candidate(5, 7)
+    competing_candidate = QuranVerseCandidate(
+        2,
+        "البقرة",
+        "Al-Baqarah",
+        1,
+        1,
+        "الم ذلك الكتب لا ريب فيه",
+    )
+    ranked_matches = [
+        verse_detection_service.RankedVerseCandidate(
+            0,
+            top_candidate,
+            94,
+            top_candidate.normalized_text,
+        ),
+        verse_detection_service.RankedVerseCandidate(
+            1,
+            competing_candidate,
+            90,
+            competing_candidate.normalized_text,
+        ),
+    ]
+    acceptance = verse_detection_service.assess_match_acceptance(ranked_matches)
+
+    inferred_match = verse_detection_service.infer_enclosing_passage_match(
+        " ".join(FATIHA_VERSES),
+        ranked_matches,
+        make_fatiha_inference_candidates(),
+        acceptance,
+    )
+
+    assert acceptance.reason == "ambiguous_match"
+    assert inferred_match is None
+
+
+def test_strong_inferred_passage_can_resolve_internal_ambiguity(monkeypatch):
+    short_candidate = make_fatiha_candidate(5, 7)
+    competing_candidate = make_fatiha_candidate(1, 2)
+    inferred_candidate = make_fatiha_candidate(1, 7)
+    ranked_matches = [
+        verse_detection_service.RankedVerseCandidate(
+            0,
+            short_candidate,
+            96,
+            short_candidate.normalized_text,
+            ranking_score_percent=92,
+        ),
+        verse_detection_service.RankedVerseCandidate(
+            1,
+            competing_candidate,
+            95,
+            competing_candidate.normalized_text,
+            ranking_score_percent=89,
+        ),
+    ]
+    inferred_match = verse_detection_service.RankedVerseCandidate(
+        2,
+        inferred_candidate,
+        98,
+        inferred_candidate.normalized_text,
+        ranking_score_percent=98,
+    )
+    monkeypatch.setattr(
+        verse_detection_service,
+        "get_quran_verse_candidates",
+        lambda: (short_candidate, competing_candidate, inferred_candidate),
+    )
+    monkeypatch.setattr(
+        verse_detection_service,
+        "rank_verse_candidates",
+        lambda *_args, **_kwargs: ranked_matches,
+    )
+    monkeypatch.setattr(
+        verse_detection_service,
+        "infer_enclosing_passage_match",
+        lambda *_args, **_kwargs: inferred_match,
+    )
+
+    outcome = verse_detection_service.detect_verse_with_metadata(
+        [{"text": inferred_candidate.normalized_text}],
+        include_ambiguous_verse=True,
+    )
+
+    assert outcome.status == "confident"
+    assert outcome.rejection_reason is None
+    assert outcome.verse is not None
+    assert outcome.verse["start_verse"] == 1
+    assert outcome.verse["end_verse"] == 7
+
+
+def test_passage_inference_does_not_rescue_unrelated_arabic_text(monkeypatch):
+    monkeypatch.setattr(
+        verse_detection_service,
+        "get_quran_verse_candidates",
+        make_fatiha_inference_candidates,
+    )
+
+    outcome = verse_detection_service.detect_verse_with_metadata(
+        [{"text": "هذا حديث يومي عن العمل والطقس وليس تلاوه من القران"}],
+        include_ambiguous_verse=True,
+    )
+
+    assert outcome.verse is None
+    assert outcome.status in {"insufficient", "probable"}

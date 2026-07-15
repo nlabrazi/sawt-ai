@@ -26,6 +26,17 @@ const verseLabel = computed(() => {
 })
 
 const topImam = computed(() => props.result.imam_predictions?.[0] ?? null)
+const resultKicker = computed(() => {
+  return props.result.detection?.status === 'ambiguous'
+    ? 'Hypothèse à vérifier'
+    : 'Correspondance trouvée'
+})
+const detailsActionLabel = computed(() =>
+  props.result.detection?.status === 'ambiguous' ? 'Vérifier le passage' : 'Voir le verset',
+)
+const showImam = computed(() => {
+  return Boolean(props.result.imam_detection_enabled)
+})
 const confidenceUi = computed(() => {
   if (props.result.detection?.status === 'ambiguous') {
     return {
@@ -41,17 +52,6 @@ const confidenceUi = computed(() => {
     detectionPolicy.value.min_probable_similarity,
   )
 })
-const confidenceScoreLabel = computed(() => {
-  return `${formatSimilarityPercent(props.result.verse?.similarity ?? 0)}%`
-})
-
-function formatSimilarityPercent(similarity: number) {
-  const percent = similarity <= 1 ? similarity * 100 : similarity
-  const safePercent = Math.max(0, Math.min(100, percent))
-
-  return Math.round(safePercent)
-}
-
 const imamName = computed(() => {
   if (!topImam.value?.name) {
     switch (props.result.imam_status) {
@@ -93,7 +93,7 @@ const imamStatusText = computed(() => {
   <article class="result-card">
     <template v-if="result.verse">
       <section class="hero-panel">
-        <p class="hero-kicker">Passage détecté</p>
+        <p class="hero-kicker">{{ resultKicker }}</p>
 
         <div class="hero-main">
           <p class="surah-arabic">
@@ -111,18 +111,17 @@ const imamStatusText = computed(() => {
 
         <div class="result-meta">
           <div class="confidence-detail" :class="confidenceUi.className">
-            <span class="confidence-score">{{ confidenceScoreLabel }}</span>
             <span class="confidence-label">
               {{ confidenceUi.label }}
             </span>
           </div>
 
-          <div class="imam-chip">
+          <div v-if="showImam" class="imam-chip">
             {{ imamName }}
           </div>
         </div>
 
-        <p v-if="imamStatusText" class="imam-status-text">
+        <p v-if="showImam && imamStatusText" class="imam-status-text">
           {{ imamStatusText }}
         </p>
 
@@ -136,7 +135,7 @@ const imamStatusText = computed(() => {
             @click="isDetailsOpen = true"
           >
             <Eye class="action-icon" :stroke-width="2" aria-hidden="true" />
-            Voir le verset
+            {{ detailsActionLabel }}
           </button>
         </div>
       </section>
@@ -168,13 +167,11 @@ const imamStatusText = computed(() => {
 }
 
 .hero-panel {
-  border-radius: 32px;
+  border-radius: 24px;
   border: 1px solid rgba(148, 163, 184, 0.14);
-  background:
-    linear-gradient(180deg, rgba(10, 20, 37, 0.76) 0%, rgba(7, 15, 30, 0.68) 100%);
-  backdrop-filter: blur(14px);
-  box-shadow: 0 24px 80px rgba(2, 6, 23, 0.22);
-  padding: 28px;
+  background: rgba(9, 18, 32, 0.66);
+  box-shadow: 0 18px 52px rgba(2, 6, 23, 0.18);
+  padding: 26px;
 }
 
 .hero-kicker {
@@ -192,7 +189,7 @@ const imamStatusText = computed(() => {
 
 .surah-arabic {
   margin: 0;
-  font-size: 56px;
+  font-size: 50px;
   line-height: 1.1;
   font-family: 'Amiri', serif;
   direction: rtl;
@@ -202,7 +199,7 @@ const imamStatusText = computed(() => {
 
 .surah-transliteration {
   margin: 12px 0 0;
-  font-size: 28px;
+  font-size: 25px;
   font-weight: 800;
   text-align: center;
   color: #eff6ff;
@@ -239,8 +236,7 @@ const imamStatusText = computed(() => {
 }
 
 .confidence-detail {
-  gap: 8px;
-  padding: 4px 14px 4px 6px;
+  padding: 0 16px;
 }
 
 .confidence-detail.banner-success {
@@ -256,20 +252,6 @@ const imamStatusText = computed(() => {
 .confidence-detail.banner-error {
   border-color: rgba(239, 68, 68, 0.18);
   background: rgba(239, 68, 68, 0.1);
-}
-
-.confidence-score {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 48px;
-  min-height: 30px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  font-size: 16px;
-  line-height: 1;
-  font-weight: 800;
-  color: #eff6ff;
 }
 
 .confidence-label {
@@ -319,7 +301,7 @@ const imamStatusText = computed(() => {
 }
 
 .primary-btn {
-  background: linear-gradient(135deg, #3b82f6, #2563eb);
+  background: #2563eb;
   color: #fff;
   box-shadow: 0 10px 30px rgba(37, 99, 235, 0.22);
   display: inline-flex;

@@ -5,7 +5,11 @@ const hmrClientPort = process.env.NUXT_HMR_CLIENT_PORT
 const hmrHost = process.env.NUXT_HMR_HOST
 const isDevelopment = process.env.NODE_ENV === 'development'
 const usePolling = process.env.CHOKIDAR_USEPOLLING === 'true'
-const siteUrl = (process.env.NUXT_PUBLIC_SITE_URL || 'https://sawt-ai.nabster.dev').replace(/\/$/, '')
+const siteUrl = (process.env.NUXT_PUBLIC_SITE_URL || 'https://sawt-ai.nabster.dev').replace(
+  /\/$/,
+  '',
+)
+const contactEmail = process.env.NUXT_PUBLIC_CONTACT_EMAIL?.trim() || ''
 const siteName = 'Sawt AI'
 const siteDescription =
   'Identifiez un verset du Coran à partir d’un enregistrement audio grâce à l’intelligence artificielle.'
@@ -37,6 +41,7 @@ export default defineNuxtConfig({
   runtimeConfig: {
     public: {
       apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
+      contactEmail,
       siteUrl,
     },
   },
@@ -72,13 +77,19 @@ export default defineNuxtConfig({
         { property: 'og:image:type', content: 'image/png' },
         { property: 'og:image:width', content: '1024' },
         { property: 'og:image:height', content: '1024' },
-        { property: 'og:image:alt', content: 'Sawt AI, reconnaissance audio de versets coraniques' },
+        {
+          property: 'og:image:alt',
+          content: 'Sawt AI, reconnaissance audio de versets coraniques',
+        },
         { property: 'og:locale', content: 'fr_FR' },
         { name: 'twitter:card', content: 'summary_large_image' },
         { name: 'twitter:title', content: `${siteName} — Reconnaissance de versets coraniques` },
         { name: 'twitter:description', content: siteDescription },
         { name: 'twitter:image', content: socialImage },
-        { name: 'twitter:image:alt', content: 'Sawt AI, reconnaissance audio de versets coraniques' },
+        {
+          name: 'twitter:image:alt',
+          content: 'Sawt AI, reconnaissance audio de versets coraniques',
+        },
       ],
       link: [
         {

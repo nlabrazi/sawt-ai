@@ -58,3 +58,75 @@ def test_load_quran_catalog_does_not_load_whisper(monkeypatch, tmp_path):
 
     assert model_loader.whisper_model is None
     assert len(model_loader.get_quran_verse_candidates()) == 3
+
+
+def test_candidate_catalog_includes_complete_seven_verse_passage():
+    payload = [
+        {
+            "id": 1,
+            "name": "الفاتحة",
+            "transliteration": "Al-Fatihah",
+            "verses": [
+                {"id": verse_id, "text": f"كلمة اية {verse_id}"}
+                for verse_id in range(1, 8)
+            ],
+        },
+    ]
+
+    candidates = model_loader._build_quran_verse_candidates(payload)
+
+    complete_passage = next(
+        candidate
+        for candidate in candidates
+        if candidate.start_verse == 1 and candidate.end_verse == 7
+    )
+    assert complete_passage.sourate_id == 1
+
+
+def test_candidate_catalog_keeps_long_surah_growth_bounded():
+    verse_count = 100
+    payload = [
+        {
+            "id": 2,
+            "name": "سورة طويلة",
+            "transliteration": "Long Surah",
+            "verses": [
+                {"id": verse_id, "text": "كلمة"}
+                for verse_id in range(1, verse_count + 1)
+            ],
+        },
+    ]
+
+    candidates = model_loader._build_quran_verse_candidates(payload)
+    expected_count = sum(
+        verse_count - window_size + 1
+        for window_size in range(1, model_loader.MAX_VERSE_DETECTION_WINDOW_SIZE + 1)
+    )
+
+    assert len(candidates) == expected_count
+    assert max(
+        candidate.end_verse - candidate.start_verse + 1
+        for candidate in candidates
+    ) == model_loader.MAX_VERSE_DETECTION_WINDOW_SIZE
+
+
+def test_candidate_catalog_caps_multi_verse_passages_by_word_count():
+    long_verse = " ".join(["كلمة"] * 40)
+    payload = [
+        {
+            "id": 2,
+            "name": "سورة طويلة",
+            "transliteration": "Long Surah",
+            "verses": [
+                {"id": 1, "text": long_verse},
+                {"id": 2, "text": long_verse},
+            ],
+        },
+    ]
+
+    candidates = model_loader._build_quran_verse_candidates(payload)
+
+    assert [(candidate.start_verse, candidate.end_verse) for candidate in candidates] == [
+        (1, 1),
+        (2, 2),
+    ]
