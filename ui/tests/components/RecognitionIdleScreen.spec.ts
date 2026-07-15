@@ -23,7 +23,9 @@ describe('RecognitionIdleScreen', () => {
     expect(wrapper.text()).toContain(
       'Sawt AI vous propose la sourate et les versets correspondants.',
     )
-    expect(wrapper.text()).toContain('laisser l’analyse démarrer automatiquement')
+    expect(wrapper.text()).toContain(
+      'Appuyez pour commencer, puis une seconde fois pour arrêter et analyser.',
+    )
     expect(wrapper.text()).toContain('Importer un fichier audio')
     expect(wrapper.get('.button-label').text()).toBe('Commencer')
     expect(wrapper.find('.record-action').exists()).toBe(false)
@@ -69,7 +71,8 @@ describe('RecognitionIdleScreen', () => {
     expect(progress.attributes('aria-valuemax')).toBe('90')
     expect(progressFill.attributes('style')).toContain('width: 33.3333')
     expect(wrapper.get('.button-label').text()).toBe('Arrêter et analyser')
-    expect(wrapper.text()).toContain('L’analyse démarre automatiquement')
+    expect(wrapper.text()).toContain('Appuyez à nouveau pour arrêter et analyser.')
+    expect(wrapper.text()).not.toContain('automatiquement dès qu’un passage est reconnu')
     expect(wrapper.find('.secondary-actions').exists()).toBe(false)
   })
 

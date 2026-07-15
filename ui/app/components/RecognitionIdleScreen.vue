@@ -41,10 +41,10 @@ const subtitle = computed(() => {
     : 'Sawt AI vous propose la sourate et les versets correspondants.'
 })
 
-const automaticAnalysisHint = computed(() => {
+const recognitionActionHint = computed(() => {
   return props.isRecording
-    ? 'L’analyse démarre automatiquement dès qu’un passage est reconnu.'
-    : 'Vous pouvez arrêter vous-même, ou laisser l’analyse démarrer automatiquement.'
+    ? 'Appuyez à nouveau pour arrêter et analyser.'
+    : 'Appuyez pour commencer, puis une seconde fois pour arrêter et analyser.'
 })
 
 const recordingTime = computed(() => `${props.recordingSeconds ?? 0}s`)
@@ -190,12 +190,12 @@ function onFileChange(event: Event) {
         <RecognitionActionButton
           :is-recording="isRecording"
           :audio-level="audioLevel"
-          aria-describedby="recognition-guidance automatic-analysis-hint"
+          aria-describedby="recognition-guidance recognition-action-hint"
           @click="onMicroButtonClick"
         />
 
-        <p id="automatic-analysis-hint" class="automatic-analysis-hint">
-          {{ automaticAnalysisHint }}
+        <p id="recognition-action-hint" class="recognition-action-hint">
+          {{ recognitionActionHint }}
         </p>
 
         <div v-if="micError || recordingError" class="status-message is-error" role="alert">
@@ -408,7 +408,7 @@ function onFileChange(event: Event) {
   gap: 8px;
 }
 
-.automatic-analysis-hint {
+.recognition-action-hint {
   margin: -2px 0 0;
   max-width: 390px;
   color: #91a2b8;
@@ -618,7 +618,7 @@ function onFileChange(event: Event) {
     font-size: 30px;
   }
 
-  .automatic-analysis-hint {
+  .recognition-action-hint {
     max-width: 320px;
     font-size: 13px;
   }
