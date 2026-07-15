@@ -41,6 +41,170 @@ def test_transcribe_audio_auto_detects_language_and_uses_vad(monkeypatch):
     ]
 
 
+def test_transcribe_audio_can_preserve_recitation_when_vad_is_disabled(monkeypatch):
+    model = FakeWhisperModel([SimpleNamespace(text=" الحمد لله رب العالمين ")])
+    monkeypatch.setattr(transcription_service, "get_whisper_model", lambda: model)
+
+    result = transcription_service.transcribe_audio(
+        "/tmp/recitation.wav",
+        language="ar",
+        vad_filter=False,
+    )
+
+    assert result == [{"text": "الحمد لله رب العالمين"}]
+    assert model.calls[0][1]["vad_filter"] is False
+    assert model.calls[0][1]["language"] == "ar"
+    assert "vad_parameters" not in model.calls[0][1]
+
+
+def make_metadata():
+    return transcription_service.TranscriptionMetadata(
+        language="ar",
+        language_probability=1.0,
+        arabic_probability=1.0,
+        language_probabilities=(("ar", 1.0),),
+        duration_seconds=12.0,
+        duration_after_vad_seconds=12.0,
+        speech_duration_seconds=12.0,
+        average_log_probability=-0.3,
+        average_no_speech_probability=0.1,
+        max_compression_ratio=1.4,
+        max_temperature=0.0,
+        segment_metrics=(),
+    )
+
+
+def test_language_screen_samples_beginning_middle_and_end():
+    windows = transcription_service._distributed_audio_windows(
+        list(range(100)),
+        window_sample_count=30,
+        max_windows=3,
+    )
+
+    assert tuple(window[0] for window in windows) == (0, 35, 70)
+    assert all(len(window) == 30 for window in windows)
+
+
+def test_language_screen_preserves_arabic_found_in_one_window(monkeypatch):
+    class FakeLanguageModel:
+        def __init__(self):
+            self.results = iter([
+                ("fr", 0.92, [("fr", 0.92), ("ar", 0.02)]),
+                ("ar", 0.81, [("ar", 0.81), ("fr", 0.11)]),
+                ("fr", 0.88, [("fr", 0.88), ("ar", 0.03)]),
+            ])
+
+        def detect_language(self, **_options):
+            return next(self.results)
+
+    monkeypatch.setattr(transcription_service, "AUDIO_SAMPLE_RATE", 1)
+    monkeypatch.setattr(
+        transcription_service,
+        "LANGUAGE_SCREENING_WINDOW_SECONDS",
+        30,
+    )
+
+    language, probability, probabilities = (
+        transcription_service._detect_language_across_windows(
+            list(range(100)),
+            FakeLanguageModel(),
+        )
+    )
+
+    assert language == "fr"
+    assert probability == 0.92
+    assert dict(probabilities)["ar"] == 0.81
+    assert not transcription_service.is_confidently_non_arabic(
+        language,
+        probability,
+        dict(probabilities)["ar"],
+    )
+
+
+def test_quran_transcription_skips_decode_when_vad_finds_no_speech(monkeypatch):
+    screen = transcription_service.AudioLanguageScreen(
+        language=None,
+        language_probability=None,
+        arabic_probability=None,
+        language_probabilities=(),
+        duration_seconds=6.0,
+        speech_duration_seconds=0.0,
+    )
+    monkeypatch.setattr(transcription_service, "detect_audio_language", lambda _path: screen)
+    monkeypatch.setattr(
+        transcription_service,
+        "transcribe_audio",
+        lambda *_args, **_kwargs: pytest.fail("text decoding must be skipped"),
+    )
+
+    result = transcription_service.transcribe_quran_audio("/tmp/silence.wav")
+
+    assert result == []
+    assert result.metadata.language is None
+    assert result.metadata.speech_duration_seconds == 0
+
+
+def test_quran_transcription_skips_confident_non_arabic_audio(monkeypatch):
+    screen = transcription_service.AudioLanguageScreen(
+        language="fr",
+        language_probability=0.98,
+        arabic_probability=0.0,
+        language_probabilities=(("fr", 0.98), ("ar", 0.0)),
+        duration_seconds=8.0,
+        speech_duration_seconds=7.2,
+    )
+    monkeypatch.setattr(transcription_service, "detect_audio_language", lambda _path: screen)
+    monkeypatch.setattr(
+        transcription_service,
+        "transcribe_audio",
+        lambda *_args, **_kwargs: pytest.fail("text decoding must be skipped"),
+    )
+
+    result = transcription_service.transcribe_quran_audio("/tmp/french.wav")
+
+    assert result == []
+    assert result.metadata.language == "fr"
+    assert result.metadata.arabic_probability == 0
+
+
+def test_quran_transcription_forces_arabic_for_uncertain_audio(monkeypatch):
+    screen = transcription_service.AudioLanguageScreen(
+        language="fr",
+        language_probability=0.61,
+        arabic_probability=0.10,
+        language_probabilities=(("fr", 0.61), ("ar", 0.10)),
+        duration_seconds=48.0,
+        speech_duration_seconds=31.0,
+    )
+    calls = []
+
+    def fake_transcribe(audio_path, **options):
+        calls.append((audio_path, options))
+        return transcription_service.TranscriptionResult(
+            [{"text": "بسم الله الرحمن الرحيم"}],
+            make_metadata(),
+        )
+
+    monkeypatch.setattr(transcription_service, "detect_audio_language", lambda _path: screen)
+    monkeypatch.setattr(transcription_service, "transcribe_audio", fake_transcribe)
+
+    result = transcription_service.transcribe_quran_audio("/tmp/uncertain.wav")
+
+    assert result == [{"text": "بسم الله الرحمن الرحيم"}]
+    assert calls == [
+        (
+            "/tmp/uncertain.wav",
+            {"language": "ar", "vad_filter": False},
+        )
+    ]
+    assert result.metadata.language == "fr"
+    assert result.metadata.language_probability == 0.61
+    assert result.metadata.arabic_probability == 0.10
+    assert result.metadata.duration_seconds == 48.0
+    assert result.metadata.duration_after_vad_seconds == 31.0
+    assert result.metadata.speech_duration_seconds == 31.0
+
+
 def test_transcribe_audio_preserves_language_and_decode_metrics(monkeypatch):
     model = FakeWhisperModel([
         SimpleNamespace(

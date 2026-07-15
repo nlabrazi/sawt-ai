@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from faster_whisper import WhisperModel
 
 BASE_DIR = Path(__file__).resolve().parents[2]
-WHISPER_MODEL_NAME = os.getenv("WHISPER_MODEL_NAME", "base")
+WHISPER_MODEL_NAME = os.getenv("WHISPER_MODEL_NAME", "turbo")
 QURAN_VERSETS_PATH = Path(
     os.getenv("QURAN_VERSETS_PATH", str(BASE_DIR / "assets" / "quran_versets.json"))
 )

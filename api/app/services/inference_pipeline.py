@@ -13,13 +13,12 @@ from app.core.transcription_policy import (
     HIGH_TEMPERATURE,
     HIGH_TEMPERATURE_MAX_LOG_PROBABILITY,
     MIN_AVERAGE_LOG_PROBABILITY,
-    NON_ARABIC_LANGUAGE_MIN_PROBABILITY,
-    NON_ARABIC_MAX_ARABIC_PROBABILITY,
+    is_confidently_non_arabic,
 )
 from app.services.transcription_service import (
     TranscriptionMetadata,
     TranscriptionResult,
-    transcribe_audio,
+    transcribe_quran_audio as transcribe_audio,
 )
 from app.services.verse_detection_service import (
     VerseDetectionOutcome,
@@ -52,6 +51,14 @@ class AudioQualityAssessment:
 
 def assess_audio_quality(segments) -> AudioQualityAssessment:
     """Écarte uniquement les cas dont les signaux Whisper sont suffisamment nets."""
+    metadata: TranscriptionMetadata | None = getattr(segments, "metadata", None)
+    if metadata is not None and is_confidently_non_arabic(
+        metadata.language,
+        metadata.language_probability,
+        metadata.arabic_probability,
+    ):
+        return AudioQualityAssessment(False, "non_arabic_speech")
+
     has_transcription = any(
         bool(segment.get("text", "").strip())
         for segment in segments
@@ -60,20 +67,9 @@ def assess_audio_quality(segments) -> AudioQualityAssessment:
     if not has_transcription:
         return AudioQualityAssessment(False, "insufficient_speech")
 
-    metadata: TranscriptionMetadata | None = getattr(segments, "metadata", None)
     if metadata is None:
         # Compatibilité avec les doubles de tests et les anciens appelants.
         return AudioQualityAssessment(True, None)
-
-    is_confidently_non_arabic = (
-        metadata.language not in (None, "ar")
-        and metadata.language_probability is not None
-        and metadata.language_probability >= NON_ARABIC_LANGUAGE_MIN_PROBABILITY
-        and metadata.arabic_probability is not None
-        and metadata.arabic_probability < NON_ARABIC_MAX_ARABIC_PROBABILITY
-    )
-    if is_confidently_non_arabic:
-        return AudioQualityAssessment(False, "non_arabic_speech")
 
     average_log_probability = metadata.average_log_probability
     has_low_average_log_probability = (
