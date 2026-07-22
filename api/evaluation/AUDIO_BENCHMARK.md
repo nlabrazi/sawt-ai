@@ -255,7 +255,7 @@ requis est vide. Cela permet la boucle de travail : construire le corpus,
 mesurer, corriger le pipeline dans un commit séparé, puis rejouer exactement le
 même corpus avant toute nouvelle modification.
 
-## Baseline mesurée le 15 juillet 2026
+## Baseline mesurée le 22 juillet 2026
 
 La baseline structurée et expurgée est versionnée dans
 `audio_quality_baseline.json`. C'est un **snapshot d'un run local manuel**. Le
@@ -272,24 +272,25 @@ avec six variantes par source : propre, bruits blanc 20 dB et 10 dB, bruit rose
 | Mesure | Résultat |
 |---|---:|
 | Plage exacte proposée, ambigu inclus | 25/36 — 69,4 % |
-| Bonne sourate proposée, ambigu inclus | 31/36 — 86,1 % |
+| Bonne sourate proposée, ambigu inclus | 32/36 — 88,9 % |
 | Passage proposé avec statut `confident` | 15/36 — 41,7 % |
 | Plage exacte avec statut `confident` | 13/36 — 36,1 % |
 | Bonne sourate avec statut `confident` | 15/36 — 41,7 % |
-| Hypothèses avec statut `ambiguous` | 16/36 — 44,4 % |
+| Hypothèses avec statut `ambiguous` | 17/36 — 47,2 % |
 | Mauvaise sourate | 0/36 |
-| Faux négatifs conservateurs | 5/36 |
-| Négatifs correctement rejetés | 10/10 — 100 % |
-| Faux positifs négatifs | 0/10 |
-| Erreurs techniques | 0/46 |
-| Latence moyenne / p50 / p95 | 15,83 s / 15,98 s / 27,29 s |
+| Faux négatifs conservateurs | 4/36 |
+| Négatifs correctement rejetés | 15/15 — 100 % |
+| Faux positifs négatifs | 0/15 |
+| Erreurs techniques | 0/51 |
+| Latence moyenne / p50 / p95 | 16,04 s / 17,87 s / 32,65 s |
 
-Les cinq faux négatifs correspondent aux mélanges où la voix française
-synthétique domine suffisamment la récitation. Le pipeline refuse ces cas au
-lieu d'inventer une sourate. Les six enregistrements ne représentent que trois
-identités de réciteurs et quatre sourates : ces chiffres constituent un
-garde-fou de non-régression, pas une estimation générale sur les 114 sourates ni
-sur de vraies voix d'enfants.
+Les quatre faux négatifs correspondent aux mélanges où la voix française
+synthétique domine suffisamment la récitation. Deux conservent une hypothèse
+explicitement `probable`, sans être présentées comme certaines. Le pipeline
+refuse les deux autres au lieu d'inventer une sourate. Les six enregistrements
+ne représentent que trois identités de réciteurs et quatre sourates : ces
+chiffres constituent un garde-fou de non-régression, pas une estimation générale
+sur les 114 sourates ni sur de vraies voix d'enfants.
 
 Les enregistrements publics du run local proviennent de Wikimedia Commons :
 [001Fatiha (CC0)](https://commons.wikimedia.org/wiki/File:001Fatiha.ogg),
