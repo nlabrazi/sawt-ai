@@ -80,6 +80,68 @@
       "tags": ["public-safe", "synthetic", "instrumental"]
     },
     {
+      "id": "short_silence_2s",
+      "label": "negative",
+      "category": "silence",
+      "expected_verse": null,
+      "source": {
+        "type": "synthetic",
+        "generator": "silence",
+        "duration_seconds": 2
+      },
+      "tags": ["public-safe", "synthetic", "short"]
+    },
+    {
+      "id": "low_tone_8s",
+      "label": "negative",
+      "category": "tone",
+      "expected_verse": null,
+      "source": {
+        "type": "synthetic",
+        "generator": "tone",
+        "duration_seconds": 8,
+        "frequency_hz": 110
+      },
+      "tags": ["public-safe", "synthetic", "non-speech"]
+    },
+    {
+      "id": "long_domestic_background_30s",
+      "label": "negative",
+      "category": "background_noise",
+      "expected_verse": null,
+      "source": {
+        "type": "synthetic",
+        "generator": "background_noise",
+        "duration_seconds": 30
+      },
+      "tags": ["public-safe", "synthetic", "non-vocal", "long"]
+    },
+    {
+      "id": "synthetic_song_slow_12s",
+      "label": "negative",
+      "category": "music",
+      "expected_verse": null,
+      "source": {
+        "type": "synthetic",
+        "generator": "synthetic_song",
+        "duration_seconds": 12,
+        "tempo_bpm": 72
+      },
+      "tags": ["public-safe", "synthetic", "instrumental"]
+    },
+    {
+      "id": "synthetic_vocalization_8s",
+      "label": "negative",
+      "category": "synthetic_vocal_like",
+      "expected_verse": null,
+      "source": {
+        "type": "synthetic",
+        "generator": "synthetic_vocalization",
+        "duration_seconds": 8
+      },
+      "tags": ["public-safe", "synthetic", "vocal-like", "non-linguistic"]
+    },
+    {
       "id": "french_tts_local",
       "label": "negative",
       "category": "french_speech",

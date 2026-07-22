@@ -18,6 +18,7 @@ def build_transcription(
     average_log_probability=-0.4,
     max_compression_ratio=1.8,
     max_temperature=0.0,
+    speech_duration_seconds=3.0,
 ):
     metadata = TranscriptionMetadata(
         language=language,
@@ -26,7 +27,7 @@ def build_transcription(
         language_probabilities=(),
         duration_seconds=4.0,
         duration_after_vad_seconds=3.0,
-        speech_duration_seconds=3.0,
+        speech_duration_seconds=speech_duration_seconds,
         average_log_probability=average_log_probability,
         average_no_speech_probability=0.1,
         max_compression_ratio=max_compression_ratio,
@@ -55,6 +56,46 @@ def test_compute_imam_status_uses_score_thresholds():
     assert compute_imam_status([{"name": "A", "score": 0.4}], detect_imam=True) == "low"
 
 
+def test_recognition_decision_signals_exclude_transcription_content():
+    segments = build_transcription("قل هو الله احد")
+    detection = VerseDetectionOutcome(
+        verse={"sourate_id": 112, "similarity": 0.91},
+        status="confident",
+        score=0.91,
+        score_margin=0.12,
+        matched_word_count=4,
+        rejection_reason=None,
+        candidates=(
+            {
+                "rank": 1,
+                "sourate_id": 112,
+                "start_verse": 1,
+                "end_verse": 4,
+                "similarity": 0.91,
+                "ranking_score": 0.88,
+                "matched_word_count": 4,
+                "coverage": 1.0,
+                "continuity": 0.94,
+            },
+        ),
+    )
+
+    signals = inference_pipeline.build_recognition_decision_signals(
+        segments,
+        detection,
+        analyzed_duration_seconds=4.0,
+        analysis_attempts=1,
+    )
+
+    assert signals["language"] == "ar"
+    assert signals["detectionStatus"] == "confident"
+    assert signals["predictedSurahId"] == 112
+    assert signals["candidateCount"] == 1
+    assert signals["topCandidates"][0]["coverage"] == 1.0
+    assert signals["transcriptionChars"] > 0
+    assert "قل" not in str(signals)
+
+
 def test_audio_quality_rejects_empty_transcription():
     quality = inference_pipeline.assess_audio_quality(build_transcription(None))
 
@@ -62,7 +103,7 @@ def test_audio_quality_rejects_empty_transcription():
     assert quality.rejection_reason == "insufficient_speech"
 
 
-def test_audio_quality_rejects_only_confidently_non_arabic_speech():
+def test_decoded_language_conflict_becomes_strict_non_blocking_warning():
     french = build_transcription(
         "Bonjour, ceci est un texte français.",
         language="fr",
@@ -76,13 +117,14 @@ def test_audio_quality_rejects_only_confidently_non_arabic_speech():
         arabic_probability=0.2,
     )
 
-    assert inference_pipeline.assess_audio_quality(french).rejection_reason == (
-        "non_arabic_speech"
-    )
+    french_quality = inference_pipeline.assess_audio_quality(french)
+    assert french_quality.accepted is True
+    assert french_quality.rejection_reason is None
+    assert french_quality.warning_reason == "non_arabic_speech"
     assert inference_pipeline.assess_audio_quality(uncertain).accepted is True
 
 
-def test_audio_quality_rejects_low_decode_confidence():
+def test_audio_quality_marks_low_decode_confidence_as_non_blocking_warning():
     low_log_probability = build_transcription(average_log_probability=-1.01)
     unstable_temperature = build_transcription(
         average_log_probability=-0.81,
@@ -93,15 +135,15 @@ def test_audio_quality_rejects_low_decode_confidence():
         max_compression_ratio=2.41,
     )
 
-    assert inference_pipeline.assess_audio_quality(
-        low_log_probability
-    ).rejection_reason == "low_transcription_confidence"
-    assert inference_pipeline.assess_audio_quality(
-        unstable_temperature
-    ).rejection_reason == "low_transcription_confidence"
-    assert inference_pipeline.assess_audio_quality(
-        suspicious_compression
-    ).rejection_reason == "low_transcription_confidence"
+    for transcription in (
+        low_log_probability,
+        unstable_temperature,
+        suspicious_compression,
+    ):
+        quality = inference_pipeline.assess_audio_quality(transcription)
+        assert quality.accepted is True
+        assert quality.rejection_reason is None
+        assert quality.warning_reason == "low_transcription_confidence"
 
 
 def test_audio_quality_does_not_reject_compression_without_weak_decode():
@@ -125,9 +167,72 @@ def test_audio_quality_rejection_happens_before_verse_matching(monkeypatch):
 
     detection = inference_pipeline.detect_verse_after_audio_quality_check(
         build_transcription(
-            "Texte lu en français",
+            None,
             language="fr",
             language_probability=0.94,
+            arabic_probability=0.01,
+        ),
+        include_ambiguous_verse=True,
+    )
+
+    assert detection.verse is None
+    assert detection.status == "insufficient"
+    assert detection.rejection_reason == "non_arabic_speech"
+
+
+def test_decoded_language_conflict_exposes_only_strong_quran_evidence(monkeypatch):
+    ambiguous_result_flags = []
+
+    def fake_detect(_segments, include_ambiguous_verse=False):
+        ambiguous_result_flags.append(include_ambiguous_verse)
+        return VerseDetectionOutcome(
+            {"sourate_id": 112, "similarity": 0.91},
+            "confident",
+            0.91,
+            0.12,
+            8,
+            None,
+        )
+
+    monkeypatch.setattr(
+        inference_pipeline,
+        "detect_verse_with_metadata",
+        fake_detect,
+    )
+
+    detection = inference_pipeline.detect_verse_after_audio_quality_check(
+        build_transcription(
+            "قل هو الله احد",
+            language="fr",
+            language_probability=0.9,
+            arabic_probability=0.01,
+        ),
+        include_ambiguous_verse=True,
+    )
+
+    assert detection.status == "confident"
+    assert ambiguous_result_flags == [True]
+
+
+def test_language_conflict_suppresses_short_exact_quran_match(monkeypatch):
+    monkeypatch.setattr(
+        inference_pipeline,
+        "detect_verse_with_metadata",
+        lambda *_args, **_kwargs: VerseDetectionOutcome(
+            {"sourate_id": 1, "similarity": 1.0},
+            "confident",
+            1.0,
+            0.2,
+            4,
+            None,
+        ),
+    )
+
+    detection = inference_pipeline.detect_verse_after_audio_quality_check(
+        build_transcription(
+            "بسم الله الرحمن الرحيم",
+            language="fr",
+            language_probability=0.9,
             arabic_probability=0.01,
         ),
         include_ambiguous_verse=True,
@@ -190,6 +295,11 @@ def test_detect_verse_progressively_propagates_ambiguous_result_policy(monkeypat
         return [{"text": "نص غير كاف"}]
 
     monkeypatch.setattr(inference_pipeline, "transcribe_audio", fake_transcribe)
+    monkeypatch.setattr(
+        inference_pipeline,
+        "transcribe_rescue_audio",
+        lambda _audio_path, _metadata: [{"text": "نص غير كاف"}],
+    )
     def fake_detect(_segments, include_ambiguous_verse=False):
         ambiguous_result_flags.append(include_ambiguous_verse)
         return VerseDetectionOutcome(
@@ -216,14 +326,122 @@ def test_detect_verse_progressively_propagates_ambiguous_result_policy(monkeypat
     )
 
     assert transcription_calls == [None]
-    assert ambiguous_result_flags == [False]
+    assert ambiguous_result_flags == [False, False]
     assert detection.status == "insufficient"
     assert analyzed_duration == 12
+    assert attempts == 2
+
+
+def test_detect_verse_progressively_selects_better_conditional_rescue(monkeypatch):
+    primary_segments = [{"text": "نص غير كاف"}]
+    rescue_segments = [{"text": "قل هو الله احد"}]
+    detections = {
+        id(primary_segments): VerseDetectionOutcome(
+            None,
+            "probable",
+            0.72,
+            0.05,
+            3,
+            "score_too_low",
+        ),
+        id(rescue_segments): VerseDetectionOutcome(
+            {"sourate_id": 112, "similarity": 0.92},
+            "confident",
+            0.92,
+            0.15,
+            4,
+            None,
+        ),
+    }
+    monkeypatch.setattr(
+        inference_pipeline,
+        "transcribe_audio",
+        lambda _audio_path: primary_segments,
+    )
+    monkeypatch.setattr(
+        inference_pipeline,
+        "transcribe_rescue_audio",
+        lambda _audio_path, _metadata: rescue_segments,
+    )
+    monkeypatch.setattr(
+        inference_pipeline,
+        "detect_verse_after_audio_quality_check",
+        lambda segments, include_ambiguous_verse: detections[id(segments)],
+    )
+
+    segments, detection, _duration, attempts = (
+        inference_pipeline.detect_verse_progressively("/tmp/noisy.wav", 8)
+    )
+
+    assert segments is rescue_segments
+    assert detection.status == "confident"
+    assert attempts == 2
+
+
+def test_detect_verse_progressively_skips_rescue_for_strong_ambiguous_proposal(
+    monkeypatch,
+):
+    primary_segments = [{"text": "passage long"}]
+    primary_detection = VerseDetectionOutcome(
+        {"sourate_id": 1, "similarity": 0.95},
+        "ambiguous",
+        0.95,
+        0.04,
+        12,
+        "ambiguous_match",
+    )
+    monkeypatch.setattr(
+        inference_pipeline,
+        "transcribe_audio",
+        lambda _audio_path: primary_segments,
+    )
+    monkeypatch.setattr(
+        inference_pipeline,
+        "detect_verse_after_audio_quality_check",
+        lambda _segments, include_ambiguous_verse: primary_detection,
+    )
+    monkeypatch.setattr(
+        inference_pipeline,
+        "transcribe_rescue_audio",
+        lambda *_args: (_ for _ in ()).throw(
+            AssertionError("strong ambiguous proposals must not be retranscribed")
+        ),
+    )
+
+    segments, detection, _duration, attempts = (
+        inference_pipeline.detect_verse_progressively("/tmp/audio.wav", 12)
+    )
+
+    assert segments is primary_segments
+    assert detection is primary_detection
     assert attempts == 1
 
 
-def test_detect_verse_progressively_rejects_low_quality_complete_audio(monkeypatch):
+def test_language_conflict_rescue_requires_enough_detected_speech():
+    outcome = VerseDetectionOutcome(
+        None,
+        "insufficient",
+        None,
+        None,
+        0,
+        "non_arabic_speech",
+    )
+
+    assert inference_pipeline.should_run_transcription_rescue(
+        outcome,
+        speech_duration_seconds=14.9,
+    ) is False
+    assert inference_pipeline.should_run_transcription_rescue(
+        outcome,
+        speech_duration_seconds=15.0,
+    ) is True
+
+
+def test_detect_verse_progressively_matches_low_quality_complete_audio_strictly(
+    monkeypatch,
+):
     transcription_calls = []
+    ambiguous_result_flags = []
 
     def fake_transcribe(_audio_path, clip_end_seconds=None):
         transcription_calls.append(clip_end_seconds)
@@ -231,13 +449,31 @@ def test_detect_verse_progressively_rejects_low_quality_complete_audio(monkeypat
 
     monkeypatch.setattr(inference_pipeline, "transcribe_audio", fake_transcribe)
 
+    def fake_detect(_segments, include_ambiguous_verse=False):
+        ambiguous_result_flags.append(include_ambiguous_verse)
+        return VerseDetectionOutcome(
+            verse={"sourate_id": 112, "similarity": 0.92},
+            status="confident",
+            score=0.92,
+            score_margin=0.15,
+            matched_word_count=4,
+            rejection_reason=None,
+        )
+
+    monkeypatch.setattr(
+        inference_pipeline,
+        "detect_verse_with_metadata",
+        fake_detect,
+    )
+
     _segments, detection, analyzed_duration, attempts = (
         inference_pipeline.detect_verse_progressively("/tmp/audio.wav", 8)
     )
 
     assert transcription_calls == [None]
-    assert detection.status == "insufficient"
-    assert detection.rejection_reason == "low_transcription_confidence"
+    assert detection.status == "confident"
+    assert detection.verse["sourate_id"] == 112
+    assert ambiguous_result_flags == [False]
     assert analyzed_duration == 8
     assert attempts == 1
 
@@ -247,6 +483,11 @@ def test_run_inference_pipeline_returns_unavailable_when_imam_prediction_fails(m
         inference_pipeline,
         "transcribe_audio",
         lambda _audio_path: [{"text": "قل هو الله احد"}],
+    )
+    monkeypatch.setattr(
+        inference_pipeline,
+        "transcribe_rescue_audio",
+        lambda _audio_path, _metadata: [{"text": "قل هو الله احد"}],
     )
     monkeypatch.setattr(
         inference_pipeline,
@@ -278,7 +519,7 @@ def test_run_inference_pipeline_returns_unavailable_when_imam_prediction_fails(m
         "matched_word_count": 0,
         "rejection_reason": "no_match",
         "analyzed_duration_seconds": None,
-        "analysis_attempts": 1,
+        "analysis_attempts": 2,
     }
 
 
@@ -307,3 +548,40 @@ def test_run_inference_pipeline_skips_imam_for_rejected_audio(monkeypatch):
     assert result["detection"]["rejection_reason"] == "insufficient_speech"
     assert result["imam_predictions"] == []
     assert result["imam_status"] == "unknown"
+
+
+def test_run_inference_pipeline_can_keep_diagnostics_without_decision_log(monkeypatch):
+    detection = VerseDetectionOutcome(
+        verse={"sourate_id": 112, "similarity": 0.95},
+        status="confident",
+        score=0.95,
+        score_margin=0.20,
+        matched_word_count=4,
+        rejection_reason=None,
+    )
+    monkeypatch.setattr(
+        inference_pipeline,
+        "detect_verse_progressively",
+        lambda *_args, **_kwargs: (
+            [{"text": "قل هو الله احد"}],
+            detection,
+            4.0,
+            1,
+        ),
+    )
+    decision_logs = []
+    monkeypatch.setattr(
+        inference_pipeline,
+        "log_api_event",
+        lambda **kwargs: decision_logs.append(kwargs),
+    )
+
+    result = inference_pipeline.run_inference_pipeline(
+        "/tmp/audio.wav",
+        detect_imam=False,
+        emit_decision_log=False,
+    )
+
+    assert decision_logs == []
+    assert result["recognition_diagnostics"]["detectionStatus"] == "confident"
+    assert result["recognition_diagnostics"]["verseFound"] is True

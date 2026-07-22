@@ -32,6 +32,41 @@
       "expected_verse": { "sourate_id": 1, "start_verse": 1, "end_verse": 7 }
     },
     {
+      "id": "baqarah_verses_2_3",
+      "transcription": "ذلك الكتاب لا ريب فيه هدى للمتقين الذين يؤمنون بالغيب ويقيمون الصلاة ومما رزقناهم ينفقون",
+      "expected_verse": { "sourate_id": 2, "start_verse": 2, "end_verse": 3 }
+    },
+    {
+      "id": "baqarah_verses_2_3_with_errors",
+      "transcription": "ذلك الكتاب لا ريب فيه هدا للمتقين الذين يومنون بالغيب ويقيمون الصلاه ومما رزقناهم ينفقون",
+      "expected_verse": { "sourate_id": 2, "start_verse": 2, "end_verse": 3 }
+    },
+    {
+      "id": "kahf_verses_1_2",
+      "transcription": "الحمد لله الذي انزل على عبده الكتاب ولم يجعل له عوجا قيما لينذر باسا شديدا من لدنه ويبشر المؤمنين الذين يعملون الصالحات ان لهم اجرا حسنا",
+      "expected_verse": { "sourate_id": 18, "start_verse": 1, "end_verse": 2 }
+    },
+    {
+      "id": "yasin_verses_2_5",
+      "transcription": "والقران الحكيم انك لمن المرسلين على صراط مستقيم تنزيل العزيز الرحيم",
+      "expected_verse": { "sourate_id": 36, "start_verse": 2, "end_verse": 5 }
+    },
+    {
+      "id": "rahman_verses_1_5",
+      "transcription": "الرحمن علم القران خلق الانسان علمه البيان الشمس والقمر بحسبان",
+      "expected_verse": { "sourate_id": 55, "start_verse": 1, "end_verse": 5 }
+    },
+    {
+      "id": "mulk_verses_1_2",
+      "transcription": "تبارك الذي بيده الملك وهو على كل شيء قدير الذي خلق الموت والحياه ليبلوكم ايكم احسن عملا وهو العزيز الغفور",
+      "expected_verse": { "sourate_id": 67, "start_verse": 1, "end_verse": 2 }
+    },
+    {
+      "id": "duha_verses_1_5",
+      "transcription": "والضحى والليل اذا سجى ما ودعك ربك وما قلى وللاخره خير لك من الاولى ولسوف يعطيك ربك فترضى",
+      "expected_verse": { "sourate_id": 93, "start_verse": 1, "end_verse": 5 }
+    },
+    {
       "id": "too_short_common_word",
       "transcription": "قل",
       "expected_verse": null
@@ -39,6 +74,21 @@
     {
       "id": "unrelated_arabic_sentence",
       "transcription": "هذا نص عربي عادي لا ينتمي الي التلاوه",
+      "expected_verse": null
+    },
+    {
+      "id": "arabic_weather_report",
+      "transcription": "تشير التوقعات الى انخفاض درجات الحراره مع هبوب الرياح في المساء",
+      "expected_verse": null
+    },
+    {
+      "id": "arabic_daily_conversation",
+      "transcription": "ساذهب الى العمل بعد قليل ثم اعود الى المنزل قبل المساء",
+      "expected_verse": null
+    },
+    {
+      "id": "short_common_quran_words",
+      "transcription": "الرحمن الرحيم",
       "expected_verse": null
     },
     {

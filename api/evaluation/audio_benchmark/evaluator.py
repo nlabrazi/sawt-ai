@@ -84,6 +84,14 @@ def _distribution_summary(values: list[float]) -> tuple[float, float, float]:
     )
 
 
+def _optional_number(value: Any) -> float | int | None:
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        return None
+    if not math.isfinite(value):
+        return None
+    return value
+
+
 def _quality_summary(counters: Counter) -> dict[str, int | float]:
     evaluated_cases = counters["positive_cases"] + counters["negative_cases"]
     accepted_predictions = (
@@ -167,6 +175,13 @@ def _case_result(
     if not isinstance(transcription, str):
         raise AudioEvaluationError("transcription_text doit être une chaîne.")
 
+    diagnostics = pipeline_result.get("recognition_diagnostics", {})
+    if not isinstance(diagnostics, Mapping):
+        diagnostics = {}
+    candidate_evidence = diagnostics.get("topCandidates", [])
+    if not isinstance(candidate_evidence, (list, tuple)):
+        candidate_evidence = []
+
     result = {
         "id": case.case_id,
         "source_case_id": case.source_case_id or case.case_id,
@@ -178,7 +193,31 @@ def _case_result(
         "predicted_verse": predicted,
         "detection_status": detection.get("status"),
         "detection_score": detection.get("score"),
+        "score_margin": detection.get("score_margin"),
+        "matched_word_count": detection.get("matched_word_count"),
         "rejection_reason": detection.get("rejection_reason"),
+        "analysis_attempts": detection.get("analysis_attempts"),
+        "candidate_count": len(candidate_evidence),
+        "candidate_evidence": [
+            dict(candidate)
+            for candidate in candidate_evidence
+            if isinstance(candidate, Mapping)
+        ],
+        "audio_quality": {
+            key: diagnostics.get(key)
+            for key in (
+                "language",
+                "languageProbability",
+                "arabicProbability",
+                "averageLogProbability",
+                "averageNoSpeechProbability",
+                "maxCompressionRatio",
+                "maxTemperature",
+                "speechDurationSeconds",
+                "audioQualityWarning",
+            )
+            if diagnostics.get(key) is not None
+        },
         "duration_seconds": case.duration_seconds,
         "latency_ms": latency_ms,
         "realtime_factor": (latency_ms / 1000) / case.duration_seconds,
@@ -210,6 +249,9 @@ def evaluate_audio_corpus(
     rejection_reason_counts = Counter()
     latencies_ms: list[float] = []
     realtime_factors: list[float] = []
+    detection_scores: list[float] = []
+    score_margins: list[float] = []
+    matched_word_counts: list[float] = []
     case_results: list[dict[str, Any]] = []
 
     for case in corpus.cases:
@@ -264,6 +306,14 @@ def evaluate_audio_corpus(
             rejection_reason_counts[result["rejection_reason"] or "none"] += 1
             latencies_ms.append(latency_ms)
             realtime_factors.append(result["realtime_factor"])
+            for value, destination in (
+                (result["detection_score"], detection_scores),
+                (result["score_margin"], score_margins),
+                (result["matched_word_count"], matched_word_counts),
+            ):
+                parsed_value = _optional_number(value)
+                if parsed_value is not None:
+                    destination.append(float(parsed_value))
             case_results.append(result)
         except Exception as exc:  # Le rapport doit conserver les autres cas du corpus.
             latency_ms = (clock() - started_at) * 1000
@@ -288,6 +338,15 @@ def evaluate_audio_corpus(
     average_latency_ms, p50_latency_ms, p95_latency_ms = _distribution_summary(latencies_ms)
     average_realtime_factor, _p50_realtime_factor, p95_realtime_factor = (
         _distribution_summary(realtime_factors)
+    )
+    average_detection_score, _p50_detection_score, _p95_detection_score = (
+        _distribution_summary(detection_scores)
+    )
+    average_score_margin, _p50_score_margin, _p95_score_margin = (
+        _distribution_summary(score_margins)
+    )
+    average_matched_word_count, _p50_words, _p95_words = _distribution_summary(
+        matched_word_counts
     )
     positive_source_summaries = [
         _quality_summary(source_counter)
@@ -373,6 +432,9 @@ def evaluate_audio_corpus(
         "p95_latency_ms": p95_latency_ms,
         "average_realtime_factor": average_realtime_factor,
         "p95_realtime_factor": p95_realtime_factor,
+        "average_detection_score": average_detection_score,
+        "average_score_margin": average_score_margin,
+        "average_matched_word_count": average_matched_word_count,
         "status_counts": dict(status_counts),
         "rejection_reason_counts": dict(rejection_reason_counts),
     }

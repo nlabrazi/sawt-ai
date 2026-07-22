@@ -192,6 +192,36 @@ def generate_synthetic_song(
     return peak_limit(samples)
 
 
+def generate_synthetic_vocalization(
+    duration_seconds: float,
+    sample_rate: int = DEFAULT_SAMPLE_RATE,
+    *,
+    seed: int,
+    target_rms: float = 0.10,
+) -> array:
+    """Produit un signal vocalisant sans voix ni contenu linguistique."""
+    frames = _frame_count(duration_seconds, sample_rate)
+    rng = random.Random(seed)
+    base_frequency = rng.uniform(105.0, 155.0)
+    phase = rng.uniform(0, 2 * math.pi)
+    samples = array("f")
+
+    for index in range(frames):
+        time_seconds = index / sample_rate
+        syllable_position = (time_seconds * 3.4) % 1.0
+        envelope = math.sin(math.pi * syllable_position) ** 2
+        vibrato = 1 + 0.018 * math.sin(2 * math.pi * 5.2 * time_seconds)
+        fundamental = math.sin(
+            2 * math.pi * base_frequency * vibrato * time_seconds + phase
+        )
+        formant_a = 0.42 * math.sin(2 * math.pi * 720 * time_seconds)
+        formant_b = 0.24 * math.sin(2 * math.pi * 1_180 * time_seconds)
+        breath = rng.uniform(-0.08, 0.08)
+        samples.append(envelope * (fundamental + formant_a + formant_b + breath))
+
+    return _scale_to_rms(peak_limit(samples), target_rms)
+
+
 def mix_at_snr(
     signal: Sequence[float],
     noise: Sequence[float],

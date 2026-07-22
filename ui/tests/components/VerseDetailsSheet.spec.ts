@@ -38,6 +38,19 @@ const ambiguousResult = {
   },
 }
 
+const probableResult = {
+  ...result,
+  detection: {
+    status: 'probable' as const,
+    score: 0.74,
+    score_margin: 0.1,
+    matched_word_count: 4,
+    rejection_reason: 'score_too_low' as const,
+    analyzed_duration_seconds: 8,
+    analysis_attempts: 1,
+  },
+}
+
 describe('VerseDetailsSheet', () => {
   beforeEach(() => {
     clearTajwidCache()
@@ -95,6 +108,25 @@ describe('VerseDetailsSheet', () => {
       props: {
         open: true,
         result: ambiguousResult,
+      },
+      global: {
+        stubs: {
+          teleport: true,
+        },
+      },
+    })
+
+    expect(wrapper.get('.sheet').attributes('aria-label')).toBe('Passage proposé')
+    expect(wrapper.get('.sheet-kicker').text()).toBe('Passage proposé')
+
+    wrapper.unmount()
+  })
+
+  it('labels a probable match as a proposal to verify', () => {
+    const wrapper = mount(VerseDetailsSheet, {
+      props: {
+        open: true,
+        result: probableResult,
       },
       global: {
         stubs: {

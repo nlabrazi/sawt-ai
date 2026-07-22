@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "measured_on": "2026-07-15",
+  "measured_on": "2026-07-22",
   "verification": {
     "kind": "manual_measured_snapshot",
     "automated_test_scope": "json_integrity_only",
@@ -12,14 +12,29 @@
     "device": "cpu",
     "compute_type": "int8",
     "quran_dither_snr_db": 40.0,
+    "detection_policy": {
+      "min_accepted_similarity": 0.8,
+      "min_probable_similarity": 0.6,
+      "min_proposal_similarity": 0.72,
+      "min_proposal_matched_word_count": 4,
+      "min_proposal_score_margin": 0.05,
+      "max_ambiguous_rescue_score": 0.92,
+      "min_matched_word_count": 3,
+      "min_score_margin": 0.08
+    },
     "matching_policy": {
       "min_strong_evidence_similarity": 0.97,
       "min_strong_evidence_word_count": 12,
       "min_confident_inferred_passage_similarity": 0.97
+    },
+    "transcription_policy": {
+      "language_conflict_rescue_min_speech_seconds": 15.0,
+      "language_conflict_min_quran_similarity": 0.9,
+      "language_conflict_min_matched_word_count": 8
     }
   },
   "corpus": {
-    "total_cases": 46,
+    "total_cases": 51,
     "positive_cases": 36,
     "positive_source_cases": 6,
     "distinct_positive_surahs": 4,
@@ -27,21 +42,21 @@
     "positive_scope": "four_surah_regression",
     "noisy_positive_cases": 30,
     "noisy_positive_source_cases": 6,
-    "negative_cases": 10,
+    "negative_cases": 15,
     "vocal_negative_source_cases": 4,
     "errors": 0
   },
   "metrics": {
     "exact_match_count": 25,
-    "correct_surah_wrong_range_count": 6,
+    "correct_surah_wrong_range_count": 7,
     "wrong_surah_count": 0,
-    "false_negative_count": 5,
-    "true_negative_count": 10,
+    "false_negative_count": 4,
+    "true_negative_count": 15,
     "false_positive_count": 0,
     "positive_exact_accuracy": 0.6944444444444444,
     "macro_positive_exact_accuracy": 0.6944444444444445,
-    "positive_surah_accuracy": 0.8611111111111112,
-    "macro_positive_surah_accuracy": 0.8611111111111112,
+    "positive_surah_accuracy": 0.8888888888888888,
+    "macro_positive_surah_accuracy": 0.8888888888888888,
     "confident_positive_predictions": 15,
     "confident_exact_match": 13,
     "confident_correct_surah": 15,
@@ -50,18 +65,18 @@
     "positive_confident_surah_accuracy": 0.4166666666666667,
     "macro_positive_confident_surah_accuracy": 0.4166666666666667,
     "detection_status_counts": {
-      "insufficient": 14,
-      "ambiguous": 16,
+      "insufficient": 16,
+      "ambiguous": 17,
       "confident": 15,
-      "probable": 1
+      "probable": 3
     },
     "negative_rejection_rate": 1.0,
     "macro_negative_rejection_rate": 1.0,
     "false_positive_rate": 0.0,
     "macro_false_positive_rate": 0.0,
-    "average_latency_ms": 15829.889381934863,
-    "p50_latency_ms": 15976.802725999733,
-    "p95_latency_ms": 27294.941023999854
+    "average_latency_ms": 16040.27546990191,
+    "p50_latency_ms": 17865.38029300027,
+    "p95_latency_ms": 32651.455791000444
   },
   "release_gates": {
     "min_macro_positive_exact_accuracy": 0.65,
@@ -78,10 +93,10 @@
   },
   "limitations": [
     "Positive cases cover only Al-Fatiha, Al-Ikhlas, Al-Falaq, and An-Nas out of 114 surahs.",
-    "Sixteen of thirty-six positive cases are exposed only as ambiguous hypotheses.",
+    "Seventeen of thirty-six positive cases are exposed only as ambiguous hypotheses.",
     "Six recordings represent only three reciter identities; one reciter supplies four surahs.",
     "Child-background variants use synthetic French speech, not real children.",
-    "Five child-background variants are conservatively rejected.",
+    "Four child-background variants remain without a returned verse; two retain labelled probable evidence.",
     "The negative corpus contains Arabic prose and an English vocal song, but no Arabic vocal song."
   ]
 }

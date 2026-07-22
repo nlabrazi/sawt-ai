@@ -5,6 +5,7 @@ import pytest
 from evaluation.audio_benchmark.audio import (
     AudioGenerationError,
     generate_synthetic_song,
+    generate_synthetic_vocalization,
     generate_tone,
     generate_white_noise,
     mix_at_snr,
@@ -60,3 +61,14 @@ def test_synthetic_song_is_non_silent_and_has_exact_duration():
 
     assert len(samples) == 4_000
     assert rms(samples) > 0.01
+
+
+def test_synthetic_vocalization_is_reproducible_without_real_voice():
+    first = generate_synthetic_vocalization(0.5, 8_000, seed=42)
+    second = generate_synthetic_vocalization(0.5, 8_000, seed=42)
+    other = generate_synthetic_vocalization(0.5, 8_000, seed=43)
+
+    assert len(first) == 4_000
+    assert first == second
+    assert first != other
+    assert rms(first) == pytest.approx(0.10, rel=1e-5)

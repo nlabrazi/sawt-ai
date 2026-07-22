@@ -92,10 +92,45 @@ describe('ResultCard', () => {
 
     const confidenceDetail = wrapper.get('.confidence-detail')
 
-    expect(wrapper.get('.hero-kicker').text()).toBe('Hypothèse à vérifier')
+    expect(wrapper.get('.hero-kicker').text()).toBe('Proposition à vérifier')
     expect(confidenceDetail.text()).toContain('Correspondance à confirmer')
     expect(confidenceDetail.text()).not.toContain('92%')
     expect(confidenceDetail.text()).not.toContain('Résultat fiable')
+    expect(wrapper.get('.primary-btn').text()).toBe('Vérifier le passage')
+  })
+
+  it('labels a probable result as a proposal to verify', () => {
+    const wrapper = mount(ResultCard, {
+      props: {
+        result: {
+          transcription_text: 'قل هو الله احد',
+          verse: {
+            sourate_id: 112,
+            sourate_name: 'الإخلاص',
+            transliteration: 'Al-Ikhlas',
+            start_verse: 1,
+            end_verse: 4,
+            text: 'قل هو الله احد',
+            similarity: 0.74,
+          },
+          detection: {
+            status: 'probable',
+            score: 0.74,
+            score_margin: 0.12,
+            matched_word_count: 4,
+            analyzed_duration_seconds: 8,
+            analysis_attempts: 1,
+            rejection_reason: 'score_too_low',
+          },
+          imam_predictions: [],
+          imam_status: 'unknown',
+          imam_detection_enabled: true,
+        },
+      },
+    })
+
+    expect(wrapper.get('.hero-kicker').text()).toBe('Proposition à vérifier')
+    expect(wrapper.get('.confidence-detail').text()).toContain('Correspondance probable')
     expect(wrapper.get('.primary-btn').text()).toBe('Vérifier le passage')
   })
 

@@ -48,7 +48,9 @@ const verseLabel = computed(() => {
 })
 
 const passageStatusLabel = computed(() =>
-  props.result.detection?.status === 'ambiguous' ? 'Passage proposé' : 'Passage détecté',
+  ['ambiguous', 'probable'].includes(props.result.detection?.status ?? '')
+    ? 'Passage proposé'
+    : 'Passage détecté',
 )
 
 const topImam = computed(() => props.result.imam_predictions?.[0] ?? null)

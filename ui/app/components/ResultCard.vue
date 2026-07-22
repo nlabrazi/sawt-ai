@@ -26,13 +26,14 @@ const verseLabel = computed(() => {
 })
 
 const topImam = computed(() => props.result.imam_predictions?.[0] ?? null)
+const isUnconfirmed = computed(() =>
+  ['ambiguous', 'probable'].includes(props.result.detection?.status ?? ''),
+)
 const resultKicker = computed(() => {
-  return props.result.detection?.status === 'ambiguous'
-    ? 'Hypothèse à vérifier'
-    : 'Correspondance trouvée'
+  return isUnconfirmed.value ? 'Proposition à vérifier' : 'Correspondance trouvée'
 })
 const detailsActionLabel = computed(() =>
-  props.result.detection?.status === 'ambiguous' ? 'Vérifier le passage' : 'Voir le verset',
+  isUnconfirmed.value ? 'Vérifier le passage' : 'Voir le verset',
 )
 const showImam = computed(() => {
   return Boolean(props.result.imam_detection_enabled)
