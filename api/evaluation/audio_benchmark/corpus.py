@@ -18,6 +18,7 @@ from evaluation.audio_benchmark.audio import (
     generate_pink_noise,
     generate_silence,
     generate_synthetic_song,
+    generate_synthetic_vocalization,
     generate_tone,
     generate_white_noise,
     inspect_pcm16_wav,
@@ -174,6 +175,12 @@ def _generate_synthetic_source(
             duration_seconds,
             sample_rate,
             tempo_bpm=tempo_bpm,
+        )
+    if generator == "synthetic_vocalization":
+        return generate_synthetic_vocalization(
+            duration_seconds,
+            sample_rate,
+            seed=seed,
         )
 
     raise AudioCorpusError(f"Générateur synthétique inconnu : {generator!r}.")
