@@ -313,4 +313,7 @@ def run_inference_pipeline(
         "imam_predictions": imam_predictions,
         "imam_status": imam_status,
         "imam_detection_enabled": detect_imam,
+        # Le schéma HTTP public ignore ce champ. Le benchmark backend l'utilise
+        # pour expliquer les décisions sans conserver le contenu récité.
+        "recognition_diagnostics": decision_signals,
     }

@@ -34,7 +34,15 @@ def pipeline_result(verse, transcription="texte privé", status="confident"):
         "detection": {
             "status": status,
             "score": 0.9 if verse else None,
+            "score_margin": 0.12 if verse else None,
+            "matched_word_count": 4 if verse else 0,
             "rejection_reason": None if verse else "no_match",
+            "analysis_attempts": 1,
+        },
+        "recognition_diagnostics": {
+            "language": "ar",
+            "arabicProbability": 0.95,
+            "averageLogProbability": -0.4,
         },
     }
 
@@ -110,6 +118,9 @@ def test_evaluate_audio_corpus_separates_positive_and_negative_failures():
         "p95_latency_ms": pytest.approx(1),
         "average_realtime_factor": pytest.approx(0.0005),
         "p95_realtime_factor": pytest.approx(0.0005),
+        "average_detection_score": pytest.approx(0.9),
+        "average_score_margin": pytest.approx(0.12),
+        "average_matched_word_count": pytest.approx(8 / 3),
         "status_counts": {"confident": 4, "insufficient": 2},
         "rejection_reason_counts": {"none": 4, "no_match": 2},
     }
@@ -125,6 +136,14 @@ def test_evaluate_audio_corpus_separates_positive_and_negative_failures():
     assert all("transcription_sha256" not in case for case in report["cases"])
     assert all("/private/" not in str(case) for case in report["cases"])
     assert report["categories"]["french_speech"]["negative_source_cases"] == 1
+    assert report["cases"][0]["score_margin"] == 0.12
+    assert report["cases"][0]["matched_word_count"] == 4
+    assert report["cases"][0]["analysis_attempts"] == 1
+    assert report["cases"][0]["audio_quality"] == {
+        "language": "ar",
+        "arabicProbability": 0.95,
+        "averageLogProbability": -0.4,
+    }
 
 
 def test_evaluation_can_explicitly_include_transcriptions():
