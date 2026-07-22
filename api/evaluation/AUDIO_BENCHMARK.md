@@ -65,6 +65,9 @@ variante sont refusées avant la première écriture.
 
 ## Injecter les récitations et négatifs réels
 
+Le protocole de collecte, les objectifs de diversité et la séparation des jeux
+sont détaillés dans [`REAL_AUDIO_COLLECTION.md`](REAL_AUDIO_COLLECTION.md).
+
 1. Copier le modèle sans changer son nom versionné :
 
    ```bash
