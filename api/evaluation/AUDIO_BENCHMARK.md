@@ -126,6 +126,20 @@ En exécution locale, installer `api/requirements.txt`, puis définir
 `WHISPER_MODEL_NAME=/chemin/local/vers/le-modele-ctranslate2` avant d'appeler le
 même script avec Python.
 
+Pour comparer `turbo` et `large-v3` dans deux processus isolés, sans changer la
+configuration de production :
+
+```bash
+docker compose exec api python scripts/compare_whisper_models.py \
+  --corpus evaluation/generated/audio/manifest.json \
+  --output-dir evaluation/reports/model-comparison
+```
+
+Le comparateur conserve les rapports détaillés par modèle et produit un
+`comparison.json` limité aux métriques de qualité et de performance. Les deux
+modèles doivent déjà être présents dans le cache local : aucun téléchargement
+implicite n'est autorisé.
+
 Par défaut, le rapport conserve seulement la longueur de la transcription : un
 SHA-256 non salé d'une phrase courte serait lui-même vérifiable par dictionnaire.
 `--include-transcriptions` exige `--output`, écrit le contenu uniquement dans ce
