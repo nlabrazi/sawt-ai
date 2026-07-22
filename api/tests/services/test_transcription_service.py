@@ -234,6 +234,38 @@ def test_quran_transcription_forces_arabic_for_uncertain_audio(monkeypatch):
     assert result.metadata.speech_duration_seconds == 31.0
 
 
+def test_quran_rescue_transcription_uses_vad_without_new_language_screen(monkeypatch):
+    calls = []
+    screened_metadata = make_metadata()
+
+    def fake_transcribe(audio_path, **options):
+        calls.append((audio_path, options))
+        return transcription_service.TranscriptionResult(
+            [{"text": "قل هو الله احد"}],
+            make_metadata(),
+        )
+
+    monkeypatch.setattr(transcription_service, "transcribe_audio", fake_transcribe)
+
+    result = transcription_service.transcribe_quran_audio_rescue(
+        "/tmp/noisy.wav",
+        screened_metadata,
+    )
+
+    assert result == [{"text": "قل هو الله احد"}]
+    assert calls == [
+        (
+            "/tmp/noisy.wav",
+            {
+                "language": "ar",
+                "vad_filter": True,
+                "dither_snr_db": None,
+            },
+        )
+    ]
+    assert result.metadata.language == screened_metadata.language
+
+
 def test_transcribe_audio_preserves_language_and_decode_metrics(monkeypatch):
     model = FakeWhisperModel([
         SimpleNamespace(

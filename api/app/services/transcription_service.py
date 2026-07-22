@@ -506,3 +506,30 @@ def transcribe_quran_audio(
     )
 
     return TranscriptionResult(transcription, screened_metadata)
+
+
+def transcribe_quran_audio_rescue(
+    audio_path: str,
+    screened_metadata: TranscriptionMetadata | None = None,
+) -> TranscriptionResult:
+    """Retente le décodage avec VAD sans répéter le filtrage de langue."""
+    transcription = transcribe_audio(
+        audio_path,
+        language=QURAN_TRANSCRIPTION_LANGUAGE,
+        vad_filter=True,
+        dither_snr_db=None,
+    )
+
+    if screened_metadata is None:
+        return transcription
+
+    rescue_metadata = replace(
+        transcription.metadata,
+        language=screened_metadata.language,
+        language_probability=screened_metadata.language_probability,
+        arabic_probability=screened_metadata.arabic_probability,
+        language_probabilities=screened_metadata.language_probabilities,
+        duration_seconds=screened_metadata.duration_seconds,
+        speech_duration_seconds=screened_metadata.speech_duration_seconds,
+    )
+    return TranscriptionResult(transcription, rescue_metadata)

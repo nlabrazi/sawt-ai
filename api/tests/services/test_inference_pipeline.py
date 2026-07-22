@@ -230,6 +230,11 @@ def test_detect_verse_progressively_propagates_ambiguous_result_policy(monkeypat
         return [{"text": "نص غير كاف"}]
 
     monkeypatch.setattr(inference_pipeline, "transcribe_audio", fake_transcribe)
+    monkeypatch.setattr(
+        inference_pipeline,
+        "transcribe_rescue_audio",
+        lambda _audio_path, _metadata: [{"text": "نص غير كاف"}],
+    )
     def fake_detect(_segments, include_ambiguous_verse=False):
         ambiguous_result_flags.append(include_ambiguous_verse)
         return VerseDetectionOutcome(
@@ -256,10 +261,56 @@ def test_detect_verse_progressively_propagates_ambiguous_result_policy(monkeypat
     )
 
     assert transcription_calls == [None]
-    assert ambiguous_result_flags == [False]
+    assert ambiguous_result_flags == [False, False]
     assert detection.status == "insufficient"
     assert analyzed_duration == 12
-    assert attempts == 1
+    assert attempts == 2
+
+
+def test_detect_verse_progressively_selects_better_conditional_rescue(monkeypatch):
+    primary_segments = [{"text": "نص غير كاف"}]
+    rescue_segments = [{"text": "قل هو الله احد"}]
+    detections = {
+        id(primary_segments): VerseDetectionOutcome(
+            None,
+            "probable",
+            0.72,
+            0.05,
+            3,
+            "score_too_low",
+        ),
+        id(rescue_segments): VerseDetectionOutcome(
+            {"sourate_id": 112, "similarity": 0.92},
+            "confident",
+            0.92,
+            0.15,
+            4,
+            None,
+        ),
+    }
+    monkeypatch.setattr(
+        inference_pipeline,
+        "transcribe_audio",
+        lambda _audio_path: primary_segments,
+    )
+    monkeypatch.setattr(
+        inference_pipeline,
+        "transcribe_rescue_audio",
+        lambda _audio_path, _metadata: rescue_segments,
+    )
+    monkeypatch.setattr(
+        inference_pipeline,
+        "detect_verse_after_audio_quality_check",
+        lambda segments, include_ambiguous_verse: detections[id(segments)],
+    )
+
+    segments, detection, _duration, attempts = (
+        inference_pipeline.detect_verse_progressively("/tmp/noisy.wav", 8)
+    )
+
+    assert segments is rescue_segments
+    assert detection.status == "confident"
+    assert attempts == 2
 
 
 def test_detect_verse_progressively_matches_low_quality_complete_audio_strictly(
@@ -311,6 +362,11 @@ def test_run_inference_pipeline_returns_unavailable_when_imam_prediction_fails(m
     )
     monkeypatch.setattr(
         inference_pipeline,
+        "transcribe_rescue_audio",
+        lambda _audio_path, _metadata: [{"text": "قل هو الله احد"}],
+    )
+    monkeypatch.setattr(
+        inference_pipeline,
         "detect_verse_with_metadata",
         lambda _segments, include_ambiguous_verse=False: VerseDetectionOutcome(
             verse=None,
@@ -339,7 +395,7 @@ def test_run_inference_pipeline_returns_unavailable_when_imam_prediction_fails(m
         "matched_word_count": 0,
         "rejection_reason": "no_match",
         "analyzed_duration_seconds": None,
-        "analysis_attempts": 1,
+        "analysis_attempts": 2,
     }
 
 

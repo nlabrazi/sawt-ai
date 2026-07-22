@@ -20,6 +20,7 @@ from app.services.transcription_service import (
     TranscriptionMetadata,
     TranscriptionResult,
     transcribe_quran_audio as transcribe_audio,
+    transcribe_quran_audio_rescue as transcribe_rescue_audio,
 )
 from app.services.verse_detection_service import (
     VerseDetectionOutcome,
@@ -42,6 +43,9 @@ AUDIO_REJECTION_REASONS: frozenset[AudioRejectionReason] = frozenset(
         "non_arabic_speech",
         "low_transcription_confidence",
     }
+)
+HARD_AUDIO_REJECTION_REASONS: frozenset[AudioRejectionReason] = frozenset(
+    {"insufficient_speech", "non_arabic_speech"}
 )
 
 
@@ -160,15 +164,59 @@ def detect_verse_progressively(
     # /recognize receives a complete audio file, including microphone snapshots.
     # Re-clipping that file here could accept a confident first verse and discard
     # the rest of a longer recitation (for example Al-Fatiha 1:1-7).
-    segments = transcribe_audio(audio_path)
+    primary_segments = transcribe_audio(audio_path)
+    primary_detection = detect_verse_after_audio_quality_check(
+        primary_segments,
+        include_ambiguous_verse=allow_ambiguous_result,
+    )
+
+    if (
+        primary_detection.status == "confident"
+        or primary_detection.rejection_reason in HARD_AUDIO_REJECTION_REASONS
+    ):
+        return (
+            primary_segments,
+            primary_detection,
+            audio_duration_seconds,
+            1,
+        )
+
+    primary_metadata = getattr(primary_segments, "metadata", None)
+    rescue_segments = transcribe_rescue_audio(audio_path, primary_metadata)
+    rescue_detection = detect_verse_after_audio_quality_check(
+        rescue_segments,
+        include_ambiguous_verse=allow_ambiguous_result,
+    )
+    primary_quality = detection_outcome_quality(primary_detection)
+    rescue_quality = detection_outcome_quality(rescue_detection)
+    selected_segments, selected_detection = (
+        (rescue_segments, rescue_detection)
+        if rescue_quality > primary_quality
+        else (primary_segments, primary_detection)
+    )
+
     return (
-        segments,
-        detect_verse_after_audio_quality_check(
-            segments,
-            include_ambiguous_verse=allow_ambiguous_result,
-        ),
+        selected_segments,
+        selected_detection,
         audio_duration_seconds,
-        1,
+        2,
+    )
+
+
+def detection_outcome_quality(outcome: VerseDetectionOutcome) -> tuple:
+    """Compare deux passes sans promouvoir une hypothèse moins sûre."""
+    status_rank = {
+        "insufficient": 0,
+        "probable": 1,
+        "ambiguous": 2,
+        "confident": 3,
+    }
+    return (
+        status_rank[outcome.status],
+        outcome.verse is not None,
+        outcome.score if outcome.score is not None else -1.0,
+        outcome.score_margin if outcome.score_margin is not None else -1.0,
+        outcome.matched_word_count,
     )
 
 
