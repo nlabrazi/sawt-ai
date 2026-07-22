@@ -107,7 +107,7 @@ def test_audio_quality_rejects_only_confidently_non_arabic_speech():
     assert inference_pipeline.assess_audio_quality(uncertain).accepted is True
 
 
-def test_audio_quality_rejects_low_decode_confidence():
+def test_audio_quality_marks_low_decode_confidence_as_non_blocking_warning():
     low_log_probability = build_transcription(average_log_probability=-1.01)
     unstable_temperature = build_transcription(
         average_log_probability=-0.81,
@@ -118,15 +118,15 @@ def test_audio_quality_rejects_low_decode_confidence():
         max_compression_ratio=2.41,
     )
 
-    assert inference_pipeline.assess_audio_quality(
-        low_log_probability
-    ).rejection_reason == "low_transcription_confidence"
-    assert inference_pipeline.assess_audio_quality(
-        unstable_temperature
-    ).rejection_reason == "low_transcription_confidence"
-    assert inference_pipeline.assess_audio_quality(
-        suspicious_compression
-    ).rejection_reason == "low_transcription_confidence"
+    for transcription in (
+        low_log_probability,
+        unstable_temperature,
+        suspicious_compression,
+    ):
+        quality = inference_pipeline.assess_audio_quality(transcription)
+        assert quality.accepted is True
+        assert quality.rejection_reason is None
+        assert quality.warning_reason == "low_transcription_confidence"
 
 
 def test_audio_quality_does_not_reject_compression_without_weak_decode():
@@ -247,8 +247,11 @@ def test_detect_verse_progressively_propagates_ambiguous_result_policy(monkeypat
     assert attempts == 1
 
 
-def test_detect_verse_progressively_rejects_low_quality_complete_audio(monkeypatch):
+def test_detect_verse_progressively_matches_low_quality_complete_audio_strictly(
+    monkeypatch,
+):
     transcription_calls = []
+    ambiguous_result_flags = []
 
     def fake_transcribe(_audio_path, clip_end_seconds=None):
         transcription_calls.append(clip_end_seconds)
@@ -256,13 +259,31 @@ def test_detect_verse_progressively_rejects_low_quality_complete_audio(monkeypat
 
     monkeypatch.setattr(inference_pipeline, "transcribe_audio", fake_transcribe)
 
+    def fake_detect(_segments, include_ambiguous_verse=False):
+        ambiguous_result_flags.append(include_ambiguous_verse)
+        return VerseDetectionOutcome(
+            verse={"sourate_id": 112, "similarity": 0.92},
+            status="confident",
+            score=0.92,
+            score_margin=0.15,
+            matched_word_count=4,
+            rejection_reason=None,
+        )
+
+    monkeypatch.setattr(
+        inference_pipeline,
+        "detect_verse_with_metadata",
+        fake_detect,
+    )
+
     _segments, detection, analyzed_duration, attempts = (
         inference_pipeline.detect_verse_progressively("/tmp/audio.wav", 8)
     )
 
     assert transcription_calls == [None]
-    assert detection.status == "insufficient"
-    assert detection.rejection_reason == "low_transcription_confidence"
+    assert detection.status == "confident"
+    assert detection.verse["sourate_id"] == 112
+    assert ambiguous_result_flags == [False]
     assert analyzed_duration == 8
     assert attempts == 1
 

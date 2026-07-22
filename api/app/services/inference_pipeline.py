@@ -35,6 +35,7 @@ AudioRejectionReason = Literal[
     "non_arabic_speech",
     "low_transcription_confidence",
 ]
+AudioQualityWarning = Literal["low_transcription_confidence"]
 AUDIO_REJECTION_REASONS: frozenset[AudioRejectionReason] = frozenset(
     {
         "insufficient_speech",
@@ -48,6 +49,7 @@ AUDIO_REJECTION_REASONS: frozenset[AudioRejectionReason] = frozenset(
 class AudioQualityAssessment:
     accepted: bool
     rejection_reason: AudioRejectionReason | None
+    warning_reason: AudioQualityWarning | None = None
 
 
 def assess_audio_quality(segments) -> AudioQualityAssessment:
@@ -95,7 +97,14 @@ def assess_audio_quality(segments) -> AudioQualityAssessment:
         or has_unstable_temperature
         or has_suspicious_compression
     ):
-        return AudioQualityAssessment(False, "low_transcription_confidence")
+        # Ces métriques Whisper indiquent un décodage fragile, pas l'absence
+        # de preuve coranique. Le matching reste autorisé, mais uniquement un
+        # résultat confiant pourra alors exposer un passage.
+        return AudioQualityAssessment(
+            True,
+            None,
+            warning_reason="low_transcription_confidence",
+        )
 
     return AudioQualityAssessment(True, None)
 
@@ -132,7 +141,9 @@ def detect_verse_after_audio_quality_check(
 
     return detect_verse_with_metadata(
         segments,
-        include_ambiguous_verse=include_ambiguous_verse,
+        include_ambiguous_verse=(
+            include_ambiguous_verse and quality.warning_reason is None
+        ),
     )
 
 
@@ -198,6 +209,7 @@ def build_recognition_decision_signals(
 ) -> dict[str, object]:
     """Construit une trace exploitable sans journaliser le contenu récité."""
     metadata: TranscriptionMetadata | None = getattr(segments, "metadata", None)
+    quality = assess_audio_quality(segments)
     verse = verse_detection.verse
 
     return {
@@ -217,6 +229,7 @@ def build_recognition_decision_signals(
         "maxCompressionRatio": metadata.max_compression_ratio if metadata else None,
         "maxTemperature": metadata.max_temperature if metadata else None,
         "speechDurationSeconds": metadata.speech_duration_seconds if metadata else None,
+        "audioQualityWarning": quality.warning_reason,
         "detectionStatus": verse_detection.status,
         "detectionScore": verse_detection.score,
         "scoreMargin": verse_detection.score_margin,
