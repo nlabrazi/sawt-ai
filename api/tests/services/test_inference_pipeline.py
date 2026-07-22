@@ -548,3 +548,40 @@ def test_run_inference_pipeline_skips_imam_for_rejected_audio(monkeypatch):
     assert result["detection"]["rejection_reason"] == "insufficient_speech"
     assert result["imam_predictions"] == []
     assert result["imam_status"] == "unknown"
+
+
+def test_run_inference_pipeline_can_keep_diagnostics_without_decision_log(monkeypatch):
+    detection = VerseDetectionOutcome(
+        verse={"sourate_id": 112, "similarity": 0.95},
+        status="confident",
+        score=0.95,
+        score_margin=0.20,
+        matched_word_count=4,
+        rejection_reason=None,
+    )
+    monkeypatch.setattr(
+        inference_pipeline,
+        "detect_verse_progressively",
+        lambda *_args, **_kwargs: (
+            [{"text": "قل هو الله احد"}],
+            detection,
+            4.0,
+            1,
+        ),
+    )
+    decision_logs = []
+    monkeypatch.setattr(
+        inference_pipeline,
+        "log_api_event",
+        lambda **kwargs: decision_logs.append(kwargs),
+    )
+
+    result = inference_pipeline.run_inference_pipeline(
+        "/tmp/audio.wav",
+        detect_imam=False,
+        emit_decision_log=False,
+    )
+
+    assert decision_logs == []
+    assert result["recognition_diagnostics"]["detectionStatus"] == "confident"
+    assert result["recognition_diagnostics"]["verseFound"] is True

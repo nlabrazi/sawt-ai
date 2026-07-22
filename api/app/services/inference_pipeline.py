@@ -368,6 +368,7 @@ def run_inference_pipeline(
     audio_duration_seconds: float | None = None,
     allow_ambiguous_result: bool = True,
     request_id: str | None = None,
+    emit_decision_log: bool = True,
 ):
     """
     Pipeline principal
@@ -429,11 +430,12 @@ def run_inference_pipeline(
     )
     if request_id is not None:
         decision_signals["requestId"] = request_id
-    log_api_event(
-        message="Recognition decision",
-        route="/recognize",
-        extra=decision_signals,
-    )
+    if emit_decision_log:
+        log_api_event(
+            message="Recognition decision",
+            route="/recognize",
+            extra=decision_signals,
+        )
 
     return {
         "transcription_text": transcription_text,

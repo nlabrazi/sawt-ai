@@ -152,6 +152,7 @@ def main() -> None:
             detect_imam=False,
             audio_duration_seconds=case.duration_seconds,
             allow_ambiguous_result=args.allow_ambiguous_result,
+            emit_decision_log=False,
         )
 
     report = evaluate_audio_corpus(
