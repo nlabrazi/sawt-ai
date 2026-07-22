@@ -740,13 +740,13 @@ def test_build_detection_outcome_classifies_low_score_as_probable():
 
 
 def test_build_detection_outcome_can_expose_probable_candidate_as_proposal():
-    candidate = QuranVerseCandidate(1, "First", "First", 1, 1, "نص اول واضح")
+    candidate = QuranVerseCandidate(1, "First", "First", 1, 1, "هذا نص اول واضح")
     ranked_matches = [
         verse_detection_service.RankedVerseCandidate(
             0,
             candidate,
             74,
-            "نص كامل واضح",
+            "هذا نص كامل واضح",
         ),
     ]
     acceptance = verse_detection_service.assess_match_acceptance(ranked_matches)
@@ -761,6 +761,46 @@ def test_build_detection_outcome_can_expose_probable_candidate_as_proposal():
     assert outcome.verse["sourate_id"] == 1
     assert outcome.status == "probable"
     assert outcome.rejection_reason == "score_too_low"
+
+
+def test_probable_candidate_requires_minimum_score_and_margin_for_proposal():
+    candidates = (
+        QuranVerseCandidate(1, "First", "First", 1, 1, "هذا نص اول واضح"),
+        QuranVerseCandidate(2, "Second", "Second", 1, 1, "هذا نص ثان واضح"),
+    )
+    weak_score_matches = [
+        verse_detection_service.RankedVerseCandidate(
+            0,
+            candidates[0],
+            69,
+            "هذا نص كامل واضح",
+        ),
+    ]
+    narrow_margin_matches = [
+        verse_detection_service.RankedVerseCandidate(
+            0,
+            candidates[0],
+            74,
+            "هذا نص كامل واضح",
+        ),
+        verse_detection_service.RankedVerseCandidate(
+            1,
+            candidates[1],
+            71,
+            "هذا نص كامل واضح",
+        ),
+    ]
+
+    for matches in (weak_score_matches, narrow_margin_matches):
+        acceptance = verse_detection_service.assess_match_acceptance(matches)
+        outcome = verse_detection_service.build_detection_outcome(
+            matches,
+            acceptance,
+            include_ambiguous_verse=True,
+        )
+
+        assert outcome.status == "probable"
+        assert outcome.verse is None
 
 
 def test_detect_verse_infers_enclosing_fatiha_when_middle_verses_are_missing(

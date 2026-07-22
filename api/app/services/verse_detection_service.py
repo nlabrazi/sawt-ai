@@ -13,6 +13,9 @@ from app.core.detection_policy import (
     MIN_ACCEPTED_SIMILARITY,
     MIN_MATCHED_WORD_COUNT,
     MIN_PROBABLE_SIMILARITY,
+    MIN_PROPOSAL_MATCHED_WORD_COUNT,
+    MIN_PROPOSAL_SCORE_MARGIN,
+    MIN_PROPOSAL_SIMILARITY,
     MIN_SCORE_MARGIN,
 )
 from app.core.model_loader import QuranVerseCandidate, get_quran_verse_candidates
@@ -747,11 +750,20 @@ def build_detection_outcome(
         acceptance.reason == "score_too_low"
         and score >= MIN_PROBABLE_SIMILARITY
     )
+    is_supported_probable_proposal = (
+        is_probable_match
+        and score >= MIN_PROPOSAL_SIMILARITY
+        and acceptance.matched_word_count >= MIN_PROPOSAL_MATCHED_WORD_COUNT
+        and (
+            score_margin is None
+            or score_margin >= MIN_PROPOSAL_SCORE_MARGIN
+        )
+    )
     should_include_verse = acceptance.accepted or (
         include_ambiguous_verse
         and (
             acceptance.reason == "ambiguous_match"
-            or is_probable_match
+            or is_supported_probable_proposal
         )
     )
 
