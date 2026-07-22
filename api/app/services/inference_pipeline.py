@@ -4,7 +4,7 @@
 # transcription -> détection verset -> détection imam
 
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Literal
 
 from app.core.api_logger import log_api_event
@@ -14,6 +14,9 @@ from app.core.transcription_policy import (
     HIGH_COMPRESSION_RATIO,
     HIGH_TEMPERATURE,
     HIGH_TEMPERATURE_MAX_LOG_PROBABILITY,
+    LANGUAGE_CONFLICT_RESCUE_MIN_SPEECH_SECONDS,
+    LANGUAGE_CONFLICT_MIN_MATCHED_WORD_COUNT,
+    LANGUAGE_CONFLICT_MIN_QURAN_SIMILARITY,
     MIN_AVERAGE_LOG_PROBABILITY,
     is_confidently_non_arabic,
 )
@@ -37,7 +40,10 @@ AudioRejectionReason = Literal[
     "non_arabic_speech",
     "low_transcription_confidence",
 ]
-AudioQualityWarning = Literal["low_transcription_confidence"]
+AudioQualityWarning = Literal[
+    "low_transcription_confidence",
+    "non_arabic_speech",
+]
 AUDIO_REJECTION_REASONS: frozenset[AudioRejectionReason] = frozenset(
     {
         "insufficient_speech",
@@ -45,11 +51,6 @@ AUDIO_REJECTION_REASONS: frozenset[AudioRejectionReason] = frozenset(
         "low_transcription_confidence",
     }
 )
-HARD_AUDIO_REJECTION_REASONS: frozenset[AudioRejectionReason] = frozenset(
-    {"insufficient_speech", "non_arabic_speech"}
-)
-
-
 @dataclass(frozen=True, slots=True)
 class AudioQualityAssessment:
     accepted: bool
@@ -60,17 +61,23 @@ class AudioQualityAssessment:
 def assess_audio_quality(segments) -> AudioQualityAssessment:
     """Écarte uniquement les cas dont les signaux Whisper sont suffisamment nets."""
     metadata: TranscriptionMetadata | None = getattr(segments, "metadata", None)
+    has_transcription = any(
+        bool(segment.get("text", "").strip())
+        for segment in segments
+    )
+
     if metadata is not None and is_confidently_non_arabic(
         metadata.language,
         metadata.language_probability,
         metadata.arabic_probability,
     ):
+        if has_transcription:
+            return AudioQualityAssessment(
+                True,
+                None,
+                warning_reason="non_arabic_speech",
+            )
         return AudioQualityAssessment(False, "non_arabic_speech")
-
-    has_transcription = any(
-        bool(segment.get("text", "").strip())
-        for segment in segments
-    )
 
     if not has_transcription:
         return AudioQualityAssessment(False, "insufficient_speech")
@@ -144,11 +151,37 @@ def detect_verse_after_audio_quality_check(
         )
         return build_audio_rejection_outcome(quality.rejection_reason)
 
-    return detect_verse_with_metadata(
+    detection = detect_verse_with_metadata(
         segments,
         include_ambiguous_verse=(
-            include_ambiguous_verse and quality.warning_reason is None
+            include_ambiguous_verse
+            and quality.warning_reason != "low_transcription_confidence"
         ),
+    )
+    if quality.warning_reason == "non_arabic_speech":
+        return apply_language_conflict_gate(detection)
+    return detection
+
+
+def apply_language_conflict_gate(
+    detection: VerseDetectionOutcome,
+) -> VerseDetectionOutcome:
+    """Exige une preuve coranique longue lors d'un conflit de langue."""
+    has_supported_quran_evidence = (
+        detection.verse is not None
+        and detection.score is not None
+        and detection.score >= LANGUAGE_CONFLICT_MIN_QURAN_SIMILARITY
+        and detection.matched_word_count >= LANGUAGE_CONFLICT_MIN_MATCHED_WORD_COUNT
+        and detection.status in {"confident", "ambiguous"}
+    )
+    if has_supported_quran_evidence or detection.verse is None:
+        return detection
+
+    return replace(
+        detection,
+        verse=None,
+        status="insufficient",
+        rejection_reason="non_arabic_speech",
     )
 
 
@@ -171,7 +204,16 @@ def detect_verse_progressively(
         include_ambiguous_verse=allow_ambiguous_result,
     )
 
-    if not should_run_transcription_rescue(primary_detection):
+    primary_metadata = getattr(primary_segments, "metadata", None)
+    primary_speech_duration = (
+        primary_metadata.speech_duration_seconds
+        if primary_metadata is not None
+        else None
+    )
+    if not should_run_transcription_rescue(
+        primary_detection,
+        speech_duration_seconds=primary_speech_duration,
+    ):
         return (
             primary_segments,
             primary_detection,
@@ -179,7 +221,6 @@ def detect_verse_progressively(
             1,
         )
 
-    primary_metadata = getattr(primary_segments, "metadata", None)
     rescue_segments = transcribe_rescue_audio(audio_path, primary_metadata)
     rescue_detection = detect_verse_after_audio_quality_check(
         rescue_segments,
@@ -218,12 +259,23 @@ def detection_outcome_quality(outcome: VerseDetectionOutcome) -> tuple:
     )
 
 
-def should_run_transcription_rescue(outcome: VerseDetectionOutcome) -> bool:
-    if (
-        outcome.status == "confident"
-        or outcome.rejection_reason in HARD_AUDIO_REJECTION_REASONS
-    ):
+def should_run_transcription_rescue(
+    outcome: VerseDetectionOutcome,
+    *,
+    speech_duration_seconds: float | None = None,
+) -> bool:
+    if outcome.status == "confident":
         return False
+
+    if outcome.rejection_reason == "insufficient_speech":
+        return False
+
+    if outcome.rejection_reason == "non_arabic_speech":
+        return (
+            speech_duration_seconds is not None
+            and speech_duration_seconds
+            >= LANGUAGE_CONFLICT_RESCUE_MIN_SPEECH_SECONDS
+        )
 
     # Une proposition ambiguë déjà forte reste explicitement présentée comme
     # telle. Une seconde passe coûteuse a peu de chances de la départager.

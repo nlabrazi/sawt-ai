@@ -18,6 +18,7 @@ def build_transcription(
     average_log_probability=-0.4,
     max_compression_ratio=1.8,
     max_temperature=0.0,
+    speech_duration_seconds=3.0,
 ):
     metadata = TranscriptionMetadata(
         language=language,
@@ -26,7 +27,7 @@ def build_transcription(
         language_probabilities=(),
         duration_seconds=4.0,
         duration_after_vad_seconds=3.0,
-        speech_duration_seconds=3.0,
+        speech_duration_seconds=speech_duration_seconds,
         average_log_probability=average_log_probability,
         average_no_speech_probability=0.1,
         max_compression_ratio=max_compression_ratio,
@@ -102,7 +103,7 @@ def test_audio_quality_rejects_empty_transcription():
     assert quality.rejection_reason == "insufficient_speech"
 
 
-def test_audio_quality_rejects_only_confidently_non_arabic_speech():
+def test_decoded_language_conflict_becomes_strict_non_blocking_warning():
     french = build_transcription(
         "Bonjour, ceci est un texte français.",
         language="fr",
@@ -116,9 +117,10 @@ def test_audio_quality_rejects_only_confidently_non_arabic_speech():
         arabic_probability=0.2,
     )
 
-    assert inference_pipeline.assess_audio_quality(french).rejection_reason == (
-        "non_arabic_speech"
-    )
+    french_quality = inference_pipeline.assess_audio_quality(french)
+    assert french_quality.accepted is True
+    assert french_quality.rejection_reason is None
+    assert french_quality.warning_reason == "non_arabic_speech"
     assert inference_pipeline.assess_audio_quality(uncertain).accepted is True
 
 
@@ -165,9 +167,72 @@ def test_audio_quality_rejection_happens_before_verse_matching(monkeypatch):
 
     detection = inference_pipeline.detect_verse_after_audio_quality_check(
         build_transcription(
-            "Texte lu en français",
+            None,
             language="fr",
             language_probability=0.94,
+            arabic_probability=0.01,
+        ),
+        include_ambiguous_verse=True,
+    )
+
+    assert detection.verse is None
+    assert detection.status == "insufficient"
+    assert detection.rejection_reason == "non_arabic_speech"
+
+
+def test_decoded_language_conflict_exposes_only_strong_quran_evidence(monkeypatch):
+    ambiguous_result_flags = []
+
+    def fake_detect(_segments, include_ambiguous_verse=False):
+        ambiguous_result_flags.append(include_ambiguous_verse)
+        return VerseDetectionOutcome(
+            {"sourate_id": 112, "similarity": 0.91},
+            "confident",
+            0.91,
+            0.12,
+            8,
+            None,
+        )
+
+    monkeypatch.setattr(
+        inference_pipeline,
+        "detect_verse_with_metadata",
+        fake_detect,
+    )
+
+    detection = inference_pipeline.detect_verse_after_audio_quality_check(
+        build_transcription(
+            "قل هو الله احد",
+            language="fr",
+            language_probability=0.9,
+            arabic_probability=0.01,
+        ),
+        include_ambiguous_verse=True,
+    )
+
+    assert detection.status == "confident"
+    assert ambiguous_result_flags == [True]
+
+
+def test_language_conflict_suppresses_short_exact_quran_match(monkeypatch):
+    monkeypatch.setattr(
+        inference_pipeline,
+        "detect_verse_with_metadata",
+        lambda *_args, **_kwargs: VerseDetectionOutcome(
+            {"sourate_id": 1, "similarity": 1.0},
+            "confident",
+            1.0,
+            0.2,
+            4,
+            None,
+        ),
+    )
+
+    detection = inference_pipeline.detect_verse_after_audio_quality_check(
+        build_transcription(
+            "بسم الله الرحمن الرحيم",
+            language="fr",
+            language_probability=0.9,
             arabic_probability=0.01,
         ),
         include_ambiguous_verse=True,
@@ -350,6 +415,26 @@ def test_detect_verse_progressively_skips_rescue_for_strong_ambiguous_proposal(
     assert segments is primary_segments
     assert detection is primary_detection
     assert attempts == 1
+
+
+def test_language_conflict_rescue_requires_enough_detected_speech():
+    outcome = VerseDetectionOutcome(
+        None,
+        "insufficient",
+        None,
+        None,
+        0,
+        "non_arabic_speech",
+    )
+
+    assert inference_pipeline.should_run_transcription_rescue(
+        outcome,
+        speech_duration_seconds=14.9,
+    ) is False
+    assert inference_pipeline.should_run_transcription_rescue(
+        outcome,
+        speech_duration_seconds=15.0,
+    ) is True
 
 
 def test_detect_verse_progressively_matches_low_quality_complete_audio_strictly(
