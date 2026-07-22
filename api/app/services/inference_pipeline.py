@@ -7,6 +7,8 @@ import logging
 from dataclasses import dataclass
 from typing import Literal
 
+from app.core.api_logger import log_api_event
+from app.core.detection_policy import MAX_AMBIGUOUS_RESCUE_SCORE
 from app.core.transcription_policy import (
     HIGH_COMPRESSION_MAX_LOG_PROBABILITY,
     HIGH_COMPRESSION_RATIO,
@@ -15,7 +17,7 @@ from app.core.transcription_policy import (
     MIN_AVERAGE_LOG_PROBABILITY,
     is_confidently_non_arabic,
 )
-from app.core.api_logger import log_api_event
+from app.services.imam_prediction_service import ImamPredictionError, predict_imam
 from app.services.transcription_service import (
     TranscriptionMetadata,
     TranscriptionResult,
@@ -26,7 +28,6 @@ from app.services.verse_detection_service import (
     VerseDetectionOutcome,
     detect_verse_with_metadata,
 )
-from app.services.imam_prediction_service import ImamPredictionError, predict_imam
 
 logger = logging.getLogger(__name__)
 
@@ -170,10 +171,7 @@ def detect_verse_progressively(
         include_ambiguous_verse=allow_ambiguous_result,
     )
 
-    if (
-        primary_detection.status == "confident"
-        or primary_detection.rejection_reason in HARD_AUDIO_REJECTION_REASONS
-    ):
+    if not should_run_transcription_rescue(primary_detection):
         return (
             primary_segments,
             primary_detection,
@@ -218,6 +216,26 @@ def detection_outcome_quality(outcome: VerseDetectionOutcome) -> tuple:
         outcome.score_margin if outcome.score_margin is not None else -1.0,
         outcome.matched_word_count,
     )
+
+
+def should_run_transcription_rescue(outcome: VerseDetectionOutcome) -> bool:
+    if (
+        outcome.status == "confident"
+        or outcome.rejection_reason in HARD_AUDIO_REJECTION_REASONS
+    ):
+        return False
+
+    # Une proposition ambiguë déjà forte reste explicitement présentée comme
+    # telle. Une seconde passe coûteuse a peu de chances de la départager.
+    if (
+        outcome.status == "ambiguous"
+        and outcome.verse is not None
+        and outcome.score is not None
+        and outcome.score >= MAX_AMBIGUOUS_RESCUE_SCORE
+    ):
+        return False
+
+    return True
 
 
 def compute_imam_status(

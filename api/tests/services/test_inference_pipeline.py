@@ -313,6 +313,45 @@ def test_detect_verse_progressively_selects_better_conditional_rescue(monkeypatc
     assert attempts == 2
 
 
+def test_detect_verse_progressively_skips_rescue_for_strong_ambiguous_proposal(
+    monkeypatch,
+):
+    primary_segments = [{"text": "passage long"}]
+    primary_detection = VerseDetectionOutcome(
+        {"sourate_id": 1, "similarity": 0.95},
+        "ambiguous",
+        0.95,
+        0.04,
+        12,
+        "ambiguous_match",
+    )
+    monkeypatch.setattr(
+        inference_pipeline,
+        "transcribe_audio",
+        lambda _audio_path: primary_segments,
+    )
+    monkeypatch.setattr(
+        inference_pipeline,
+        "detect_verse_after_audio_quality_check",
+        lambda _segments, include_ambiguous_verse: primary_detection,
+    )
+    monkeypatch.setattr(
+        inference_pipeline,
+        "transcribe_rescue_audio",
+        lambda *_args: (_ for _ in ()).throw(
+            AssertionError("strong ambiguous proposals must not be retranscribed")
+        ),
+    )
+
+    segments, detection, _duration, attempts = (
+        inference_pipeline.detect_verse_progressively("/tmp/audio.wav", 12)
+    )
+
+    assert segments is primary_segments
+    assert detection is primary_detection
+    assert attempts == 1
+
+
 def test_detect_verse_progressively_matches_low_quality_complete_audio_strictly(
     monkeypatch,
 ):
