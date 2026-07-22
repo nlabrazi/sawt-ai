@@ -739,6 +739,30 @@ def test_build_detection_outcome_classifies_low_score_as_probable():
     assert outcome.rejection_reason == "score_too_low"
 
 
+def test_build_detection_outcome_can_expose_probable_candidate_as_proposal():
+    candidate = QuranVerseCandidate(1, "First", "First", 1, 1, "نص اول واضح")
+    ranked_matches = [
+        verse_detection_service.RankedVerseCandidate(
+            0,
+            candidate,
+            74,
+            "نص كامل واضح",
+        ),
+    ]
+    acceptance = verse_detection_service.assess_match_acceptance(ranked_matches)
+
+    outcome = verse_detection_service.build_detection_outcome(
+        ranked_matches,
+        acceptance,
+        include_ambiguous_verse=True,
+    )
+
+    assert outcome.verse is not None
+    assert outcome.verse["sourate_id"] == 1
+    assert outcome.status == "probable"
+    assert outcome.rejection_reason == "score_too_low"
+
+
 def test_detect_verse_infers_enclosing_fatiha_when_middle_verses_are_missing(
     monkeypatch,
 ):

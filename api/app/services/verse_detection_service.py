@@ -743,8 +743,16 @@ def build_detection_outcome(
     else:
         status = "insufficient"
 
+    is_probable_match = (
+        acceptance.reason == "score_too_low"
+        and score >= MIN_PROBABLE_SIMILARITY
+    )
     should_include_verse = acceptance.accepted or (
-        include_ambiguous_verse and acceptance.reason == "ambiguous_match"
+        include_ambiguous_verse
+        and (
+            acceptance.reason == "ambiguous_match"
+            or is_probable_match
+        )
     )
 
     if should_include_verse:
