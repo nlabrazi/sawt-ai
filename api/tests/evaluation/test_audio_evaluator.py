@@ -43,6 +43,7 @@ def pipeline_result(verse, transcription="texte privé", status="confident"):
             "language": "ar",
             "arabicProbability": 0.95,
             "averageLogProbability": -0.4,
+            "audioQualityWarning": "low_transcription_confidence",
             "topCandidates": [
                 {
                     "rank": 1,
@@ -154,6 +155,7 @@ def test_evaluate_audio_corpus_separates_positive_and_negative_failures():
         "language": "ar",
         "arabicProbability": 0.95,
         "averageLogProbability": -0.4,
+        "audioQualityWarning": "low_transcription_confidence",
     }
 
 

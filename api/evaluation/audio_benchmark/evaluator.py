@@ -214,6 +214,7 @@ def _case_result(
                 "maxCompressionRatio",
                 "maxTemperature",
                 "speechDurationSeconds",
+                "audioQualityWarning",
             )
             if diagnostics.get(key) is not None
         },
