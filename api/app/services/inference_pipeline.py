@@ -15,6 +15,7 @@ from app.core.transcription_policy import (
     MIN_AVERAGE_LOG_PROBABILITY,
     is_confidently_non_arabic,
 )
+from app.core.api_logger import log_api_event
 from app.services.transcription_service import (
     TranscriptionMetadata,
     TranscriptionResult,
@@ -188,11 +189,52 @@ def compute_imam_status(
     return "low"
 
 
+def build_recognition_decision_signals(
+    segments,
+    verse_detection: VerseDetectionOutcome,
+    *,
+    analyzed_duration_seconds: float | None,
+    analysis_attempts: int,
+) -> dict[str, object]:
+    """Construit une trace exploitable sans journaliser le contenu récité."""
+    metadata: TranscriptionMetadata | None = getattr(segments, "metadata", None)
+    verse = verse_detection.verse
+
+    return {
+        "segmentCount": len(segments),
+        "transcriptionChars": sum(
+            len(segment.get("text", "").strip()) for segment in segments
+        ),
+        "language": metadata.language if metadata else None,
+        "languageProbability": metadata.language_probability if metadata else None,
+        "arabicProbability": metadata.arabic_probability if metadata else None,
+        "averageLogProbability": (
+            metadata.average_log_probability if metadata else None
+        ),
+        "averageNoSpeechProbability": (
+            metadata.average_no_speech_probability if metadata else None
+        ),
+        "maxCompressionRatio": metadata.max_compression_ratio if metadata else None,
+        "maxTemperature": metadata.max_temperature if metadata else None,
+        "speechDurationSeconds": metadata.speech_duration_seconds if metadata else None,
+        "detectionStatus": verse_detection.status,
+        "detectionScore": verse_detection.score,
+        "scoreMargin": verse_detection.score_margin,
+        "matchedWordCount": verse_detection.matched_word_count,
+        "rejectionReason": verse_detection.rejection_reason,
+        "verseFound": verse is not None,
+        "predictedSurahId": verse.get("sourate_id") if verse else None,
+        "analyzedDurationSeconds": analyzed_duration_seconds,
+        "analysisAttempts": analysis_attempts,
+    }
+
+
 def run_inference_pipeline(
     audio_path: str,
     detect_imam: bool = True,
     audio_duration_seconds: float | None = None,
     allow_ambiguous_result: bool = True,
+    request_id: str | None = None,
 ):
     """
     Pipeline principal
@@ -244,6 +286,20 @@ def run_inference_pipeline(
         analysis_attempts,
         len(imam_predictions),
         imam_status,
+    )
+
+    decision_signals = build_recognition_decision_signals(
+        segments,
+        verse_detection,
+        analyzed_duration_seconds=analyzed_duration_seconds,
+        analysis_attempts=analysis_attempts,
+    )
+    if request_id is not None:
+        decision_signals["requestId"] = request_id
+    log_api_event(
+        message="Recognition decision",
+        route="/recognize",
+        extra=decision_signals,
     )
 
     return {

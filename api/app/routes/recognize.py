@@ -177,6 +177,7 @@ async def recognize(
             detect_imam,
             audio_duration_seconds,
             allow_ambiguous_result,
+            str(request_id),
         )
     finally:
         await file.close()

@@ -45,12 +45,14 @@ def test_recognize_runs_pipeline_in_threadpool_and_cleans_temp_file(monkeypatch)
         detect_imam: bool,
         audio_duration_seconds: float,
         allow_ambiguous_result: bool,
+        request_id: str,
     ):
         path = Path(audio_path)
         captured["path"] = path
         captured["detect_imam"] = detect_imam
         captured["audio_duration_seconds"] = audio_duration_seconds
         captured["allow_ambiguous_result"] = allow_ambiguous_result
+        captured["request_id"] = request_id
         captured["bytes"] = path.read_bytes()
 
         return {
@@ -97,6 +99,7 @@ def test_recognize_runs_pipeline_in_threadpool_and_cleans_temp_file(monkeypatch)
     assert captured["detect_imam"] is False
     assert captured["audio_duration_seconds"] == 12.5
     assert captured["allow_ambiguous_result"] is True
+    assert captured["request_id"]
     assert captured["bytes"] == build_wav_like_audio()
     assert captured["path"].suffix == ".wav"
     assert not captured["path"].exists()

@@ -55,6 +55,31 @@ def test_compute_imam_status_uses_score_thresholds():
     assert compute_imam_status([{"name": "A", "score": 0.4}], detect_imam=True) == "low"
 
 
+def test_recognition_decision_signals_exclude_transcription_content():
+    segments = build_transcription("قل هو الله احد")
+    detection = VerseDetectionOutcome(
+        verse={"sourate_id": 112, "similarity": 0.91},
+        status="confident",
+        score=0.91,
+        score_margin=0.12,
+        matched_word_count=4,
+        rejection_reason=None,
+    )
+
+    signals = inference_pipeline.build_recognition_decision_signals(
+        segments,
+        detection,
+        analyzed_duration_seconds=4.0,
+        analysis_attempts=1,
+    )
+
+    assert signals["language"] == "ar"
+    assert signals["detectionStatus"] == "confident"
+    assert signals["predictedSurahId"] == 112
+    assert signals["transcriptionChars"] > 0
+    assert "قل" not in str(signals)
+
+
 def test_audio_quality_rejects_empty_transcription():
     quality = inference_pipeline.assess_audio_quality(build_transcription(None))
 
