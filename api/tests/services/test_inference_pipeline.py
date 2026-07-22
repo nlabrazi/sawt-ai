@@ -64,6 +64,19 @@ def test_recognition_decision_signals_exclude_transcription_content():
         score_margin=0.12,
         matched_word_count=4,
         rejection_reason=None,
+        candidates=(
+            {
+                "rank": 1,
+                "sourate_id": 112,
+                "start_verse": 1,
+                "end_verse": 4,
+                "similarity": 0.91,
+                "ranking_score": 0.88,
+                "matched_word_count": 4,
+                "coverage": 1.0,
+                "continuity": 0.94,
+            },
+        ),
     )
 
     signals = inference_pipeline.build_recognition_decision_signals(
@@ -76,6 +89,8 @@ def test_recognition_decision_signals_exclude_transcription_content():
     assert signals["language"] == "ar"
     assert signals["detectionStatus"] == "confident"
     assert signals["predictedSurahId"] == 112
+    assert signals["candidateCount"] == 1
+    assert signals["topCandidates"][0]["coverage"] == 1.0
     assert signals["transcriptionChars"] > 0
     assert "قل" not in str(signals)
 

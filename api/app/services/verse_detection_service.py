@@ -30,6 +30,7 @@ MAX_WINDOWS_PER_SIZE = 6
 MATCH_CANDIDATE_LIMIT = 20
 RANKED_CANDIDATE_LIMIT = 2
 AMBIGUITY_CANDIDATE_LIMIT = 10
+DIAGNOSTIC_CANDIDATE_LIMIT = 3
 PASSAGE_ANCHOR_MIN_WORD_COUNT = 4
 PASSAGE_ANCHOR_MIN_SIMILARITY = 90.0
 PASSAGE_ANCHOR_MIN_TEXT_COVERAGE = 0.85
@@ -86,6 +87,7 @@ class VerseDetectionOutcome:
     score_margin: float | None
     matched_word_count: int
     rejection_reason: RejectionReason | None
+    candidates: tuple[dict[str, float | int], ...] = ()
 
     def metadata(self) -> dict:
         return {
@@ -95,6 +97,57 @@ class VerseDetectionOutcome:
             "matched_word_count": self.matched_word_count,
             "rejection_reason": self.rejection_reason,
         }
+
+
+def build_candidate_evidence(
+    ranked_matches: list[RankedVerseCandidate],
+    *,
+    limit: int = DIAGNOSTIC_CANDIDATE_LIMIT,
+) -> tuple[dict[str, float | int], ...]:
+    """Expose les preuves de classement sans inclure le texte coranique."""
+    evidence = []
+    seen_candidates = set()
+
+    for match in ranked_matches:
+        candidate = match.candidate
+        candidate_key = (
+            candidate.sourate_id,
+            candidate.start_verse,
+            candidate.end_verse,
+        )
+        if candidate_key in seen_candidates:
+            continue
+
+        seen_candidates.add(candidate_key)
+        matched_word_count = len(match.matched_window.split())
+        candidate_word_count = len(candidate.normalized_text.split())
+        covered_word_count = min(matched_word_count, candidate_word_count)
+        coverage = (
+            covered_word_count / candidate_word_count
+            if candidate_word_count
+            else 0.0
+        )
+        continuity = fuzz.ratio(
+            match.matched_window,
+            candidate.normalized_text,
+        ) / 100
+        evidence.append(
+            {
+                "rank": len(evidence) + 1,
+                "sourate_id": candidate.sourate_id,
+                "start_verse": candidate.start_verse,
+                "end_verse": candidate.end_verse,
+                "similarity": match.score_percent / 100,
+                "ranking_score": effective_ranking_score(match) / 100,
+                "matched_word_count": matched_word_count,
+                "coverage": coverage,
+                "continuity": continuity,
+            }
+        )
+        if len(evidence) >= limit:
+            break
+
+    return tuple(evidence)
 
 
 def compute_similarity_score(query: str, candidate: str, **_kwargs) -> float:
@@ -670,6 +723,7 @@ def build_detection_outcome(
             score_margin=None,
             matched_word_count=0,
             rejection_reason="no_match",
+            candidates=(),
         )
 
     top_match = ranked_matches[0]
@@ -714,6 +768,7 @@ def build_detection_outcome(
         score_margin=score_margin,
         matched_word_count=acceptance.matched_word_count,
         rejection_reason=acceptance.reason,
+        candidates=build_candidate_evidence(ranked_matches),
     )
 
 

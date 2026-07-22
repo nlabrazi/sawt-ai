@@ -178,6 +178,9 @@ def _case_result(
     diagnostics = pipeline_result.get("recognition_diagnostics", {})
     if not isinstance(diagnostics, Mapping):
         diagnostics = {}
+    candidate_evidence = diagnostics.get("topCandidates", [])
+    if not isinstance(candidate_evidence, (list, tuple)):
+        candidate_evidence = []
 
     result = {
         "id": case.case_id,
@@ -194,6 +197,12 @@ def _case_result(
         "matched_word_count": detection.get("matched_word_count"),
         "rejection_reason": detection.get("rejection_reason"),
         "analysis_attempts": detection.get("analysis_attempts"),
+        "candidate_count": len(candidate_evidence),
+        "candidate_evidence": [
+            dict(candidate)
+            for candidate in candidate_evidence
+            if isinstance(candidate, Mapping)
+        ],
         "audio_quality": {
             key: diagnostics.get(key)
             for key in (

@@ -239,6 +239,8 @@ def build_recognition_decision_signals(
         "predictedSurahId": verse.get("sourate_id") if verse else None,
         "analyzedDurationSeconds": analyzed_duration_seconds,
         "analysisAttempts": analysis_attempts,
+        "candidateCount": len(verse_detection.candidates),
+        "topCandidates": list(verse_detection.candidates),
     }
 
 

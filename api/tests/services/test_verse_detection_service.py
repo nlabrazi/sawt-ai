@@ -670,6 +670,30 @@ def test_build_detection_outcome_exposes_ambiguous_decision():
         "matched_word_count": 3,
         "rejection_reason": "ambiguous_match",
     }
+    assert outcome.candidates == (
+        {
+            "rank": 1,
+            "sourate_id": 1,
+            "start_verse": 1,
+            "end_verse": 1,
+            "similarity": 0.92,
+            "ranking_score": 0.92,
+            "matched_word_count": 3,
+            "coverage": 1.0,
+            "continuity": fuzz.ratio("نص كامل واضح", "نص اول واضح") / 100,
+        },
+        {
+            "rank": 2,
+            "sourate_id": 2,
+            "start_verse": 1,
+            "end_verse": 1,
+            "similarity": 0.88,
+            "ranking_score": 0.88,
+            "matched_word_count": 3,
+            "coverage": 1.0,
+            "continuity": fuzz.ratio("نص كامل واضح", "نص ثان واضح") / 100,
+        },
+    )
 
 
 def test_build_detection_outcome_can_expose_ambiguous_candidate_for_manual_result():

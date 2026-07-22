@@ -43,6 +43,15 @@ def pipeline_result(verse, transcription="texte privé", status="confident"):
             "language": "ar",
             "arabicProbability": 0.95,
             "averageLogProbability": -0.4,
+            "topCandidates": [
+                {
+                    "rank": 1,
+                    "sourate_id": 112,
+                    "similarity": 0.9,
+                    "coverage": 1.0,
+                    "continuity": 0.95,
+                },
+            ] if verse else [],
         },
     }
 
@@ -139,6 +148,8 @@ def test_evaluate_audio_corpus_separates_positive_and_negative_failures():
     assert report["cases"][0]["score_margin"] == 0.12
     assert report["cases"][0]["matched_word_count"] == 4
     assert report["cases"][0]["analysis_attempts"] == 1
+    assert report["cases"][0]["candidate_count"] == 1
+    assert report["cases"][0]["candidate_evidence"][0]["coverage"] == 1.0
     assert report["cases"][0]["audio_quality"] == {
         "language": "ar",
         "arabicProbability": 0.95,
