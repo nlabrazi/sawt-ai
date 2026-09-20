@@ -19,9 +19,9 @@ pipeline {
             }
             steps {
                 dir('api') {
-                    sh 'python -m pip install --upgrade pip'
-                    sh 'python -m pip install -r requirements-test.txt'
-                    sh 'pytest -c pytest.ini'
+                    sh 'python -m venv .venv'
+                    sh '.venv/bin/python -m pip install -r requirements-test.txt'
+                    sh '.venv/bin/python -m pytest -c pytest.ini'
                 }
             }
         }
