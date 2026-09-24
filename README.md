@@ -77,6 +77,7 @@ Sawt-AI is an AI-powered application designed to detect and classify Quranic ver
 
 * [![Python][Python.io]][Python-url]
 * [![Docker][Docker.io]][Docker-url]
+* [![Playwright][Playwright.io]][Playwright-url]
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 
@@ -150,6 +151,29 @@ cd ui
 npm test
 ```
 
+Frontend End-to-End (E2E) tests with Playwright:
+
+```bash
+cd ui
+npm run test:e2e
+```
+
+Run E2E tests in interactive UI mode or view HTML reports:
+
+```bash
+npm run test:e2e:ui
+npm run test:e2e:report
+```
+
+Run E2E tests with the official Playwright Docker image:
+
+```bash
+docker run --rm --ipc=host -e CI=true -w /workspace/ui \
+  -v $(pwd):/workspace \
+  mcr.microsoft.com/playwright:v1.63.0-noble \
+  bash -c "npm ci && npm run test:e2e"
+```
+
 Verse detection quality benchmark (text matching only):
 
 ```bash
@@ -179,6 +203,8 @@ The current test suite covers:
 - reproducible text and audio evaluation metrics with manual release gates
 - frontend recording transitions, double-click protection, result/rejection screens, and navigation
 - feedback, tajwid loading, confidence rendering, accessibility, and utility parsing
+- Playwright E2E coverage for landing page rendering, responsive viewports, mock audio synthesis, recognition workflow, rejection guidance, verse details sheet with Tajwid reader, and feedback forms
+- automated Jenkins CI pipeline with dedicated `Frontend E2E tests` stage using `mcr.microsoft.com/playwright:v1.63.0-noble`
 
 ### 🌍 Environment Variables
 
@@ -308,3 +334,5 @@ See the full license in [`LICENSE.txt`](https://en.wikipedia.org/wiki/MIT_Licens
 [TailwindCSS-url]: https://tailwindcss.com/
 [Stimulus.js]: https://img.shields.io/badge/stimulus-0a0a0a?style=for-the-badge&logo=stimulus&logoColor=white
 [Stimulus-url]: https://stimulus.hotwired.dev/
+[Playwright.io]: https://img.shields.io/badge/Playwright-2EAD33?style=for-the-badge&logo=playwright&logoColor=white
+[Playwright-url]: https://playwright.dev/
