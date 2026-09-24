@@ -43,6 +43,31 @@ pipeline {
                 }
             }
         }
+
+        stage('Frontend E2E tests') {
+            agent {
+                docker {
+                    image 'mcr.microsoft.com/playwright:v1.63.0-noble'
+                    args '--ipc=host'
+                    reuseNode true
+                }
+            }
+            environment {
+                CI = 'true'
+                HOME = '/tmp'
+            }
+            steps {
+                dir('ui') {
+                    sh 'npm ci'
+                    sh 'npm run test:e2e'
+                }
+            }
+            post {
+                always {
+                    archiveArtifacts artifacts: 'ui/playwright-report/**, ui/test-results/**', allowEmptyArchive: true
+                }
+            }
+        }
     }
 
     post {
