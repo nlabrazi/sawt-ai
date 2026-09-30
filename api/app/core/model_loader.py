@@ -20,6 +20,7 @@ if TYPE_CHECKING:
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 WHISPER_MODEL_NAME = os.getenv("WHISPER_MODEL_NAME", "turbo")
+DEFAULT_WHISPER_CPU_THREADS = 4
 QURAN_VERSETS_PATH = Path(
     os.getenv("QURAN_VERSETS_PATH", str(BASE_DIR / "assets" / "quran_versets.json"))
 )
@@ -130,10 +131,14 @@ def load_all_models() -> None:
     if whisper_model is None:
         from faster_whisper import WhisperModel
 
+        whisper_cpu_threads = int(
+            os.getenv("WHISPER_CPU_THREADS", str(DEFAULT_WHISPER_CPU_THREADS))
+        )
         whisper_model = WhisperModel(
             WHISPER_MODEL_NAME,
             device="cpu",
             compute_type="int8",
+            cpu_threads=whisper_cpu_threads,
         )
 
     load_quran_catalog()

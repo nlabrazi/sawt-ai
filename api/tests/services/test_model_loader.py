@@ -159,3 +159,31 @@ def test_accessors_raise_runtime_error_when_catalog_not_loaded(monkeypatch):
     with pytest.raises(RuntimeError, match="Quran verses are not loaded"):
         model_loader.get_quran_candidates_by_range()
 
+
+def test_load_all_models_configures_whisper_cpu_threads(monkeypatch, tmp_path):
+    import sys
+
+    snapshot_path = tmp_path / "quran_versets.json"
+    snapshot_path.write_text(json.dumps(build_quran_payload()), encoding="utf-8")
+
+    captured_kwargs = {}
+
+    class DummyWhisper:
+        def __init__(self, *args, **kwargs):
+            captured_kwargs.update(kwargs)
+
+    monkeypatch.setattr(model_loader, "QURAN_VERSETS_PATH", snapshot_path)
+    monkeypatch.setattr(model_loader, "whisper_model", None)
+    monkeypatch.setattr(model_loader, "quran_versets", None)
+    monkeypatch.setattr(model_loader, "quran_verse_candidates", None)
+    monkeypatch.setenv("WHISPER_CPU_THREADS", "6")
+
+    dummy_module = type(sys)("faster_whisper")
+    dummy_module.WhisperModel = DummyWhisper
+    monkeypatch.setitem(sys.modules, "faster_whisper", dummy_module)
+
+    model_loader.load_all_models()
+
+    assert captured_kwargs.get("cpu_threads") == 6
+
+
