@@ -24,22 +24,42 @@ function isAllowedAudioType(file: File, allowedMimeTypes: string[]) {
   return allowedMimeTypes.some((type) => file.type === type || file.type.startsWith(`${type};`))
 }
 
-function getAudioDuration(file: File): Promise<number> {
+function getAudioDuration(file: File, timeoutMs = 4000): Promise<number> {
   return new Promise((resolve, reject) => {
     const audio = document.createElement('audio')
     const objectUrl = URL.createObjectURL(file)
+    let isSettled = false
+
+    const cleanup = () => {
+      URL.revokeObjectURL(objectUrl)
+      audio.removeAttribute('src')
+      audio.load()
+    }
+
+    const timer = window.setTimeout(() => {
+      if (isSettled) return
+      isSettled = true
+      cleanup()
+      reject(new Error('Délai dépassé pour la lecture du fichier audio.'))
+    }, timeoutMs)
 
     audio.preload = 'metadata'
     audio.src = objectUrl
 
     audio.onloadedmetadata = () => {
+      if (isSettled) return
+      isSettled = true
+      window.clearTimeout(timer)
       const duration = audio.duration
-      URL.revokeObjectURL(objectUrl)
+      cleanup()
       resolve(duration)
     }
 
     audio.onerror = () => {
-      URL.revokeObjectURL(objectUrl)
+      if (isSettled) return
+      isSettled = true
+      window.clearTimeout(timer)
+      cleanup()
       reject(new Error('Impossible de lire la durée du fichier audio.'))
     }
   })

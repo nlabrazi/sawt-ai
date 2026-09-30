@@ -154,4 +154,16 @@ describe('useRecognitionFlow microphone recording', () => {
     expect(stopRecording).toHaveBeenCalledTimes(1)
     expect(recognizeAudio).toHaveBeenCalledWith(expect.any(File), false)
   })
+
+  it('sets an upload error when audio duration reading times out', async () => {
+    vi.useFakeTimers()
+    const { flow } = await setupRecognitionFlow()
+    const file = new File(['corrupt-data'], 'corrupt.mp3', { type: 'audio/mpeg' })
+
+    const submitPromise = flow.submitAudio(file, true)
+    await vi.advanceTimersByTimeAsync(4500)
+    await submitPromise
+
+    expect(flow.uploadError.value).toBe('Impossible de lire ce fichier audio.')
+  })
 })

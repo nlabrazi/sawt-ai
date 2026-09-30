@@ -7,7 +7,7 @@
 // - expose un compteur simple pour l'UI
 // - expose un niveau audio temps réel pour animer l'UI
 
-import { computed, ref, type Ref } from 'vue'
+import { computed, getCurrentScope, onScopeDispose, ref, type Ref } from 'vue'
 
 const WAV_MIME_TYPE = 'audio/wav'
 
@@ -393,6 +393,12 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
     }
 
     resetRecordingState()
+  }
+
+  if (getCurrentScope()) {
+    onScopeDispose(() => {
+      cleanup()
+    })
   }
 
   return {

@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { effectScope, ref } from 'vue'
 
 import { useMicrophoneRecorder } from '~/composables/useMicrophoneRecorder'
 
@@ -225,5 +225,24 @@ describe('useMicrophoneRecorder', () => {
     expect((secondSnapshot?.size ?? 0) >= (firstSnapshot?.size ?? 0)).toBe(true)
     expect(recorder.isRecording.value).toBe(true)
     expect(stopTrack).not.toHaveBeenCalled()
+  })
+
+  it('cleans up recorder, tracks and audio context when the effect scope is disposed', async () => {
+    vi.useFakeTimers()
+
+    const { stopTrack } = setupRecorderEnvironment()
+    const scope = effectScope()
+    const recorder = scope.run(() => useMicrophoneRecorder(ref(90)))
+
+    expect(recorder).toBeDefined()
+    if (!recorder) return
+
+    await recorder.startRecording()
+    expect(recorder.isRecording.value).toBe(true)
+
+    scope.stop()
+
+    expect(recorder.isRecording.value).toBe(false)
+    expect(stopTrack).toHaveBeenCalledTimes(1)
   })
 })
