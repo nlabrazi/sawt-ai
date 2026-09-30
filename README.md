@@ -192,7 +192,7 @@ bash api/scripts/search_hadith.sh "Je cherche le hadith sur la colère"
 ```
 
 This prints three ranked HadeethEnc titles and links using the cached E5-base
-experiment. From the `api` directory, use `bash scripts/search_hadith.sh` instead.
+experiment with corrected passage boundaries. From the `api` directory, use `bash scripts/search_hadith.sh` instead.
 The launcher prepares its Python dependencies inside Docker on first use.
 See the guide below to rebuild the experiment caches on a fresh checkout.
 

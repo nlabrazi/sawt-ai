@@ -7,7 +7,10 @@ API_DIR = Path(__file__).resolve().parents[1]
 
 
 class HadithExperiment:
-    def __init__(self):
+    def __init__(self, *, strategy="multi"):
+        if strategy not in ("multi", "multi_context"):
+            raise ValueError("Unknown experiment strategy")
+        self.strategy = strategy
         self.resources = None
 
     def load(self):
@@ -20,21 +23,22 @@ class HadithExperiment:
         from scripts.diagnose_hadith_retrieval import fingerprint, group_documents
 
         cache = API_DIR / ".cache" / "hadith_retrieval"
-        report_path = API_DIR / "evaluation" / "hadith_retrieval" / "multilingual-e5-base_multi.json"
+        name = "multilingual-e5-base_" + self.strategy
+        report_path = API_DIR / "evaluation" / "hadith_retrieval" / (name + ".json")
         snapshot_path = cache / "snapshot.json"
-        matrix_path = cache / "multilingual-e5-base_multi.npz"
+        matrix_path = cache / (name + ".npz")
         if not all(path.is_file() for path in (report_path, snapshot_path, matrix_path)):
             raise ValueError("Le cache du benchmark E5-base manque. Voir evaluation/HADITH_SEARCH.md pour le reconstruire.")
         report = json.loads(report_path.read_text(encoding="utf-8"))
         snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
-        if report["strategy"] != "multi" or fingerprint(snapshot) != report["snapshot_sha256"]:
+        if report["strategy"] != self.strategy or fingerprint(snapshot) != report["snapshot_sha256"]:
             raise ValueError("Le corpus local ne correspond pas au benchmark E5-base.")
         tokenizer = AutoTokenizer.from_pretrained(
             report["document_tokenizer"], revision=report["document_tokenizer_revision"], trust_remote_code=False,
         )
         tokenizer.model_max_length = 10**9  # Long documents are explicitly split below.
         documents = [doc for record in snapshot["records"] for doc in build_documents(
-            record["payload"], snapshot["categories"], "multi", tokenizer, report["truncation"]["max_tokens"],
+            record["payload"], snapshot["categories"], self.strategy, tokenizer, report["truncation"]["max_tokens"],
         )]
         if fingerprint([{"id": doc.hadeethenc_id, "kind": doc.kind, "text": doc.text} for doc in documents]) != report["documents_sha256"]:
             raise ValueError("Les passages locaux diffèrent du benchmark E5-base.")

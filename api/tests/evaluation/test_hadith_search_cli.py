@@ -8,17 +8,20 @@ from scripts import hadith_experiment, search_hadith
 
 
 @pytest.mark.parametrize("raw", [False, True])
-def test_cli_uses_cleaned_subject_and_can_reproduce_raw_search(monkeypatch, capsys, raw):
+@pytest.mark.parametrize("variant, strategy", [("benchmark", "multi_context"), ("benchmark-original", "multi")])
+def test_cli_uses_cleaned_subject_and_can_reproduce_raw_search(monkeypatch, capsys, raw, variant, strategy):
     query = "Donnez moi hadith qui parle de ne pas se mettre en colère"
     index = Mock()
     index.rank.return_value = [("4709", 0.8)]
     client = Mock()
     client.get_hadith.return_value = {"id": "4709", "title": "Titre témoin", "hadeeth": "Texte source inchangé", "hadeeth_ar": "نص"}
-    monkeypatch.setattr(hadith_experiment, "HadithExperiment", lambda: index)
+    factory = Mock(return_value=index)
+    monkeypatch.setattr(hadith_experiment, "HadithExperiment", factory)
     monkeypatch.setattr(hadeethenc_client, "HadeethEncClient", lambda url: client)
-    monkeypatch.setattr("sys.argv", ["search_hadith.py", "--variant", "benchmark", "--json", *(["--raw-query"] if raw else []), query])
+    monkeypatch.setattr("sys.argv", ["search_hadith.py", "--variant", variant, "--json", *(["--raw-query"] if raw else []), query])
     search_hadith.main()
     searched = query if raw else "ne pas se mettre en colère"
+    factory.assert_called_once_with(strategy=strategy)
     index.rank.assert_called_once_with(searched)
     output = json.loads(capsys.readouterr().out)
     assert output["query"] == query

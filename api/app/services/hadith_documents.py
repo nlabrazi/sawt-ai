@@ -86,16 +86,61 @@ def split_document(document: SearchDocument, tokenizer, max_tokens: int = 512) -
     return chunks
 
 
+
+def split_document_with_context(document: SearchDocument, tokenizer, max_tokens: int = 512) -> list[SearchDocument]:
+    """Rebalance the last two chunks if the tail has less than a quarter-window.
+
+    This preserves every character, including attributions and punctuation, while
+    preventing an orphan closing quote or source credit from ranking on its own.
+    The original splitter remains available to reproduce the frozen A/B reports.
+    """
+    chunks = split_document(document, tokenizer, max_tokens)
+    if len(chunks) < 2:
+        return chunks
+    tail = chunks[-1].text[len(PASSAGE_PREFIX):]
+    if len(tokenizer(tail, add_special_tokens=False)["input_ids"]) >= max_tokens // 4:
+        return chunks
+    body = document.text[len(PASSAGE_PREFIX):]
+    start = sum(len(chunk.text) - len(PASSAGE_PREFIX) for chunk in chunks[:-2])
+    remaining = body[start:]
+    offsets = tokenizer(remaining, add_special_tokens=False, return_offsets_mapping=True)["offset_mapping"]
+    midpoint = len(offsets) // 2
+    candidates = sorted(range(1, len(offsets)), key=lambda i: (
+        not (remaining[offsets[i][0] - 1].isspace() or remaining[offsets[i][0]].isspace()),
+        abs(i - midpoint),
+    ))
+    for token_cut in candidates:
+        cut = offsets[token_cut][0]
+        if all(len(tokenizer(PASSAGE_PREFIX + part)["input_ids"]) <= max_tokens
+               for part in (remaining[:cut], remaining[cut:])):
+            break
+    else:
+        raise ValueError("Unable to retain context within the token budget")
+    rebuilt = chunks[:-2]
+    for char_start, char_end in ((start, start + cut), (start + cut, len(body))):
+        spans = []
+        for span in document.sections:
+            left = max(span["start"] - len(PASSAGE_PREFIX), char_start)
+            right = min(span["end"] - len(PASSAGE_PREFIX), char_end)
+            if right > left:
+                spans.append({"section": span["section"], "start": len(PASSAGE_PREFIX) + left - char_start,
+                              "end": len(PASSAGE_PREFIX) + right - char_start})
+        rebuilt.append(SearchDocument(document.hadeethenc_id, f"{document.kind}:{len(rebuilt) + 1}",
+                                      PASSAGE_PREFIX + body[char_start:char_end], tuple(spans)))
+    return rebuilt
+
+
 def build_documents(payload: dict, categories: dict[str, str], strategy: str, tokenizer=None, max_tokens: int = 512) -> list[SearchDocument]:
     if strategy == "original":
         return [join_document(payload, categories, ("title", "hadith", "explanation", "hints", "categories"), "original")]
     if strategy == "semantic_first":
         return [join_document(payload, categories, ("title", "categories", "hints", "hadith", "explanation"), "semantic_first")]
-    if strategy != "multi" or tokenizer is None:
+    if strategy not in ("multi", "multi_context") or tokenizer is None:
         raise ValueError("Unknown strategy or missing tokenizer")
     documents = []
     for kind, order in (("title_categories", ("title", "categories")), ("hints", ("hints",)), ("hadith_explanation", ("hadith", "explanation"))):
         document = join_document(payload, categories, order, kind)
         if document.sections:
-            documents.extend(split_document(document, tokenizer, max_tokens))
+            splitter = split_document_with_context if strategy == "multi_context" else split_document
+            documents.extend(splitter(document, tokenizer, max_tokens))
     return documents

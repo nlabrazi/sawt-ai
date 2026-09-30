@@ -13,7 +13,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("queries", nargs="+")
-    parser.add_argument("--variant", choices=("initial", "benchmark"), default="initial")
+    parser.add_argument("--variant", choices=("initial", "benchmark", "benchmark-original"), default="initial")
     parser.add_argument("--json", action="store_true", help="Afficher les textes complets et les scores en JSON")
     parser.add_argument("--raw-query", action="store_true", help="Comparer sans retirer les amorces de recherche")
     args = parser.parse_args()
@@ -24,11 +24,12 @@ def main():
     from app.services.hadith_index import HadithIndex
     from app.services.hadith_query import normalize_hadith_query
 
-    if args.variant == "benchmark":
+    if args.variant in ("benchmark", "benchmark-original"):
         from scripts.hadith_experiment import HadithExperiment
-        index = HadithExperiment()
+        strategy = "multi_context" if args.variant == "benchmark" else "multi"
+        index = HadithExperiment(strategy=strategy)
         config = HadithConfig.from_env()
-        model_label = "E5-base, passages multiples — variante du benchmark"
+        model_label = "E5-base, passages avec contexte" if strategy == "multi_context" else "E5-base, découpage original"
     else:
         index = HadithIndex()
         config = index.config

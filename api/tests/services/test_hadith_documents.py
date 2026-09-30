@@ -1,5 +1,7 @@
 import re
 
+import pytest
+
 from app.services.hadith_documents import PASSAGE_PREFIX, build_documents, inspect_document, join_document
 from scripts.build_hadith_index import build_search_text
 
@@ -38,10 +40,11 @@ def test_reordering_preserves_early_semantic_fields_but_exposes_remaining_trunca
     assert audit["truncated"] is True
 
 
-def test_multiple_passages_preserve_all_characters_without_truncation():
+@pytest.mark.parametrize("strategy", ["multi", "multi_context"])
+def test_multiple_passages_preserve_all_characters_without_truncation(strategy):
     payload = source()
     categories = {"10": "Catégorie"}
-    docs = build_documents(payload, categories, "multi", WordTokenizer(), 32)
+    docs = build_documents(payload, categories, strategy, WordTokenizer(), 32)
     assert len(docs) > 3
     assert all(len(WordTokenizer()(doc.text)["input_ids"]) <= 32 for doc in docs)
     for kind, order in (("title_categories", ("title", "categories")), ("hints", ("hints",)), ("hadith_explanation", ("hadith", "explanation"))):
@@ -55,3 +58,28 @@ def test_missing_optional_sections_do_not_create_empty_embeddings():
     payload = {"id": "1", "title": "Titre", "hadeeth": "Texte"}
     docs = build_documents(payload, {}, "multi", WordTokenizer())
     assert [doc.kind for doc in docs] == ["title_categories", "hadith_explanation"]
+
+
+@pytest.mark.parametrize("tail", ["»", ". » Hadith rapporté par al-Bukhârî et Muslim."])
+def test_short_tails_keep_context_instead_of_becoming_independent_passages(tail):
+    tokenizer = WordTokenizer()
+    payload = {"id": "1", "title": "Titre", "hadeeth": "Contexte utile. " * 31 + tail}
+    # The legacy budget at 64 leaves the tail after 57 body tokens.
+    legacy = build_documents(payload, {}, "multi", tokenizer, 64)
+    fixed = build_documents(payload, {}, "multi_context", tokenizer, 64)
+    old_body = [doc for doc in legacy if doc.kind.startswith("hadith_explanation")]
+    new_body = [doc for doc in fixed if doc.kind.startswith("hadith_explanation")]
+    assert len(old_body) == len(new_body) == 2
+    assert len(tokenizer(old_body[-1].text)["input_ids"]) < 20
+    assert all("Contexte utile." in doc.text for doc in new_body)
+    assert all(len(tokenizer(doc.text)["input_ids"]) <= 64 for doc in fixed)
+    assert "".join(doc.text[len(PASSAGE_PREFIX):] for doc in new_body) == payload["hadeeth"]
+    for doc in new_body:
+        audit = inspect_document(doc, tokenizer, 64)
+        assert not audit["truncated"]
+        assert all(section["status"] == "retained" for section in audit["sections"])
+
+
+def test_short_complete_hadith_and_its_source_are_not_discarded():
+    payload = {"id": "1", "title": "Ne te mets pas colère !", "hadeeth": "Ne te mets pas colère !"}
+    assert build_documents(payload, {}, "multi_context", WordTokenizer()) == build_documents(payload, {}, "multi", WordTokenizer())

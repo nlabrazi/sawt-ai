@@ -28,8 +28,8 @@ inconnues ou incomplètes restent intactes. `--raw-query` permet de comparer ave
 la phrase d'origine ; `--json` affiche aussi les textes complets, la phrase utilisée
 et les scores de diagnostic.
 
-Cette commande utilise **E5-base et les mêmes passages que le benchmark**, avec
-les modèles et la matrice déjà présents dans `.cache`. Elle contrôle les
+Cette commande utilise **E5-base avec le découpage corrigé**, avec
+les modèles et la matrice déjà présents dans `.cache`. La [correction du découpage](hadith_context/README.md) empêche les fins de citation et attributions isolées de devenir des passages indépendants. `--variant benchmark-original` permet de reproduire le découpage précédent. Elle contrôle les
 empreintes du corpus et des passages avant de rechercher. Elle ne reconstruit
 pas l'index. Pour une nouvelle machine dépourvue de ces caches, reproduire d'abord
 les expériences décrites plus bas. Le modèle fonctionne localement ; les textes
@@ -60,6 +60,16 @@ résultats, ainsi que 60 variations synthétiques des mêmes 20 sujets, sans mod
 les labels ni les rapports du benchmark initial.
 Pour l'instant, un retour utile consiste simplement à conserver la phrase testée
 et à indiquer si un des trois liens correspond à ce qui était recherché.
+
+Après cette correction, les mêmes vingt requêtes avec nettoyage des amorces
+atteignent 85 % en Top-1 et 95 % en Top-3. Ces chiffres restent provisoires.
+La requête « couronne » reste sans réponse attendue identifiée dans le corpus ;
+le moteur renvoie encore ses voisins les plus proches. Les résultats de la section
+précédente décrivent l'étape antérieure au rééquilibrage des passages.
+
+Pour une nouvelle machine, après avoir reconstruit les matrices de l'A/B initial,
+exécuter `scripts/evaluate_hadith_context.py` dans l'environnement Python préparé
+pour créer la matrice corrigée utilisée par le lanceur.
 
 ## Construire et essayer le moteur initial
 

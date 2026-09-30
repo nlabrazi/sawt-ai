@@ -88,7 +88,7 @@ def run_diagnostics(cases, label_status, snapshot, model, matrix, documents, *, 
     if missing:
         raise ValueError(f"Expected IDs outside snapshot: {sorted(missing)}")
     documents_audit = [inspect_document(doc, model.tokenizer, model.max_seq_length) for doc in documents]
-    if strategy == "multi" and any(audit["truncated"] for audit in documents_audit):
+    if strategy in ("multi", "multi_context") and any(audit["truncated"] for audit in documents_audit):
         raise ValueError("A multi-passage document would be truncated")
     lost = Counter(section["section"] for audit in documents_audit for section in audit["sections"] if section["status"] == "lost")
     truncated = Counter(section["section"] for audit in documents_audit for section in audit["sections"] if section["status"] == "truncated")
