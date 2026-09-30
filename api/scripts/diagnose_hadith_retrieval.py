@@ -151,7 +151,7 @@ def markdown_report(report):
                 lines += ["", "`search_text` exact (texte de recherche uniquement, source : HadeethEnc) :", "", "```text", document["search_text"], "```", ""]
     if all(result["top_3_hit"] for result in report["results"]):
         lines.append("Aucun échec Top-3 sur ces labels provisoires.")
-    return "\n".join(lines) + "\n"
+    return "\n".join(lines).rstrip("\n") + "\n"
 
 
 def main():
