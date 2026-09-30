@@ -4,31 +4,16 @@
 
 from __future__ import annotations
 
+import json
 import logging
 import os
-
-import httpx
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 logger = logging.getLogger(__name__)
 
 DEFAULT_SUPABASE_TIMEOUT_SECONDS = 15
 PUBLISHABLE_KEY_PREFIX = "sb_publishable_"
-
-_http_client: httpx.Client | None = None
-
-
-def _get_http_client() -> httpx.Client:
-    global _http_client
-    if _http_client is None or _http_client.is_closed:
-        _http_client = httpx.Client(timeout=DEFAULT_SUPABASE_TIMEOUT_SECONDS)
-    return _http_client
-
-
-def _close_http_client() -> None:
-    global _http_client
-    if _http_client is not None and not _http_client.is_closed:
-        _http_client.close()
-    _http_client = None
 
 
 class FeedbackStoreError(Exception):
@@ -97,22 +82,26 @@ def save_feedback(payload: dict) -> None:
     table_name = _get_feedback_table()
 
     endpoint = f"{supabase_url}/rest/v1/{table_name}"
-    client = _get_http_client()
+    body = json.dumps(payload).encode("utf-8")
+
+    request = Request(
+        endpoint,
+        data=body,
+        method="POST",
+        headers=_build_supabase_headers(supabase_api_key),
+    )
 
     try:
-        response = client.post(
-            endpoint,
-            json=payload,
-            headers=_build_supabase_headers(supabase_api_key),
-        )
-        response.raise_for_status()
-    except httpx.HTTPStatusError as exc:
+        with urlopen(request, timeout=DEFAULT_SUPABASE_TIMEOUT_SECONDS):
+            return
+    except HTTPError as exc:
+        error_body = exc.read().decode("utf-8", errors="replace")
         logger.exception(
             "Supabase feedback insert failed with status %s and body %s",
-            exc.response.status_code,
-            exc.response.text,
+            exc.code,
+            error_body,
         )
         raise FeedbackStoreError("Supabase feedback insert failed.") from exc
-    except httpx.RequestError as exc:
+    except URLError as exc:
         logger.exception("Supabase feedback endpoint is unreachable")
         raise FeedbackStoreError("Supabase feedback endpoint is unreachable.") from exc

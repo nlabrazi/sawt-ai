@@ -79,12 +79,7 @@ async def lifespan(_: FastAPI):
             route="startup",
         )
 
-    try:
-        yield
-    finally:
-        from app.services.feedback_store import _close_http_client
-
-        _close_http_client()
+    yield
 
 
 app = FastAPI(lifespan=lifespan)
