@@ -24,10 +24,6 @@ async function setupRecognitionFlow(options: { deferStop?: boolean } = {}) {
     isFinalizingRecording.value = false
     return new File(['audio'], 'recording.wav', { type: 'audio/wav' })
   })
-  const snapshotRecording = vi.fn(async () => {
-    return new File(['snapshot'], 'snapshot.wav', { type: 'audio/wav' })
-  })
-  const probeAudio = vi.fn()
   const recognizeAudio = vi.fn()
 
   vi.doMock('~/composables/useApiHealth', () => ({
@@ -46,7 +42,6 @@ async function setupRecognitionFlow(options: { deferStop?: boolean } = {}) {
       error: ref(null),
       result: ref(null),
       recognizeAudio,
-      probeAudio,
       reset: vi.fn(),
     }),
   }))
@@ -61,7 +56,6 @@ async function setupRecognitionFlow(options: { deferStop?: boolean } = {}) {
       audioLevel: ref(0),
       startRecording,
       stopRecording,
-      snapshotRecording,
       cleanup: vi.fn(),
     }),
   }))
@@ -78,8 +72,6 @@ async function setupRecognitionFlow(options: { deferStop?: boolean } = {}) {
     maxDurationReached,
     startRecording,
     stopRecording,
-    snapshotRecording,
-    probeAudio,
     recognizeAudio,
     releaseStop,
   }
@@ -96,14 +88,12 @@ describe('useRecognitionFlow microphone recording', () => {
 
   it('waits for a second click before stopping and analyzing the complete recording', async () => {
     vi.useFakeTimers()
-    const { flow, isRecording, stopRecording, snapshotRecording, probeAudio, recognizeAudio } =
+    const { flow, isRecording, stopRecording, recognizeAudio } =
       await setupRecognitionFlow()
 
     await flow.onMicroClick()
     await vi.advanceTimersByTimeAsync(5_000)
 
-    expect(snapshotRecording).not.toHaveBeenCalled()
-    expect(probeAudio).not.toHaveBeenCalled()
     expect(stopRecording).not.toHaveBeenCalled()
     expect(recognizeAudio).not.toHaveBeenCalled()
     expect(isRecording.value).toBe(true)
@@ -139,8 +129,6 @@ describe('useRecognitionFlow microphone recording', () => {
       flow,
       maxDurationReached,
       stopRecording,
-      snapshotRecording,
-      probeAudio,
       recognizeAudio,
     } = await setupRecognitionFlow()
 
@@ -149,8 +137,6 @@ describe('useRecognitionFlow microphone recording', () => {
     await nextTick()
     await nextTick()
 
-    expect(snapshotRecording).not.toHaveBeenCalled()
-    expect(probeAudio).not.toHaveBeenCalled()
     expect(stopRecording).toHaveBeenCalledTimes(1)
     expect(recognizeAudio).toHaveBeenCalledWith(expect.any(File), false)
   })

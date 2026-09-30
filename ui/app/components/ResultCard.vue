@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import Eye from '@lucide/vue/dist/esm/icons/eye.mjs'
+import { Eye } from '@lucide/vue'
 import { computed, defineAsyncComponent, ref } from 'vue'
 
 import { useApiHealth } from '~/composables/useApiHealth'

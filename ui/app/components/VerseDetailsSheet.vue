@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import ArrowLeft from '@lucide/vue/dist/esm/icons/arrow-left.mjs'
-import BookOpen from '@lucide/vue/dist/esm/icons/book-open.mjs'
-import Copy from '@lucide/vue/dist/esm/icons/copy.mjs'
+import { ArrowLeft, BookOpen, Copy } from '@lucide/vue'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 
 import MiniToast from '~/components/MiniToast.vue'

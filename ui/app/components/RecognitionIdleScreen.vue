@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import FlaskConical from '@lucide/vue/dist/esm/icons/flask-conical.mjs'
+import { FlaskConical } from '@lucide/vue'
 import { computed, ref } from 'vue'
 
 import RecognitionActionButton from '~/components/RecognitionActionButton.vue'

@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import ThumbsDown from '@lucide/vue/dist/esm/icons/thumbs-down.mjs'
-import ThumbsUp from '@lucide/vue/dist/esm/icons/thumbs-up.mjs'
+import { ThumbsDown, ThumbsUp } from '@lucide/vue'
 import { computed, ref, watch } from 'vue'
 
 import MiniToast from '~/components/MiniToast.vue'

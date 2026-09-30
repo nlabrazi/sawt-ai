@@ -191,30 +191,6 @@ describe('useMicrophoneRecorder', () => {
     expect(stopTrack).toHaveBeenCalledTimes(1)
   })
 
-  it('creates cumulative snapshots without stopping the recorder', async () => {
-    vi.useFakeTimers()
-
-    const { stopTrack } = setupRecorderEnvironment()
-    const recorder = useMicrophoneRecorder(ref(90))
-
-    await recorder.startRecording()
-
-    const firstSnapshotPromise = recorder.snapshotRecording()
-    await vi.advanceTimersByTimeAsync(0)
-    const firstSnapshot = await firstSnapshotPromise
-
-    const secondSnapshotPromise = recorder.snapshotRecording()
-    await vi.advanceTimersByTimeAsync(0)
-    const secondSnapshot = await secondSnapshotPromise
-
-    expect(firstSnapshot).toBeInstanceOf(File)
-    expect(firstSnapshot?.type).toBe('audio/webm;codecs=opus')
-    expect(secondSnapshot).toBeInstanceOf(File)
-    expect(secondSnapshot?.type).toBe('audio/webm;codecs=opus')
-    expect(recorder.isRecording.value).toBe(true)
-    expect(stopTrack).not.toHaveBeenCalled()
-  })
-
   it('cleans up recorder, tracks and audio context when the effect scope is disposed', async () => {
     vi.useFakeTimers()
 

@@ -111,29 +111,6 @@ describe('useRecognition', () => {
     expect(requestBody.get('allow_ambiguous_result')).toBe('true')
   })
 
-  it('probes audio without changing the main loading state', async () => {
-    vi.mocked($fetch).mockResolvedValueOnce(successfulResponse)
-
-    const { loading, result, probeAudio, acceptResult } = useRecognition()
-    const audioFile = new File(['audio'], 'snapshot.wav', { type: 'audio/wav' })
-
-    const response = await probeAudio(audioFile)
-
-    const requestOptions = vi.mocked($fetch).mock.calls[0]?.[1]
-    const requestBody = requestOptions?.body as FormData
-
-    expect(loading.value).toBe(false)
-    expect(result.value).toBeNull()
-    expect(response?.detection?.status).toBe('confident')
-    expect(requestBody.get('allow_ambiguous_result')).toBe('false')
-
-    if (response) {
-      acceptResult(response)
-    }
-
-    expect(result.value?.verse?.sourate_id).toBe(112)
-  })
-
   it('keeps a fast confident response close to the loading target duration', async () => {
     vi.useFakeTimers()
     vi.mocked($fetch).mockResolvedValueOnce(successfulResponse)

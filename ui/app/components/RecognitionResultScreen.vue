@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import RotateCcw from '@lucide/vue/dist/esm/icons/rotate-ccw.mjs'
+import { RotateCcw } from '@lucide/vue'
 import { computed } from 'vue'
 
 import FeedbackForm from '~/components/FeedbackForm.vue'

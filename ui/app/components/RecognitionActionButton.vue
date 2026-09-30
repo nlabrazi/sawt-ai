@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import LoaderCircle from '@lucide/vue/dist/esm/icons/loader-circle.mjs'
-import Mic from '@lucide/vue/dist/esm/icons/mic.mjs'
-import Square from '@lucide/vue/dist/esm/icons/square.mjs'
+import { LoaderCircle, Mic, Square } from '@lucide/vue'
 import { computed, ref } from 'vue'
 
 const props = withDefaults(

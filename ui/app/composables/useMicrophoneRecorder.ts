@@ -48,8 +48,6 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
   let sourceNode: MediaStreamAudioSourceNode | null = null
   let animationFrameId: number | null = null
   let stopPromise: Promise<File | null> | null = null
-  let snapshotPromise: Promise<File | null> | null = null
-  let resolveSnapshotData: (() => void) | null = null
 
   function getSupportedMimeType() {
     const candidates = [
@@ -204,8 +202,6 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
         if (event.data.size > 0) {
           sessionChunks.push(event.data)
         }
-
-        resolveSnapshotData?.()
       }
 
       mediaRecorder.start()
@@ -217,35 +213,6 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
       micError.value = 'Impossible d’accéder au microphone.'
       cleanup()
     }
-  }
-
-  function snapshotRecording(): Promise<File | null> {
-    if (snapshotPromise) return snapshotPromise
-    if (!mediaRecorder || !isRecording.value) return Promise.resolve(null)
-
-    const recorder = mediaRecorder
-
-    snapshotPromise = new Promise<File | null>((resolve) => {
-      resolveSnapshotData = () => {
-        resolveSnapshotData = null
-        const mimeType = recorder.mimeType || 'audio/webm'
-        const blob = new Blob(audioChunks, { type: mimeType })
-
-        resolve(createRecordedFile(blob, `recording-snapshot-${Date.now()}`))
-      }
-
-      try {
-        recorder.requestData()
-      } catch (error) {
-        console.warn('Unable to create a recording snapshot.', error)
-        resolveSnapshotData = null
-        resolve(null)
-      }
-    }).finally(() => {
-      snapshotPromise = null
-    })
-
-    return snapshotPromise
   }
 
   function stopRecording(): Promise<File | null> {
@@ -329,7 +296,6 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
     isFinalizingRecording,
     startRecording,
     stopRecording,
-    snapshotRecording,
     cleanup,
   }
 }

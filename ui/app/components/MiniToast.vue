@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import CircleCheck from '@lucide/vue/dist/esm/icons/circle-check.mjs'
+import { CircleCheck } from '@lucide/vue'
 
 defineProps<{
   open: boolean
