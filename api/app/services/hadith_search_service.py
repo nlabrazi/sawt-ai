@@ -6,6 +6,7 @@ from app.core.hadith_config import HadithConfig
 from app.schemas.hadith import HadithSearchResponse
 from app.services.hadeethenc_client import HadeethEncClient, HadeethEncError, HadeethEncNotFound, to_hadith_result
 from app.services.hadith_index import HadithIndex
+from app.services.hadith_query import normalize_hadith_query
 
 UNAVAILABLE_MESSAGE = "La recherche de hadiths est temporairement indisponible."
 
@@ -22,7 +23,7 @@ class HadithSearchService:
 
     def search(self, query: str, limit: int = 3) -> HadithSearchResponse:
         try:
-            ranked = self.index.rank(query, limit)
+            ranked = self.index.rank(normalize_hadith_query(query), limit)
         except Exception as exc:
             # Includes missing optional embedding dependencies; Quran stays available.
             raise HadithSearchError(UNAVAILABLE_MESSAGE) from exc

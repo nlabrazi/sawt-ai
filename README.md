@@ -185,6 +185,17 @@ Add transcriptions observed from real audio to this file before tuning detection
 thresholds. This benchmark measures exact passage accuracy, precision, recall,
 false positives, and matching latency; it does not measure Whisper accuracy.
 
+Try the current Hadith benchmark candidate from the project root (Docker required):
+
+```bash
+bash api/scripts/search_hadith.sh "Je cherche le hadith sur la colère"
+```
+
+This prints three ranked HadeethEnc titles and links using the cached E5-base
+experiment. From the `api` directory, use `bash scripts/search_hadith.sh` instead.
+The launcher prepares its Python dependencies inside Docker on first use.
+See the guide below to rebuild the experiment caches on a fresh checkout.
+
 Hadith retrieval experiments (terminal only):
 
 ```bash

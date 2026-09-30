@@ -49,3 +49,19 @@ def test_removed_sources_return_no_usable_results():
     client = Mock()
     client.get_hadith.side_effect = HadeethEncNotFound()
     assert HadithSearchService(index=index, client=client).search("requête").results == []
+
+
+@pytest.mark.parametrize("query, searched", [
+    ("Je cherche le hadith sur la colère", "la colère"),
+    ("Donnez moi hadith qui parle de ne pas se mettre en colère", "ne pas se mettre en colère"),
+    ("Je ne cherche pas un hadith sur la colère", "Je ne cherche pas un hadith sur la colère"),
+])
+def test_cleans_only_search_input_while_preserving_the_users_query(query, searched):
+    index = Mock()
+    index.rank.return_value = [("3", 0.9)]
+    client = Mock()
+    client.get_hadith.return_value = payload("3")
+    response = HadithSearchService(index=index, client=client).search(query)
+    index.rank.assert_called_once_with(searched, 3)
+    assert response.query == query
+    assert response.results[0].translation == "Texte source\r\nintact"

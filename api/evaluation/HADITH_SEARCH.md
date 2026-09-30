@@ -9,7 +9,59 @@ fournit directement `hadeeth`, `hadeeth_ar`, `attribution`, `grade`, `explanatio
 et `hints`. Aucun rapporteur ou numéro de recueil n'est déduit d'un texte.
 Les chaînes affichées restent celles de la source, y compris ses éventuelles coquilles.
 
-## Construire et essayer le moteur
+## Essayer une phrase depuis le terminal
+
+Depuis le dossier `api` (Docker doit être démarré) :
+
+```bash
+bash scripts/search_hadith.sh "Je cherche le hadith sur la colère"
+```
+
+Depuis la racine `sawt-ai`, utiliser `bash api/scripts/search_hadith.sh`.
+Remplacer uniquement la phrase entre guillemets pour faire un autre essai.
+Le lanceur affiche trois titres classés et leurs liens officiels : ouvrir les
+liens permet de lire les hadiths et de vérifier s'ils répondent à la demande.
+Le lanceur retire désormais les amorces reconnues comme « Je cherche le hadith sur »
+ou « Donnez moi hadith qui parle de », puis affiche `Recherche utilisée` lorsque
+la phrase a changé. Il conserve les détails et les négations du sujet. Les formes
+inconnues ou incomplètes restent intactes. `--raw-query` permet de comparer avec
+la phrase d'origine ; `--json` affiche aussi les textes complets, la phrase utilisée
+et les scores de diagnostic.
+
+Cette commande utilise **E5-base et les mêmes passages que le benchmark**, avec
+les modèles et la matrice déjà présents dans `.cache`. Elle contrôle les
+empreintes du corpus et des passages avant de rechercher. Elle ne reconstruit
+pas l'index. Pour une nouvelle machine dépourvue de ces caches, reproduire d'abord
+les expériences décrites plus bas. Le modèle fonctionne localement ; les textes
+des résultats sont récupérés sur HadeethEnc et nécessitent Internet.
+
+Le lanceur crée un conteneur temporaire à partir de l'image API existante et un
+environnement Python persistant dans `api/.cache/hadith-cli-venv`. La première
+utilisation installe les dépendances de recherche nécessaires. Il réutilise le
+PyTorch de l'image et laisse les dépendances du serveur API en place. Le conteneur
+est supprimé à la fin ; les dépendances et les modèles en cache sont conservés.
+Le serveur API et le site n'ont pas besoin d'être lancés pour cet essai.
+
+Le Python système (`py` ou `python`) peut manquer de bibliothèques comme
+`pydantic` : utiliser le lanceur ci-dessus évite de les installer sur l'hôte.
+Depuis `api`, le chemin Python serait `scripts/search_hadith.py`, sans répéter
+`api/`, mais cette invocation directe exige un environnement Python préparé.
+
+Les 95 % en Top-3 ne couvrent que les 20 phrases préparées et leurs labels
+provisoires. Sans nettoyage, « Je cherche le hadith sur la colère » renvoyait
+4181, 8266, puis 3287. Avec le nettoyage, la recherche « la colère » renvoie
+4709, 3743, puis 3287 : le conseil de ne pas se mettre en colère devient premier.
+Le benchmark initial reste à 95 % en Top-3 et passe de 65 % à 70 % en Top-1.
+Les textes indexés, le modèle et le classement sont inchangés. Les requêtes très
+courtes peuvent toutefois rester ambiguës, et certaines donnent des résultats
+moins précis après nettoyage (par exemple « la mère »).
+La [comparaison avant/après](hadith_query_cleanup/README.md) conserve tous les
+résultats, ainsi que 60 variations synthétiques des mêmes 20 sujets, sans modifier
+les labels ni les rapports du benchmark initial.
+Pour l'instant, un retour utile consiste simplement à conserver la phrase testée
+et à indiquer si un des trois liens correspond à ce qui était recherché.
+
+## Construire et essayer le moteur initial
 
 Après installation de `api/requirements.txt`, depuis la racine :
 
