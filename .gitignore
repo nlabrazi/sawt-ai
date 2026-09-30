@@ -48,3 +48,7 @@ __pycache__/
 *.py[cod]
 *.pyo
 *.pyd
+
+# Rebuildable Hadith search artifacts (official content is fetched at query time).
+api/assets/hadith_index.npz
+api/assets/hadith_index_meta.json

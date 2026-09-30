@@ -13,3 +13,7 @@ torchaudio==2.8.0
 speechbrain==1.0.3
 soundfile==0.12.1
 huggingface_hub==0.25.2
+
+# Embeddings; transformers pinned to the version compatible with the existing hub.
+sentence-transformers==3.4.1
+transformers==4.48.3
