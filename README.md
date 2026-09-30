@@ -128,14 +128,6 @@ second press or when the 90-second safety limit is reached.
 - The maximum audio duration expected by the UI is `90 seconds`
 - Imam detection depends on the model mounted from `./training`
 
-### ⚡ Architecture & Performance Optimizations
-
-- **Native Audio Streaming**: The frontend streams recordings directly in their native container (`audio/webm;codecs=opus` or `audio/mp4`) without CPU-heavy client-side PCM transcoding, reducing network payloads by 15x–25x and avoiding Web Audio API memory leaks.
-- **Concurrency Throttling**: A server-side async semaphore (`MAX_CONCURRENT_INFERENCES=2`) bounds concurrent heavy inference passes to protect CPU and RAM against thrashing and OOM spikes under high traffic.
-- **Bounded Whisper CPU Threads**: `WHISPER_CPU_THREADS=4` constrains Faster-Whisper to a deterministic thread pool, keeping the API responsive for concurrent requests and background I/O.
-- **Precomputed Quran Structures**: All 31,866 normalized Quran candidate texts, single-verse frequency counts, and candidate range mappings are precomputed and cached once at startup, eliminating over 31,000 dynamic allocations per request.
-- **Imam Audio Calibration**: Input audio duration for the Imam classifier is bounded to 10 seconds (`MAX_IMAM_AUDIO_SECONDS=10.0`), matching the training distribution (5-second segments) while drastically minimizing tensor memory footprint.
-
 ### 🧪 Tests
 
 Backend API test runner with your `py=/usr/bin/python3` alias:
@@ -221,9 +213,6 @@ Example API variables are available in [`api/.env.example`](api/.env.example):
 ```env
 ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 WHISPER_MODEL_NAME=turbo
-WHISPER_CPU_THREADS=4
-MAX_CONCURRENT_INFERENCES=2
-MAX_IMAM_AUDIO_SECONDS=10.0
 QURAN_VERSETS_PATH=/app/assets/quran_versets.json
 TAJWID_DATA_PATH=/app/assets/quran_tajwid.json
 TAJWID_BACKUP_URL=https://<project-ref>.supabase.co/storage/v1/object/public/assets/quran_tajwid.json

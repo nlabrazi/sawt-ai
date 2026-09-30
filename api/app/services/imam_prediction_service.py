@@ -21,25 +21,6 @@ DEFAULT_MODEL_PATH = (
 MODEL_PATH = Path(os.getenv("IMAM_MODEL_PATH", str(DEFAULT_MODEL_PATH)))
 logger = logging.getLogger(__name__)
 
-DEFAULT_MAX_IMAM_AUDIO_SECONDS = 10.0
-MAX_IMAM_AUDIO_SECONDS = float(
-    os.getenv("MAX_IMAM_AUDIO_SECONDS", str(DEFAULT_MAX_IMAM_AUDIO_SECONDS))
-)
-MAX_IMAM_SAMPLES = int(MAX_IMAM_AUDIO_SECONDS * TARGET_SAMPLE_RATE)
-
-
-def calibrate_audio_for_imam(waveform: Any, max_samples: int | None = None) -> Any:
-    """Borne la durée de l'audio pour correspondre à la distribution du modèle d'imam (5-10s) et préserver la mémoire."""
-    if max_samples is None:
-        max_samples = int(
-            float(os.getenv("MAX_IMAM_AUDIO_SECONDS", str(DEFAULT_MAX_IMAM_AUDIO_SECONDS)))
-            * TARGET_SAMPLE_RATE
-        )
-
-    if hasattr(waveform, "shape") and waveform.shape[-1] > max_samples:
-        return waveform[..., :max_samples]
-    return waveform
-
 IMAM_DETECTION_UNAVAILABLE_MESSAGE = "La reconnaissance de l’imam est temporairement indisponible."
 
 encoder: Any | None = None
@@ -220,8 +201,6 @@ def load_audio(audio_path: str):
     if sr != TARGET_SAMPLE_RATE:
         resampler = torchaudio.transforms.Resample(sr, TARGET_SAMPLE_RATE)
         waveform = resampler(waveform)
-
-    waveform = calibrate_audio_for_imam(waveform)
 
     return waveform.squeeze(0)
 
