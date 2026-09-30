@@ -88,8 +88,7 @@ describe('useRecognitionFlow microphone recording', () => {
 
   it('waits for a second click before stopping and analyzing the complete recording', async () => {
     vi.useFakeTimers()
-    const { flow, isRecording, stopRecording, recognizeAudio } =
-      await setupRecognitionFlow()
+    const { flow, isRecording, stopRecording, recognizeAudio } = await setupRecognitionFlow()
 
     await flow.onMicroClick()
     await vi.advanceTimersByTimeAsync(5_000)
@@ -125,12 +124,7 @@ describe('useRecognitionFlow microphone recording', () => {
   })
 
   it('stops and analyzes automatically only when the maximum duration is reached', async () => {
-    const {
-      flow,
-      maxDurationReached,
-      stopRecording,
-      recognizeAudio,
-    } = await setupRecognitionFlow()
+    const { flow, maxDurationReached, stopRecording, recognizeAudio } = await setupRecognitionFlow()
 
     await flow.onMicroClick()
     maxDurationReached.value = true
