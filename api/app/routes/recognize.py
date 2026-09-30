@@ -140,7 +140,10 @@ async def recognize(
 
     try:
         temp_file, file_size, detected_content_type = await persist_upload_to_temp_file(file)
-        audio_duration_seconds = enforce_audio_duration_limit(temp_file)
+        audio_duration_seconds = await run_in_threadpool(
+            enforce_audio_duration_limit,
+            temp_file,
+        )
         declared_content_type = canonicalize_content_type(file.content_type)
 
         log_api_event(
