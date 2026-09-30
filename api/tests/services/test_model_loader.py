@@ -38,11 +38,21 @@ def test_load_all_models_precomputes_quran_verse_candidates_once(monkeypatch, tm
     model_loader.load_all_models()
 
     candidates = model_loader.get_quran_verse_candidates()
+    candidate_texts = model_loader.get_quran_candidate_texts()
+    occurrences = model_loader.get_quran_text_occurrences()
+    single_verses = model_loader.get_quran_single_verse_candidates_by_sourate(112)
+    candidates_by_range = model_loader.get_quran_candidates_by_range()
 
     assert build_calls == [1]
     assert len(candidates) == 3
     assert candidates[0].normalized_text == "قل"
     assert candidates[-1].normalized_text == "قل هو الله"
+    assert candidate_texts == ("قل", "هو الله", "قل هو الله")
+    assert occurrences["قل"] == 1
+    assert occurrences["هو الله"] == 1
+    assert len(single_verses) == 2
+    assert (112, 1, 2) in candidates_by_range
+    assert candidates_by_range[(112, 1, 2)][1].normalized_text == "قل هو الله"
 
 
 def test_load_quran_catalog_does_not_load_whisper(monkeypatch, tmp_path):
@@ -130,3 +140,22 @@ def test_candidate_catalog_caps_multi_verse_passages_by_word_count():
         (1, 1),
         (2, 2),
     ]
+
+
+def test_accessors_raise_runtime_error_when_catalog_not_loaded(monkeypatch):
+    import pytest
+
+    monkeypatch.setattr(model_loader, "quran_versets", None)
+
+    with pytest.raises(RuntimeError, match="Quran verses are not loaded"):
+        model_loader.get_quran_candidate_texts()
+
+    with pytest.raises(RuntimeError, match="Quran verses are not loaded"):
+        model_loader.get_quran_text_occurrences()
+
+    with pytest.raises(RuntimeError, match="Quran verses are not loaded"):
+        model_loader.get_quran_single_verse_candidates_by_sourate(1)
+
+    with pytest.raises(RuntimeError, match="Quran verses are not loaded"):
+        model_loader.get_quran_candidates_by_range()
+
