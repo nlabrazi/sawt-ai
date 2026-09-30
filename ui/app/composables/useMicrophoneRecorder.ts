@@ -9,80 +9,6 @@
 
 import { computed, getCurrentScope, onScopeDispose, ref, type Ref } from 'vue'
 
-const WAV_MIME_TYPE = 'audio/wav'
-
-function clampPcm16Sample(sample: number) {
-  const normalizedSample = Math.max(-1, Math.min(1, sample))
-
-  return normalizedSample < 0 ? normalizedSample * 0x8000 : normalizedSample * 0x7fff
-}
-
-function writeAsciiString(view: DataView, offset: number, value: string) {
-  for (let index = 0; index < value.length; index += 1) {
-    view.setUint8(offset + index, value.charCodeAt(index))
-  }
-}
-
-function mixAudioBufferToMono(audioBuffer: AudioBuffer) {
-  const mixedChannelData = new Float32Array(audioBuffer.length)
-
-  for (let channelIndex = 0; channelIndex < audioBuffer.numberOfChannels; channelIndex += 1) {
-    const channelData = audioBuffer.getChannelData(channelIndex)
-
-    for (let sampleIndex = 0; sampleIndex < channelData.length; sampleIndex += 1) {
-      mixedChannelData[sampleIndex] +=
-        (channelData[sampleIndex] ?? 0) / audioBuffer.numberOfChannels
-    }
-  }
-
-  return mixedChannelData
-}
-
-function createWavBlob(audioBuffer: AudioBuffer) {
-  const monoChannelData = mixAudioBufferToMono(audioBuffer)
-  const bytesPerSample = 2
-  const wavBuffer = new ArrayBuffer(44 + monoChannelData.length * bytesPerSample)
-  const view = new DataView(wavBuffer)
-  const byteRate = audioBuffer.sampleRate * bytesPerSample
-
-  writeAsciiString(view, 0, 'RIFF')
-  view.setUint32(4, 36 + monoChannelData.length * bytesPerSample, true)
-  writeAsciiString(view, 8, 'WAVE')
-  writeAsciiString(view, 12, 'fmt ')
-  view.setUint32(16, 16, true)
-  view.setUint16(20, 1, true)
-  view.setUint16(22, 1, true)
-  view.setUint32(24, audioBuffer.sampleRate, true)
-  view.setUint32(28, byteRate, true)
-  view.setUint16(32, bytesPerSample, true)
-  view.setUint16(34, 16, true)
-  writeAsciiString(view, 36, 'data')
-  view.setUint32(40, monoChannelData.length * bytesPerSample, true)
-
-  let offset = 44
-
-  for (let sampleIndex = 0; sampleIndex < monoChannelData.length; sampleIndex += 1) {
-    view.setInt16(offset, clampPcm16Sample(monoChannelData[sampleIndex] ?? 0), true)
-    offset += bytesPerSample
-  }
-
-  return new Blob([wavBuffer], { type: WAV_MIME_TYPE })
-}
-
-async function convertRecordedBlobToWavFile(blob: Blob, filename: string) {
-  const decoderContext = new window.AudioContext()
-
-  try {
-    const arrayBuffer = await blob.arrayBuffer()
-    const audioBuffer = await decoderContext.decodeAudioData(arrayBuffer.slice(0))
-    const wavBlob = createWavBlob(audioBuffer)
-
-    return new File([wavBlob], filename, { type: WAV_MIME_TYPE })
-  } finally {
-    await decoderContext.close().catch(() => undefined)
-  }
-}
-
 function resolveRecordedExtension(mimeType: string) {
   if (mimeType.includes('ogg')) {
     return 'ogg'
@@ -230,21 +156,13 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
     audioLevel.value = 0
   }
 
-  async function createRecordedFile(blob: Blob, filenameBase: string) {
+  function createRecordedFile(blob: Blob, filenameBase: string): File {
     const mimeType = blob.type || 'audio/webm'
+    const extension = resolveRecordedExtension(mimeType)
 
-    try {
-      return await convertRecordedBlobToWavFile(blob, `${filenameBase}.wav`)
-    } catch (error) {
-      console.warn(
-        'Unable to convert recorded audio to WAV, falling back to the original blob.',
-        error,
-      )
-
-      return new File([blob], `${filenameBase}.${resolveRecordedExtension(mimeType)}`, {
-        type: mimeType,
-      })
-    }
+    return new File([blob], `${filenameBase}.${extension}`, {
+      type: mimeType,
+    })
   }
 
   async function startRecording() {
@@ -313,7 +231,7 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
         const mimeType = recorder.mimeType || 'audio/webm'
         const blob = new Blob(audioChunks, { type: mimeType })
 
-        void createRecordedFile(blob, `recording-snapshot-${Date.now()}`).then(resolve)
+        resolve(createRecordedFile(blob, `recording-snapshot-${Date.now()}`))
       }
 
       try {
