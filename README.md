@@ -185,6 +185,17 @@ Add transcriptions observed from real audio to this file before tuning detection
 thresholds. This benchmark measures exact passage accuracy, precision, recall,
 false positives, and matching latency; it does not measure Whisper accuracy.
 
+Hadith retrieval experiments (terminal only):
+
+```bash
+python api/scripts/build_hadith_index.py
+python api/scripts/diagnose_hadith_retrieval.py --strategy original --reuse-original-index --provisional-labels
+```
+
+See [`api/evaluation/HADITH_SEARCH.md`](api/evaluation/HADITH_SEARCH.md) for the
+official HadeethEnc corpus, reproducible E5 comparisons, token truncation diagnostics,
+and the human review required before validating the benchmark or enabling a UI.
+
 End-to-end backend audio smoke benchmark (generated locally, with no downloaded corpus):
 
 ```bash

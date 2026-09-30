@@ -1,0 +1,323 @@
+{
+  "schema_version": 1,
+  "language": "fr",
+  "label_status": "pending_human_review",
+  "instructions": "Les candidats proviennent du corpus officiel mais ne sont pas des labels validés. Un humain doit lire les fiches, renseigner expected_hadeethenc_ids, review_status=human_reviewed, reviewed_by et reviewed_at. Vérifier aussi les variantes acceptables. Ne pas déduire les labels du classement du moteur.",
+  "cases": [
+    {
+      "query": "Je cherche le hadith où le Prophète conseille à quelqu'un de ne pas se mettre en colère",
+      "expected_hadeethenc_ids": [],
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "candidates_for_review": [
+        {
+          "hadeethenc_id": "4709",
+          "official_title": "Ne te mets pas colère !",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/4709"
+        }
+      ]
+    },
+    {
+      "query": "Le vrai fort c'est celui qui arrive à se contrôler quand il s'énerve",
+      "expected_hadeethenc_ids": [],
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "candidates_for_review": [
+        {
+          "hadeethenc_id": "5351",
+          "official_title": "Le fort n'est pas celui qui terrasse autrui, le fort, c'est celui qui maîtrise sa personne au moment de la colère.",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/5351"
+        }
+      ]
+    },
+    {
+      "query": "Un hadith qui dit que nos actes comptent selon l'intention qu'on avait",
+      "expected_hadeethenc_ids": [],
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "candidates_for_review": [
+        {
+          "hadeethenc_id": "4560",
+          "official_title": "Certes, les œuvres ne valent que par les intentions et chaque individu sera rétribué en fonction de son intention",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/4560"
+        },
+        {
+          "hadeethenc_id": "66511",
+          "official_title": "Les actes ne valent que par les intentions",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/66511"
+        }
+      ]
+    },
+    {
+      "query": "Il faut souhaiter pour son frère ce qu'on souhaite pour soi",
+      "expected_hadeethenc_ids": [],
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "candidates_for_review": [
+        {
+          "hadeethenc_id": "4717",
+          "official_title": "Aucun de vous ne croira vraiment jusqu'à ce qu'il aime pour son frère ce qu'il aime pour lui-même.",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/4717"
+        },
+        {
+          "hadeethenc_id": "66520",
+          "official_title": "Aucun de vous ne croira vraiment jusqu'à ce qu'il aime pour son frère ce qu'il aime pour lui-même.",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/66520"
+        }
+      ]
+    },
+    {
+      "query": "Le conseil de parler seulement pour dire du bien sinon se taire",
+      "expected_hadeethenc_ids": [],
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "candidates_for_review": [
+        {
+          "hadeethenc_id": "5437",
+          "official_title": "Quiconque croit en Allah et au Jour Dernier, qu'il dise du bien ou qu'il se taise",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/5437"
+        }
+      ]
+    },
+    {
+      "query": "Qui mérite le plus ma bonne compagnie ? Il répond trois fois la mère",
+      "expected_hadeethenc_ids": [],
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "candidates_for_review": [
+        {
+          "hadeethenc_id": "4182",
+          "official_title": "Ô Messager d’Allah ! Quelle est la personne qui mérite le plus que je lui tienne bonne compagnie ? Ta mère, puis ta mère, puis ta mère, ensuite ton père et enfin du plus proche au plus proche.",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/4182"
+        }
+      ]
+    },
+    {
+      "query": "Une femme est pardonnée après avoir donné à boire à un chien assoiffé",
+      "expected_hadeethenc_ids": [],
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "candidates_for_review": [
+        {
+          "hadeethenc_id": "10100",
+          "official_title": "Un chien qui était sur le point de mourir de soif tournait autour d’un point d’eau. C’est alors que l'une des prostituées du peuple des enfants d’Israël le vit, elle décida de prendre son chausson afin de le remplir d’eau puis elle l’abreuva. Allah lui pardonna ses péchés grâce à son geste.",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/10100"
+        }
+      ]
+    },
+    {
+      "query": "Une femme punie parce qu'elle avait enfermé un chat sans le nourrir",
+      "expected_hadeethenc_ids": [],
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "candidates_for_review": [
+        {
+          "hadeethenc_id": "58193",
+          "official_title": "Une femme a été châtiée pour avoir emprisonné une chatte jusqu'à ce qu'elle meure. Pour cela, elle est entrée en Enfer. Elle ne l'a ni nourrie, ni abreuvée lorsqu'elle l'a enfermée et elle ne l'a pas non plus laissé se nourrir des bestioles de la terre.",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/58193"
+        }
+      ]
+    },
+    {
+      "query": "Planter un arbre dont les animaux mangent rapporte une récompense",
+      "expected_hadeethenc_ids": [],
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "candidates_for_review": [
+        {
+          "hadeethenc_id": "3911",
+          "official_title": "Il n’est pas un musulman qui plante un arbre sans que tout ce qui en est mangé, volé ou prélevé ne soit considéré comme une aumône de sa part.",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/3911"
+        }
+      ]
+    },
+    {
+      "query": "Ne pas mépriser les petits gestes de bien même accueillir quelqu'un avec le sourire",
+      "expected_hadeethenc_ids": [],
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "candidates_for_review": [
+        {
+          "hadeethenc_id": "5348",
+          "official_title": "Ne méprise rien du bien, ne serait-ce que de rencontrer ton frère avec un visage souriant. \"",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/5348"
+        }
+      ]
+    },
+    {
+      "query": "Je cherche le conseil de faciliter les choses et de ne pas faire fuir les gens",
+      "expected_hadeethenc_ids": [],
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "candidates_for_review": [
+        {
+          "hadeethenc_id": "5866",
+          "official_title": "Facilitez et ne rendez pas difficile ! Annoncez de bonnes nouvelles et ne faites pas fuir !",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/5866"
+        }
+      ]
+    },
+    {
+      "query": "Qui est vraiment ruiné le jour du jugement malgré ses prières et ses bonnes actions ?",
+      "expected_hadeethenc_ids": [],
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "candidates_for_review": [
+        {
+          "hadeethenc_id": "3165",
+          "official_title": "Le ruiné de ma communauté c’est celui qui, au Jour de la Résurrection, viendra avec des prières, des jeûnes et des aumônes légales, mais aura insulté untel, calomnié untel, fait couler le sang d’untel et frappé untel. On donnera alors ses bonnes actions à celui-ci et à celui-là.",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/3165"
+        }
+      ]
+    },
+    {
+      "query": "Trois choses accompagnent le mort à la tombe mais seules ses actions restent",
+      "expected_hadeethenc_ids": [],
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "candidates_for_review": [
+        {
+          "hadeethenc_id": "4240",
+          "official_title": "Trois choses accompagnent le mort jusqu’à sa tombe : sa famille, sa fortune et son œuvre. Deux d’entre elles reviennent tandis qu’une seule reste : sa famille et sa fortune reviennent et son œuvre reste.",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/4240"
+        }
+      ]
+    },
+    {
+      "query": "Quelqu'un demande un conseil sur l'islam et on lui dit de croire puis de rester droit",
+      "expected_hadeethenc_ids": [],
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "candidates_for_review": [
+        {
+          "hadeethenc_id": "65018",
+          "official_title": "! Dis-moi quelque chose concernant l'Islam de sorte que je n'interroge personne à son propos autre que toi. \" Il a dit : \" Dis : Je crois en Allah, puis fais preuve de droiture.",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/65018"
+        },
+        {
+          "hadeethenc_id": "66524",
+          "official_title": "! Dis-moi quelque chose concernant l'Islam de sorte que je n'interroge personne à son propos autre que toi. \" Il a dit : \" Dis : Je crois en Allah, puis fais preuve de droiture.",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/66524"
+        }
+      ]
+    },
+    {
+      "query": "Le hadith qui explique que la religion est la sincérité",
+      "expected_hadeethenc_ids": [],
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "candidates_for_review": [
+        {
+          "hadeethenc_id": "4309",
+          "official_title": "La religion, c’est la sincérité",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/4309"
+        },
+        {
+          "hadeethenc_id": "66516",
+          "official_title": "La religion, c’est la sincérité",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/66516"
+        }
+      ]
+    },
+    {
+      "query": "Les meilleurs sont ceux qui apprennent le Coran et l'enseignent",
+      "expected_hadeethenc_ids": [],
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "candidates_for_review": [
+        {
+          "hadeethenc_id": "5913",
+          "official_title": "Le meilleur d'entre vous est celui qui a appris le Coran et l'a enseigné.",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/5913"
+        }
+      ]
+    },
+    {
+      "query": "La récompense des parents qui ont perdu trois enfants avant la puberté",
+      "expected_hadeethenc_ids": [],
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "candidates_for_review": [
+        {
+          "hadeethenc_id": "8875",
+          "official_title": "Il n'est pas un musulman qui perde trois de ses enfants, avant que ceux-ci n'aient atteint la puberté, sans qu'Allah ne l'introduise au Paradis par Sa miséricorde envers eux.",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/8875"
+        }
+      ]
+    },
+    {
+      "query": "Enlever un obstacle de la route fait partie des branches de la foi",
+      "expected_hadeethenc_ids": [],
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "candidates_for_review": [
+        {
+          "hadeethenc_id": "3276",
+          "official_title": "La foi comporte un peu plus de soixante ou soixante-dix branches. La meilleure d’entre elle est l’attestation qu’il n’y a aucune divinité digne d’être adorée en dehors d’Allah et la plus infime consiste à ôter ce qui est nuisible du chemin. La pudeur est également une branche de la foi.",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/3276"
+        },
+        {
+          "hadeethenc_id": "6468",
+          "official_title": "La foi comporte soixante-dix et quelques - ou soixante et quelques - branches. La meilleure d’entre elles est la parole : \" Il n’est de divinité [digne d'adoration] qu'Allah \", et la moindre  consiste à ôter ce qui est nuisible du chemin",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/6468"
+        }
+      ]
+    },
+    {
+      "query": "Ne pas apprendre la religion pour se vanter devant les savants ou se disputer",
+      "expected_hadeethenc_ids": [],
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "candidates_for_review": [
+        {
+          "hadeethenc_id": "65047",
+          "official_title": "N'apprenez pas la science pour vous en pavaner auprès des savants, ni pour vous disputer avec les ignorants",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/65047"
+        }
+      ]
+    },
+    {
+      "query": "Allah accorde sa miséricorde à ceux qui sont miséricordieux",
+      "expected_hadeethenc_ids": [],
+      "review_status": "pending",
+      "reviewed_by": null,
+      "reviewed_at": null,
+      "candidates_for_review": [
+        {
+          "hadeethenc_id": "6405",
+          "official_title": "C'est une miséricorde qu'Allah a placée dans le cœur de Ses serviteurs. Allah n'accorde Sa miséricorde qu'aux miséricordieux d'entre Ses serviteurs.",
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/6405"
+        }
+      ]
+    }
+  ],
+  "coverage_probes": [
+    {
+      "query": "Je cherche le hadith où les parents reçoivent une couronne",
+      "note": "Aucune occurrence de couronne dans le texte des 1790 fiches téléchargées. Couverture à vérifier humainement; ne pas assimiler le premier résultat à une réponse correcte."
+    },
+    {
+      "query": "Quels hadiths parlent des bonnes actions qui continuent après la mort ?",
+      "note": "Requête exploratoire issue du cahier des charges; correspondances à identifier humainement."
+    }
+  ]
+}
