@@ -143,6 +143,8 @@ export async function setupMockApi(
           : (options.hadithResponse ?? {
               query: route.request().postDataJSON().query,
               results: [hadithFixture],
+              search_mode: 'semantic',
+              search_terms: [],
             })
       await route.fulfill({
         status,

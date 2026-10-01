@@ -37,13 +37,19 @@ describe('HadithSearchScreen', () => {
   })
 
   it('renders proposals, labels their query and opens the selected reading', async () => {
-    vi.mocked($fetch).mockResolvedValueOnce({ query: 'la colère', results: [hadithFixture] })
+    vi.mocked($fetch).mockResolvedValueOnce({
+      query: 'la colère',
+      results: [hadithFixture],
+      search_mode: 'keywords',
+      search_terms: ['colère'],
+    })
     const wrapper = mountScreen()
     await wrapper.get('input').setValue('la colère')
     await wrapper.get('form').trigger('submit')
     await flushPromises()
     expect(wrapper.get('h2').text()).toBe('Hadiths proposés')
     expect(wrapper.text()).toContain('Pour « la colère »')
+    expect(wrapper.get('.search-method').text()).toContain('Recherche par mots-clés : « colère »')
     expect(wrapper.get('[role="status"]').text()).toContain('1 proposition disponible')
     await wrapper.get('.hadith-card button').trigger('click')
     await vi.dynamicImportSettled()
@@ -84,6 +90,41 @@ describe('HadithSearchScreen', () => {
     resolve({ query: 'la colère', results: [hadithFixture] })
     await flushPromises()
     expect(wrapper.find('.hadith-card').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('explains missing keyword results and offers a source link without showing proposals', async () => {
+    vi.mocked($fetch).mockResolvedValueOnce({
+      query: 'hadith couronne',
+      results: [],
+      search_mode: 'keywords',
+      search_terms: ['couronne'],
+    })
+    const wrapper = mountScreen()
+    await wrapper.get('input').setValue('hadith couronne')
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+    expect(wrapper.get('.search-method').text()).toContain('Recherche par mots-clés : « couronne »')
+    expect(wrapper.get('.empty-state').text()).toContain('Aucun résultat pour ces mots-clés')
+    expect(wrapper.get('.empty-state a').attributes('href')).toBe('https://hadeethenc.com/fr')
+    expect(wrapper.find('.hadith-card').exists()).toBe(false)
+    expect(wrapper.find('[role="alert"]').exists()).toBe(false)
+    wrapper.unmount()
+  })
+
+  it('labels semantic proposals so they are not mistaken for keyword matches', async () => {
+    vi.mocked($fetch).mockResolvedValueOnce({
+      query: 'Ne pas se mettre en colère',
+      results: [hadithFixture],
+      search_mode: 'semantic',
+      search_terms: [],
+    })
+    const wrapper = mountScreen()
+    await wrapper.get('input').setValue('Ne pas se mettre en colère')
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+    expect(wrapper.get('.search-method').text()).toContain('Recherche par sens')
+    expect(wrapper.get('.search-method').text()).toContain('sans répondre exactement')
     wrapper.unmount()
   })
 

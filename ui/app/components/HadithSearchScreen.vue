@@ -49,7 +49,7 @@ function chooseExample(example: string) {
         </button>
       </div>
       <p v-if="validationError" id="hadith-query-error" class="validation-error" role="alert">{{ validationError }}</p>
-      <p id="hadith-query-hint" class="input-hint">Une phrase en français · 300 caractères maximum</p>
+      <p id="hadith-query-hint" class="input-hint">1 à 3 mots : recherche par mots-clés · Une phrase : recherche par sens · 300 caractères maximum</p>
       <div class="examples" aria-label="Exemples de recherche">
         <span>Essayez :</span>
         <button v-for="example in examples" :key="example" type="button" :disabled="loading" @click="chooseExample(example)">{{ example }}</button>
@@ -60,7 +60,7 @@ function chooseExample(example: string) {
       <span v-else-if="response">{{ response.results.length }} proposition{{ response.results.length === 1 ? '' : 's' }} disponible{{ response.results.length === 1 ? '' : 's' }}.</span>
     </div>
     <div v-if="loading" class="loading-panel" :aria-busy="true">
-      <div class="loading-copy"><span class="loading-dot" aria-hidden="true" /><p>Nous recherchons les passages proches de votre demande.</p><button type="button" @click="cancel">Annuler</button></div>
+      <div class="loading-copy"><span class="loading-dot" aria-hidden="true" /><p>Nous recherchons les hadiths correspondant à votre demande.</p><button type="button" @click="cancel">Annuler</button></div>
       <div v-for="position in 3" :key="position" class="skeleton-card" aria-hidden="true"><span /><span /><span /></div>
     </div>
     <div v-else-if="error" class="status-panel" role="alert">
@@ -69,10 +69,16 @@ function chooseExample(example: string) {
     </div>
     <section v-else-if="response" class="results" aria-labelledby="hadith-results-title">
       <div class="results-heading"><h2 id="hadith-results-title" ref="resultsTitle" tabindex="-1">Hadiths proposés</h2><p>Pour « {{ response.query }} »</p></div>
-      <p v-if="!response.results.length" class="empty-state">Aucun résultat exploitable n’a été retourné. Essayez une autre formulation ou consultez HadeethEnc.</p>
+      <p class="search-method" v-if="response.search_mode === 'keywords'">Recherche par mots-clés<span v-if="response.search_terms.length"> : {{ response.search_terms.map(term => `« ${term} »`).join(', ') }}</span>.<br />Chaque résultat contient ces mots, au singulier ou au pluriel, dans son titre, son texte ou son explication en français.</p>
+      <p class="search-method" v-else>Recherche par sens. Les propositions peuvent être proches du sujet sans répondre exactement à votre demande.</p>
+      <div v-if="!response.results.length" class="empty-state">
+        <p v-if="response.search_mode === 'keywords'">Aucun résultat pour ces mots-clés dans la collection française indexée. Essayez un autre mot ou décrivez le hadith dans une phrase.</p>
+        <p v-else>Aucun résultat exploitable n’a été retourné. Essayez une autre formulation.</p>
+        <a href="https://hadeethenc.com/fr" target="_blank" rel="noopener noreferrer">Consulter la collection HadeethEnc <span class="sr-only">(nouvel onglet)</span></a>
+      </div>
       <HadithResultCard v-for="(hadith, index) in response.results" :key="hadith.id" :hadith="hadith" :position="index + 1" @read="selected = $event" />
     </section>
-    <p class="source-note">Recherche dans la collection HadeethEnc. Les propositions peuvent être proches du sujet sans répondre exactement à votre demande. Vérifiez les textes et leur source.</p>
+    <p class="source-note">Recherche dans la collection HadeethEnc. Vérifiez les textes et leur source.</p>
     <HadithDetailsDialog v-if="selected" :hadith="selected" @close="selected = null" />
   </section>
 </template>
@@ -193,6 +199,7 @@ input:focus-visible, button:focus-visible {
   margin: 10px 0 18px;
   color: #a7b6cb;
   font-size: 12px;
+  line-height: 1.6;
 }
 
 .validation-error {
@@ -251,6 +258,42 @@ input:focus-visible, button:focus-visible {
   font-size: 12px;
   line-height: 1.8;
   text-align: center;
+}
+
+.search-method {
+  margin: 0;
+  color: #b6c4d8;
+  font-size: 13px;
+  line-height: 1.7;
+  overflow-wrap: anywhere;
+}
+
+.empty-state p {
+  margin: 0 0 12px;
+}
+
+.empty-state a {
+  display: inline-block;
+  padding: 8px 0;
+  color: #93c5fd;
+  text-underline-offset: 3px;
+}
+
+.empty-state a:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 3px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
 
 .status-panel, .empty-state {

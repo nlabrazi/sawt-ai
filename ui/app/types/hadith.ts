@@ -13,4 +13,6 @@ export type HadithResult = {
 export type HadithSearchResponse = {
   query: string
   results: HadithResult[]
+  search_mode: 'keywords' | 'semantic'
+  search_terms: string[]
 }

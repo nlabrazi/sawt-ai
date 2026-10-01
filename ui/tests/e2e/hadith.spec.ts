@@ -72,11 +72,33 @@ test('recovers from service unavailability and distinguishes an empty list', asy
   await page.getByLabel('Que recherchez-vous ?').fill('la colère')
   await page.getByRole('button', { name: 'Rechercher', exact: true }).click()
   await expect(page.getByRole('alert')).toContainText('temporairement indisponible')
-  await setupMockApi(page, { hadithResponse: { query: 'la colère', results: [] } })
+  await setupMockApi(page, {
+    hadithResponse: { query: 'la colère', results: [], search_mode: 'semantic', search_terms: [] },
+  })
   await page.getByRole('button', { name: 'Réessayer', exact: true }).click()
   await expect(page.locator('.empty-state')).toContainText('Aucun résultat exploitable')
   await expect(page.getByRole('alert')).not.toBeVisible()
 })
+
+for (const query of ['couronne', 'hadith couronne']) {
+  test(`explains the absence of keyword results for ${query}`, async ({ page }) => {
+    await setupMockApi(page, {
+      hadithResponse: { query, results: [], search_mode: 'keywords', search_terms: ['couronne'] },
+    })
+    await page.getByLabel('Que recherchez-vous ?').fill(query)
+    await page.getByRole('button', { name: 'Rechercher', exact: true }).click()
+    await expect(page.locator('.search-method')).toContainText(
+      'Recherche par mots-clés : « couronne »',
+    )
+    await expect(page.locator('.empty-state')).toContainText('Aucun résultat pour ces mots-clés')
+    await expect(page.locator('.hadith-card')).toHaveCount(0)
+    await expect(page.getByRole('alert')).not.toBeVisible()
+    await expect(page.getByRole('heading', { name: 'Hadiths proposés' })).toBeFocused()
+    await expect(
+      page.getByRole('link', { name: /Consulter la collection HadeethEnc/ }),
+    ).toHaveAttribute('href', 'https://hadeethenc.com/fr')
+  })
+}
 
 test('cancels a pending request when changing mode and ignores its late response', async ({
   page,
