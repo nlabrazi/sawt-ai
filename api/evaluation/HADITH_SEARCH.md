@@ -2,7 +2,7 @@
 
 ## Périmètre et source
 
-Recherche sémantique française dans HadeethEnc, sans génération de contenu.
+Recherche française par mots-clés ou par sens dans HadeethEnc, sans génération de contenu.
 Le client utilise uniquement l'[API officielle](https://documenter.getpostman.com/view/5211979/TVev3j7q).
 Les catégories racines sont paginées puis les IDs sont dédupliqués. Chaque fiche
 fournit directement `hadeeth`, `hadeeth_ar`, `attribution`, `grade`, `explanation`
@@ -29,9 +29,51 @@ Le modèle est chargé au premier appel ; les fiches sont récupérées en direc
 HadeethEnc. Le chargement et le réseau peuvent donc ajouter de la latence.
 
 Les résultats sont des **propositions**, sans pourcentage de confiance affiché.
-Une liste vide signifie qu’aucune fiche exploitable n’a été retournée, sans
-conclure à l’absence du hadith. Le moteur n’a pas encore de détection calibrée des
-requêtes sans réponse ; le cas « couronne » reste une limite connue.
+L’API renvoie aussi `search_mode` (`keywords` ou `semantic`) et `search_terms`.
+L’interface affiche le mode utilisé et distingue une absence de résultat d’une
+indisponibilité technique (HTTP 503).
+
+## Correction des recherches courtes par mots-clés
+
+Après retrait des amorces reconnues (« Je cherche le hadith sur », « hadith »…),
+un sujet d’au plus trois mots est recherché dans les **titres, textes et
+explications français** de toute la collection indexée. Les articles et
+prépositions courants sont ignorés ; chaque terme restant est obligatoire.
+Le classement E5 s’applique ensuite uniquement aux fiches contenant les termes,
+avant la sélection des trois résultats. Les catégories et enseignements internes
+ne constituent pas une preuve de correspondance pour ce mode.
+
+La correspondance utilise des mots entiers, ignore la casse, normalise Unicode
+et accepte les variantes simples en `s`. Les accents sont conservés :
+« couronne » ne correspond pas à « couronné de succès ». Les synonymes, pluriels
+irréguliers et variantes sans accents ne sont pas recherchés dans ce mode.
+Une requête sans terme utile ne renvoie aucune fiche arbitraire.
+
+Chaque fiche est toujours récupérée en direct depuis HadeethEnc. Les mots-clés
+sont revérifiés sur son contenu actuel avant affichage ; une fiche retirée ou
+modifiée peut donc réduire le nombre de résultats. L’absence de résultat décrit
+cette collection et cette formulation, sans conclure à l’absence du hadith dans
+d’autres sources. Il faut reconstruire l’index pour intégrer de nouveaux textes.
+
+Les phrases plus longues et les négations restent sémantiques : elles peuvent
+retourner des voisins hors sujet et ne disposent pas d’un seuil de rejet calibré.
+L’interface les annonce comme une **recherche par sens**. Aucun seuil arbitraire
+sur le cosinus n’a été ajouté : les scores d’un bon résultat et d’une requête
+hors corpus se chevauchent. Cette correction garantit la présence des mots dans
+les résultats courts, elle ne valide pas la pertinence religieuse des phrases.
+
+Contrôle effectué sur l’API et les 1 790 fiches de l’index local :
+
+| Requête | Mode | IDs retournés |
+| --- | --- | --- |
+| couronne | mots-clés | aucun |
+| hadith couronne | mots-clés | aucun |
+| couronnes | mots-clés | aucun |
+| la colère | mots-clés | 4709, 3287, 5513 |
+| les intentions | mots-clés | 66511, 65014, 4560 |
+| Ne pas se mettre en colère | sens | 4709, 2988, 6985 |
+
+Ces IDs documentent un contrôle de régression local, sans labels religieux validés.
 
 ## Tests du parcours Hadith
 
@@ -55,7 +97,10 @@ Les tests HTTP utilisent une application FastAPI minimale, sans démarrer les
 modèles Coran. Les tests frontend et Playwright utilisent des réponses contrôlées,
 sans appeler HadeethEnc ni mesurer la pertinence du classement. Ils couvrent les
 états de recherche, les réponses périmées, l’annulation, la conservation de l’état,
-la lecture au clavier, le retour du focus et le parcours mobile.
+la lecture au clavier, le retour du focus et le parcours mobile. Les régressions
+HTTP et moteur vérifient aussi les mots entiers, les pluriels simples, les accents,
+le filtrage avant classement et la revérification du contenu actuel. Playwright
+vérifie l’état vide de « couronne » et « hadith couronne » avec des réponses contrôlées.
 
 ## Essayer une phrase depuis le terminal
 
@@ -67,21 +112,24 @@ bash scripts/search_hadith.sh "Je cherche le hadith sur la colère"
 
 Depuis la racine `sawt-ai`, utiliser `bash api/scripts/search_hadith.sh`.
 Remplacer uniquement la phrase entre guillemets pour faire un autre essai.
-Le lanceur affiche trois titres classés et leurs liens officiels : ouvrir les
+Le lanceur affiche jusqu’à trois titres classés et leurs liens officiels : ouvrir les
 liens permet de lire les hadiths et de vérifier s'ils répondent à la demande.
 Le lanceur retire désormais les amorces reconnues comme « Je cherche le hadith sur »
 ou « Donnez moi hadith qui parle de », puis affiche `Recherche utilisée` lorsque
 la phrase a changé. Il conserve les détails et les négations du sujet. Les formes
-inconnues ou incomplètes restent intactes. `--raw-query` permet de comparer avec
-la phrase d'origine ; `--json` affiche aussi les textes complets, la phrase utilisée
-et les scores de diagnostic.
+inconnues ou incomplètes restent intactes. Le lanceur utilise désormais le même
+service de recherche que l’API, avec son filtre de mots-clés. `--json` affiche les
+textes complets, le mode de recherche et les termes utilisés.
 
-Cette commande utilise **E5-base avec le découpage corrigé**, avec
-les modèles et la matrice déjà présents dans `.cache`. La [correction du découpage](hadith_context/README.md) empêche les fins de citation et attributions isolées de devenir des passages indépendants. `--variant benchmark-original` permet de reproduire le découpage précédent. Elle contrôle les
-empreintes du corpus et des passages avant de rechercher. Elle ne reconstruit
-pas l'index. Pour une nouvelle machine dépourvue de ces caches, reproduire d'abord
-les expériences décrites plus bas. Le modèle fonctionne localement ; les textes
-des résultats sont récupérés sur HadeethEnc et nécessitent Internet.
+Cette commande utilise l’index construit dans `assets`, dont les valeurs par
+défaut sont **E5-base / multi_context**. Pour reproduire les expériences historiques,
+utiliser explicitement `--variant benchmark` ou `--variant benchmark-original`.
+Ces variantes consultent les matrices dans `.cache` et affichent des voisins
+sémantiques bruts, sans filtre de mots-clés. `--raw-query` est réservé à ces
+variantes, et leurs sorties JSON contiennent les scores de diagnostic.
+La [correction du découpage](hadith_context/README.md) décrit leurs passages.
+Le modèle fonctionne localement ; les textes des résultats sont récupérés sur
+HadeethEnc et nécessitent Internet.
 
 Le lanceur crée un conteneur temporaire à partir de l'image API existante et un
 environnement Python persistant dans `api/.cache/hadith-cli-venv`. La première
@@ -111,13 +159,14 @@ et à indiquer si un des trois liens correspond à ce qui était recherché.
 
 Après cette correction, les mêmes vingt requêtes avec nettoyage des amorces
 atteignent 85 % en Top-1 et 95 % en Top-3. Ces chiffres restent provisoires.
-La requête « couronne » reste sans réponse attendue identifiée dans le corpus ;
-le moteur renvoie encore ses voisins les plus proches. Les résultats de la section
+Dans cette expérience historique, « couronne » restait sans réponse attendue
+identifiée dans le corpus et renvoyait ses voisins les plus proches. La recherche
+actuelle par mots-clés renvoie une liste vide. Les résultats de la section
 précédente décrivent l'étape antérieure au rééquilibrage des passages.
 
 Pour une nouvelle machine, après avoir reconstruit les matrices de l'A/B initial,
 exécuter `scripts/evaluate_hadith_context.py` dans l'environnement Python préparé
-pour créer la matrice corrigée utilisée par le lanceur.
+pour créer la matrice corrigée utilisée par `--variant benchmark`.
 
 ## Construire et essayer le moteur actuel
 
@@ -141,6 +190,22 @@ La première construction télécharge le modèle et les fiches officielles.
 téléchargement interrompu ; `--refresh` recharge toutes les fiches lors d'une mise
 à jour. Une erreur de récupération empêche de publier un index partiel.
 Les fichiers du cache ne sont jamais utilisés comme contenu de résultat.
+
+Les nouveaux index utilisent le schéma de métadonnées **2** : les textes français
+visibles sont stockés séparément des passages E5 et liés par une empreinte SHA-256.
+Pour migrer un index existant sans recalculer les embeddings :
+
+```bash
+docker compose exec api python scripts/build_hadith_index.py --upgrade-search-documents
+docker compose restart api
+```
+
+La migration utilise `.cache/hadeethenc/fr` (ou `--cache-dir`), exige l’empreinte
+exacte des records ayant servi à construire l’index et conserve la sauvegarde
+`hadith_index_meta.before-search-documents.json`. Si un record manque ou a changé,
+elle refuse de remplacer les métadonnées : reconstruire l’index. L’ancien schéma
+reste lisible pour les diagnostics sémantiques historiques ; une recherche par
+mots-clés sans textes vérifiables échoue en 503, sans repli vers des voisins hors sujet.
 
 L’index actuel utilise **E5-base** et la stratégie **`multi_context`** : plusieurs
 passages par hadith, puis le meilleur score par ID pour obtenir des résultats

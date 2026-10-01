@@ -200,19 +200,37 @@ docker compose exec api python scripts/build_hadith_index.py
 
 The index and metadata are local artifacts ignored by Git. Restart the API if it
 has already loaded an older index. Results require Internet access to HadeethEnc.
-The UI labels results as proposals: nearest neighbours may not answer the query,
-and the provisional retrieval benchmark does not establish religious accuracy.
+Short subjects (up to three words after removing a recognized search prefix) use
+keyword retrieval across French titles, texts, and explanations. Every returned
+source must contain all keywords, with simple singular/plural variants. Missing
+keywords return an empty list: `couronne` and `hadith couronne` no longer return
+unrelated neighbours. Accents matter (`couronne` does not match `couronné`).
+Longer phrases and negations retain semantic retrieval. The UI labels the search
+method; semantic neighbours may not answer the query. The provisional retrieval
+benchmark does not establish religious accuracy.
 
-Try the current Hadith benchmark candidate from the project root (Docker required):
+Upgrade an existing index from its original cached source records without
+re-encoding, then restart the API:
+
+```bash
+docker compose exec api python scripts/build_hadith_index.py --upgrade-search-documents
+docker compose restart api
+```
+
+The upgrade verifies the exact source checksum and preserves a metadata backup.
+If the cache is missing or changed, rebuild the index instead. New builds include
+the source text metadata automatically.
+
+Try the same search policy as the API from the project root (Docker required):
 
 ```bash
 bash api/scripts/search_hadith.sh "Je cherche le hadith sur la colère"
 ```
 
-This prints three ranked HadeethEnc titles and links using the cached E5-base
-experiment with corrected passage boundaries. From the `api` directory, use `bash scripts/search_hadith.sh` instead.
+This prints up to three ranked HadeethEnc titles and links using the built index.
+From the `api` directory, use `bash scripts/search_hadith.sh` instead.
 The launcher prepares its Python dependencies inside Docker on first use.
-See the guide below to rebuild the experiment caches on a fresh checkout.
+Use `--variant benchmark` explicitly for historical experiments and raw scores.
 
 Try the current built index from the terminal:
 
