@@ -85,7 +85,6 @@ const statusPanel = computed(() => {
   <section class="screen result-screen" aria-labelledby="result-title">
 
     <div class="result-intro">
-      <p class="eyebrow">Résultat de l’analyse</p>
       <h1 id="result-title" class="main-title">{{ heading }}</h1>
       <p class="main-subtitle">{{ introduction }}</p>
     </div>
@@ -130,18 +129,9 @@ const statusPanel = computed(() => {
   text-align: center;
 }
 
-.eyebrow {
-  margin: 0;
-  color: #93c5fd;
-  font-size: 12px;
-  font-weight: 750;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
 .main-title {
   margin: 12px 0 0;
-  font-size: clamp(36px, 6vw, 54px);
+  font-size: clamp(28px, 4vw, 40px);
   line-height: 1.04;
   font-weight: 800;
   letter-spacing: -0.05em;
@@ -233,7 +223,7 @@ const statusPanel = computed(() => {
   }
 
   .main-title {
-    font-size: clamp(34px, 10vw, 44px);
+    font-size: clamp(28px, 7vw, 34px);
   }
 
   .content-stack {

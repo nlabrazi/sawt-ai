@@ -9,7 +9,7 @@ defineEmits<{ read: [hadith: HadithResult] }>()
 <template>
   <article class="hadith-card">
     <div class="card-meta">
-      <span class="result-number">Proposition {{ position }}</span>
+      <span class="result-number">{{ position.toString().padStart(2, '0') }}</span>
       <span class="source-label">{{ hadith.provider }}</span>
     </div>
     <h3>{{ hadith.title }}</h3>
@@ -30,16 +30,15 @@ defineEmits<{ read: [hadith: HadithResult] }>()
 
 <style scoped>
 .hadith-card {
-  padding: 24px;
+  padding: 20px;
   border: 1px solid #243349;
-  border-radius: 22px;
+  border-radius: 18px;
   background: linear-gradient(140deg, #111f32, #0d1728);
-  transition: border-color 160ms, transform 160ms;
+  transition: border-color 160ms;
 }
 
 .hadith-card:hover {
   border-color: #48668d;
-  transform: translateY(-2px);
 }
 
 .card-meta, .card-actions {
@@ -59,12 +58,12 @@ defineEmits<{ read: [hadith: HadithResult] }>()
 }
 
 h3 {
-  margin: 16px 0 12px;
-  font-size: 20px;
+  margin: 12px 0 8px;
+  font-size: 18px;
   line-height: 1.45;
   overflow-wrap: anywhere;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
@@ -74,7 +73,7 @@ h3 {
   color: #b7c5d8;
   line-height: 1.7;
   display: -webkit-box;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   white-space: pre-line;
@@ -87,7 +86,7 @@ h3 {
 }
 
 .card-actions {
-  margin-top: 20px;
+  margin-top: 12px;
   flex-wrap: wrap;
 }
 

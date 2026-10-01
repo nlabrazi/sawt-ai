@@ -7,7 +7,7 @@ describe('HadithResultCard', () => {
     const wrapper = mount(HadithResultCard, { props: { hadith: hadithFixture, position: 1 } })
     expect(wrapper.text()).toContain(hadithFixture.title)
     expect(wrapper.get('.excerpt').text()).toBe(hadithFixture.translation)
-    expect(wrapper.text()).toContain('Proposition 1')
+    expect(wrapper.get('.result-number').text()).toBe('01')
     await wrapper.get('button').trigger('click')
     expect(wrapper.emitted('read')?.[0]).toEqual([hadithFixture])
     expect(wrapper.get('a').attributes('href')).toBe(hadithFixture.source_url)

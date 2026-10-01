@@ -21,6 +21,15 @@ export function useHadithSearch() {
     loading.value = false
   }
 
+  function reset() {
+    cancel()
+    query.value = ''
+    response.value = null
+    error.value = null
+    validationError.value = null
+    pendingQuery = ''
+  }
+
   async function search() {
     const text = query.value.trim()
     validationError.value =
@@ -67,5 +76,5 @@ export function useHadithSearch() {
   }
 
   if (getCurrentScope()) onScopeDispose(cancel)
-  return { query, response, loading, error, validationError, search, cancel }
+  return { query, response, loading, error, validationError, search, cancel, reset }
 }

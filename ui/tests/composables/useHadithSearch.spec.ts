@@ -90,6 +90,32 @@ describe('useHadithSearch', () => {
     await request
     expect(state.error.value).toBeNull()
   })
+  it('resets the draft, results, errors and any pending request', async () => {
+    const state = useHadithSearch()
+    vi.mocked($fetch).mockResolvedValueOnce(result)
+    state.query.value = 'la colère'
+    await state.search()
+    state.reset()
+    expect(state.query.value).toBe('')
+    expect(state.response.value).toBeNull()
+
+    const pending = deferred<typeof result>()
+    vi.mocked($fetch).mockReturnValueOnce(pending.promise)
+    state.query.value = 'la colère'
+    const request = state.search()
+    const signal = vi.mocked($fetch).mock.calls[1]?.[1]?.signal as AbortSignal
+    state.error.value = 'Ancienne erreur'
+    state.validationError.value = 'Ancienne validation'
+    state.reset()
+    expect(signal.aborted).toBe(true)
+    expect(state.query.value).toBe('')
+    expect(state.loading.value).toBe(false)
+    expect(state.error.value).toBeNull()
+    expect(state.validationError.value).toBeNull()
+    pending.resolve(result)
+    await request
+    expect(state.response.value).toBeNull()
+  })
   it.each([
     503,
     422,

@@ -33,7 +33,7 @@ onBeforeUnmount(() => {
     >
       <div class="reading-sheet">
         <header class="reading-header">
-          <span>Lecture du hadith · {{ hadith.provider }}</span>
+          <span>{{ hadith.provider }}</span>
           <button type="button" aria-label="Fermer la lecture du hadith" autofocus @click="emit('close')">
             <X :size="22" aria-hidden="true" />
           </button>
@@ -69,7 +69,7 @@ onBeforeUnmount(() => {
 <style scoped>
 dialog {
   width: min(760px, calc(100% - 32px));
-  max-height: calc(100svh - 48px);
+  max-height: calc(100dvh - 48px);
   margin: auto;
   padding: 0;
   border: 1px solid #34465f;
@@ -202,12 +202,12 @@ button:focus-visible, a:focus-visible {
   dialog {
     width: 100%;
     max-width: 100%;
-    max-height: 92svh;
+    max-height: calc(100dvh - env(safe-area-inset-top, 0px) - 12px);
     margin: auto 0 0;
     border-radius: 24px 24px 0 0;
   }
   .reading-content {
-    padding: 22px;
+    padding: 22px max(22px, env(safe-area-inset-right, 0px)) calc(22px + env(safe-area-inset-bottom, 0px)) max(22px, env(safe-area-inset-left, 0px));
   }
   h2 {
     font-size: 22px;

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { BookOpen, Search } from '@lucide/vue'
+import { Search } from '@lucide/vue'
 import { defineAsyncComponent, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import HadithResultCard from '~/components/HadithResultCard.vue'
 import type { useHadithSearch } from '~/composables/useHadithSearch'
@@ -11,9 +11,7 @@ const HadithDetailsDialog = defineAsyncComponent(
 const props = defineProps<{ searchState: ReturnType<typeof useHadithSearch> }>()
 const { query, response, loading, error, validationError, search, cancel } = props.searchState
 const selected = ref<HadithResult | null>(null)
-const input = ref<HTMLInputElement | null>(null)
 const resultsTitle = ref<HTMLElement | null>(null)
-const examples = ['Ne pas se mettre en colère', 'Les actes et les intentions', 'La miséricorde']
 
 watch(response, async (value) => {
   if (!value) return
@@ -25,42 +23,32 @@ onBeforeUnmount(() => {
   selected.value = null
   cancel()
 })
-
-function chooseExample(example: string) {
-  query.value = example
-  validationError.value = null
-  input.value?.focus()
-}
 </script>
 
 <template>
-  <section class="hadith-screen" aria-labelledby="hadith-title">
-    <div class="search-intro">
-      <span class="eyebrow"><BookOpen :size="16" aria-hidden="true" /> Recherche de hadiths · Bêta</span>
-      <h1 id="hadith-title">Retrouvez un hadith</h1>
-      <p>Décrivez un sujet ou quelques mots du texte.<br />Sawt AI vous propose des hadiths à consulter.</p>
+  <section class="hadith-screen" :class="{ 'is-idle': !loading && !response && !error }" aria-labelledby="hadith-title">
+    <div class="search-shell">
+      <div class="search-intro">
+        <h1 id="hadith-title">Retrouvez un hadith</h1>
+        <p>Un sujet, quelques mots ou un extrait.</p>
+      </div>
+      <form class="search-form" novalidate @submit.prevent="search">
+        <label for="hadith-query" class="sr-only">Que recherchez-vous ?</label>
+        <div class="search-controls">
+          <input id="hadith-query" v-model="query" type="search" maxlength="300" placeholder="Rechercher un hadith" enterkeyhint="search" :aria-invalid="!!validationError" :aria-describedby="validationError ? 'hadith-query-error' : undefined" @input="validationError = null" />
+          <button class="search-button" type="submit" :disabled="loading">
+            <Search :size="20" aria-hidden="true" /><span class="sr-only">{{ loading ? 'Recherche…' : 'Rechercher' }}</span>
+          </button>
+        </div>
+        <p v-if="validationError" id="hadith-query-error" class="validation-error" role="alert">{{ validationError }}</p>
+      </form>
     </div>
-    <form class="search-form" novalidate @submit.prevent="search">
-      <label for="hadith-query">Que recherchez-vous ?</label>
-      <div class="search-controls">
-        <input id="hadith-query" ref="input" v-model="query" type="search" maxlength="300" placeholder="Un hadith sur la colère, les intentions…" :aria-invalid="!!validationError" :aria-describedby="validationError ? 'hadith-query-error' : 'hadith-query-hint'" @input="validationError = null" />
-        <button class="search-button" type="submit" :disabled="loading">
-          <Search :size="19" aria-hidden="true" /> {{ loading ? 'Recherche…' : 'Rechercher' }}
-        </button>
-      </div>
-      <p v-if="validationError" id="hadith-query-error" class="validation-error" role="alert">{{ validationError }}</p>
-      <p id="hadith-query-hint" class="input-hint">1 à 3 mots : recherche par mots-clés · Une phrase : recherche par sens · 300 caractères maximum</p>
-      <div class="examples" aria-label="Exemples de recherche">
-        <span>Essayez :</span>
-        <button v-for="example in examples" :key="example" type="button" :disabled="loading" @click="chooseExample(example)">{{ example }}</button>
-      </div>
-    </form>
-    <div class="search-feedback" role="status" aria-live="polite" aria-atomic="true">
+    <div class="search-feedback sr-only" role="status" aria-live="polite" aria-atomic="true">
       <span v-if="loading">Recherche des hadiths en cours…</span>
       <span v-else-if="response">{{ response.results.length }} proposition{{ response.results.length === 1 ? '' : 's' }} disponible{{ response.results.length === 1 ? '' : 's' }}.</span>
     </div>
     <div v-if="loading" class="loading-panel" :aria-busy="true">
-      <div class="loading-copy"><span class="loading-dot" aria-hidden="true" /><p>Nous recherchons les hadiths correspondant à votre demande.</p><button type="button" @click="cancel">Annuler</button></div>
+      <div class="loading-copy"><span class="loading-dot" aria-hidden="true" /><p>Recherche en cours…</p><button type="button" @click="cancel">Annuler</button></div>
       <div v-for="position in 3" :key="position" class="skeleton-card" aria-hidden="true"><span /><span /><span /></div>
     </div>
     <div v-else-if="error" class="status-panel" role="alert">
@@ -69,16 +57,19 @@ function chooseExample(example: string) {
     </div>
     <section v-else-if="response" class="results" aria-labelledby="hadith-results-title">
       <div class="results-heading"><h2 id="hadith-results-title" ref="resultsTitle" tabindex="-1">Hadiths proposés</h2><p>Pour « {{ response.query }} »</p></div>
-      <p class="search-method" v-if="response.search_mode === 'keywords'">Recherche par mots-clés<span v-if="response.search_terms.length"> : {{ response.search_terms.map(term => `« ${term} »`).join(', ') }}</span>.<br />Chaque résultat contient ces mots, au singulier ou au pluriel, dans son titre, son texte ou son explication en français.</p>
-      <p class="search-method" v-else>Recherche par sens. Les propositions peuvent être proches du sujet sans répondre exactement à votre demande.</p>
       <div v-if="!response.results.length" class="empty-state">
         <p v-if="response.search_mode === 'keywords'">Aucun résultat pour ces mots-clés dans la collection française indexée. Essayez un autre mot ou décrivez le hadith dans une phrase.</p>
         <p v-else>Aucun résultat exploitable n’a été retourné. Essayez une autre formulation.</p>
         <a href="https://hadeethenc.com/fr" target="_blank" rel="noopener noreferrer">Consulter la collection HadeethEnc <span class="sr-only">(nouvel onglet)</span></a>
       </div>
       <HadithResultCard v-for="(hadith, index) in response.results" :key="hadith.id" :hadith="hadith" :position="index + 1" @read="selected = $event" />
+      <details class="result-context">
+        <summary>À propos des résultats <span class="beta-badge">Bêta</span></summary>
+        <p class="search-method" v-if="response.search_mode === 'keywords'">Recherche par mots-clés<span v-if="response.search_terms.length"> : {{ response.search_terms.map(term => `« ${term} »`).join(', ') }}</span>.<br />Chaque résultat contient ces mots, au singulier ou au pluriel, dans son titre, son texte ou son explication en français.</p>
+        <p class="search-method" v-else>Recherche par sens. Les propositions peuvent être proches du sujet sans répondre exactement à votre demande.</p>
+        <p class="source-note">Collection HadeethEnc · Vérifiez le texte et sa source.</p>
+      </details>
     </section>
-    <p class="source-note">Recherche dans la collection HadeethEnc. Vérifiez les textes et leur source.</p>
     <HadithDetailsDialog v-if="selected" :hadith="selected" @close="selected = null" />
   </section>
 </template>
@@ -86,55 +77,57 @@ function chooseExample(example: string) {
 <style scoped>
 .hadith-screen {
   flex: 1;
+  display: flex;
+  flex-direction: column;
   width: min(100%, 780px);
   margin: 0 auto;
-  padding: 26px 20px 42px;
+  padding: 48px 20px 32px;
+}
+
+.hadith-screen.is-idle {
+  justify-content: center;
+}
+
+.search-shell {
+  width: min(100%, 620px);
+  margin-inline: auto;
+}
+
+.search-intro p {
+  margin: 16px 0 0;
+  color: #aebed3;
+  font-size: 15px;
+  line-height: 1.6;
 }
 
 .search-intro {
-  margin: 48px 0 32px;
+  margin: 0 0 28px;
   text-align: center;
 }
 
-.eyebrow {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #93c5fd;
-  font-size: 13px;
-}
-
 h1 {
-  margin: 18px 0 16px;
-  font-size: clamp(36px, 6vw, 54px);
+  margin: 0;
+  font-size: clamp(28px, 4vw, 40px);
   line-height: 1.1;
   letter-spacing: -.045em;
 }
 
-.search-intro p {
-  margin: 0;
-  color: #aebed3;
-  line-height: 1.7;
-}
-
 .search-form {
-  padding: 24px;
-  background: #112035b8;
-  border: 1px solid #2a3d58;
-  border-radius: 22px;
-}
-
-label {
-  display: block;
-  margin-bottom: 12px;
-  font-weight: 600;
-  font-size: 14px;
-  color: #d4e0f1;
+  width: 100%;
 }
 
 .search-controls {
   display: flex;
-  gap: 10px;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid #3c506f;
+  border-radius: 18px;
+  background: #0e1b2d;
+}
+
+.search-controls:focus-within {
+  border-color: #93c5fd;
 }
 
 input {
@@ -142,9 +135,9 @@ input {
   min-width: 0;
   min-height: 52px;
   padding: 14px;
-  border: 1px solid #3c506f;
+  border: 0;
   border-radius: 12px;
-  background: #091323;
+  background: transparent;
   color: #f1f5fb;
   font: inherit;
   font-size: 16px;
@@ -154,7 +147,7 @@ input::placeholder {
   color: #92a4be;
 }
 
-input[aria-invalid='true'] {
+.search-controls:has(input[aria-invalid='true']) {
   border-color: #f4a2a2;
 }
 
@@ -179,7 +172,10 @@ button:disabled {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
+  flex-shrink: 0;
+  width: 48px;
+  height: 48px;
+  padding: 0;
   background: #2563eb;
   border-color: #4982f8;
   color: #fff;
@@ -195,49 +191,15 @@ input:focus-visible, button:focus-visible {
   outline-offset: 3px;
 }
 
-.input-hint {
-  margin: 10px 0 18px;
-  color: #a7b6cb;
-  font-size: 12px;
-  line-height: 1.6;
-}
-
 .validation-error {
   color: #fca5a5;
   font-size: 14px;
 }
 
-.examples {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 8px;
-  color: #a7b6cb;
-  font-size: 12px;
-}
-
-.examples button {
-  padding: 7px 10px;
-  font-size: 12px;
-  border-radius: 999px;
-  background: #142740;
-}
-
-.examples button:hover:not(:disabled) {
-  border-color: #719acc;
-}
-
-.search-feedback {
-  min-height: 32px;
-  padding-top: 14px;
-  color: #b0c8e7;
-  font-size: 13px;
-}
-
 .results, .loading-panel {
   display: grid;
   gap: 16px;
-  margin-top: 18px;
+  margin-top: 28px;
 }
 
 .results-heading h2 {
@@ -251,13 +213,45 @@ input:focus-visible, button:focus-visible {
   overflow-wrap: anywhere;
 }
 
-.source-note {
-  margin: 28px auto 0;
-  max-width: 640px;
-  color: #98abc5;
+.result-context {
+  color: #a7b6cb;
   font-size: 12px;
-  line-height: 1.8;
-  text-align: center;
+}
+
+.result-context summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  min-height: 44px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.result-context summary::before {
+  content: '+';
+  font-size: 16px;
+}
+
+.result-context[open] summary::before {
+  content: '−';
+}
+
+.result-context summary:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 3px;
+}
+
+.beta-badge {
+  padding: 2px 6px;
+  border: 1px solid #3c506f;
+  border-radius: 6px;
+  font-size: 10px;
+}
+
+.source-note {
+  margin: 10px 0 0;
+  line-height: 1.7;
 }
 
 .search-method {
@@ -366,17 +360,8 @@ input:focus-visible, button:focus-visible {
 }
 
 @media (max-width: 640px) {
-  .search-intro {
-    margin-top: 34px;
-  }
-  .search-form {
-    padding: 18px;
-  }
-  .search-controls {
-    flex-direction: column;
-  }
-  .search-button {
-    min-height: 48px;
+  .hadith-screen {
+    padding: 36px 16px 24px;
   }
   .loading-copy {
     flex-wrap: wrap;

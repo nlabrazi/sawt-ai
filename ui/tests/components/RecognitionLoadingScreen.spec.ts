@@ -11,7 +11,8 @@ describe('RecognitionLoadingScreen', () => {
       },
     })
 
-    expect(wrapper.text()).toContain('Étape 2 sur 3')
+    expect(wrapper.find('.eyebrow').exists()).toBe(false)
+    expect(wrapper.find('.button-label').exists()).toBe(false)
     expect(wrapper.text()).toContain('Nous comparons le passage aux versets du Coran.')
     expect(wrapper.get('.loading-step.is-active').text()).toContain('Recherche')
     expect(wrapper.get('.loading-step.is-active').attributes('aria-current')).toBe('step')
@@ -25,7 +26,6 @@ describe('RecognitionLoadingScreen', () => {
       },
     })
 
-    expect(wrapper.text()).toContain('Étape 3 sur 3')
     expect(wrapper.text()).toContain('Votre résultat est presque prêt.')
     expect(wrapper.findAll('.loading-step.is-done')).toHaveLength(2)
     expect(wrapper.get('.loading-step.is-active').text()).toContain('Résultat')

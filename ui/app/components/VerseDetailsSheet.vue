@@ -552,18 +552,18 @@ async function copyVerse() {
   .sheet-overlay {
     align-items: flex-start;
     padding: 4vh 0 0;
-    padding-top: 4dvh;
+    padding-top: max(4dvh, env(safe-area-inset-top, 0px));
   }
 
   .sheet {
     width: 100%;
     max-height: 96vh;
-    max-height: 96dvh;
+    max-height: calc(100dvh - max(4dvh, env(safe-area-inset-top, 0px)));
     border-radius: 28px;
   }
 
   .sheet-header {
-    padding: 18px 18px 14px;
+    padding: 18px max(18px, env(safe-area-inset-right, 0px)) 14px max(18px, env(safe-area-inset-left, 0px));
   }
 
   .sheet-title {
@@ -571,7 +571,7 @@ async function copyVerse() {
   }
 
   .sheet-scroll {
-    padding: 16px 18px 18px;
+    padding: 16px max(18px, env(safe-area-inset-right, 0px)) calc(18px + env(safe-area-inset-bottom, 0px)) max(18px, env(safe-area-inset-left, 0px));
   }
 
   .action-card {

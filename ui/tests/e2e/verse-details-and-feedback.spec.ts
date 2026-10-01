@@ -5,6 +5,7 @@ test.describe('Verse Details and Feedback', () => {
   test.beforeEach(async ({ page }) => {
     await setupMockApi(page)
     await page.goto('/')
+    await page.getByRole('button', { name: 'Coran', exact: true }).click()
     await page.waitForLoadState('networkidle')
 
     const fileInput = page.locator('input[type="file"]')

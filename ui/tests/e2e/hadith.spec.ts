@@ -37,7 +37,7 @@ test('searches, reads the source text and restores focus after Escape', async ({
   await expect(read).toBeFocused()
 })
 
-test('keeps the query and proposals after returning from Quran mode', async ({ page }) => {
+test('clears the query and proposals after returning from Quran mode', async ({ page }) => {
   const query = page.getByLabel('Que recherchez-vous ?')
   await query.fill('les intentions')
   await page.getByRole('button', { name: 'Rechercher', exact: true }).click()
@@ -45,22 +45,21 @@ test('keeps the query and proposals after returning from Quran mode', async ({ p
   await page.getByRole('button', { name: 'Coran', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Récitez un passage du Coran' })).toBeVisible()
   await page.getByRole('button', { name: 'Hadiths', exact: true }).click()
-  await expect(query).toHaveValue('les intentions')
-  await expect(page.locator('.hadith-card')).toBeVisible()
+  await expect(query).toHaveValue('')
+  await expect(page.locator('.hadith-card')).toHaveCount(0)
   await query.fill('la miséricorde')
   await query.press('Enter')
   await expect(page.locator('.results-heading')).toContainText('la miséricorde')
 })
 
-test('fills examples without submitting and validates a short query', async ({ page }) => {
+test('keeps search minimal and validates a short query', async ({ page }) => {
   let requests = 0
   page.on('request', (request) => {
     if (request.url().endsWith('/hadith/search') && request.method() === 'POST') requests += 1
   })
-  await page.getByRole('button', { name: 'Ne pas se mettre en colère', exact: true }).click()
+  await expect(page.locator('.examples')).toHaveCount(0)
+  await expect(page.locator('.input-hint')).toHaveCount(0)
   const query = page.getByLabel('Que recherchez-vous ?')
-  await expect(query).toHaveValue('Ne pas se mettre en colère')
-  await expect(query).toBeFocused()
   await query.fill('ab')
   await query.press('Enter')
   await expect(page.getByRole('alert')).toContainText('3 caractères')
@@ -87,13 +86,16 @@ for (const query of ['couronne', 'hadith couronne']) {
     })
     await page.getByLabel('Que recherchez-vous ?').fill(query)
     await page.getByRole('button', { name: 'Rechercher', exact: true }).click()
+    await expect(page.getByRole('heading', { name: 'Hadiths proposés' })).toBeFocused()
+    await expect(page.locator('.search-method')).not.toBeVisible()
+    await page.locator('.result-context summary').click()
+    await expect(page.locator('.search-method')).toBeVisible()
     await expect(page.locator('.search-method')).toContainText(
       'Recherche par mots-clés : « couronne »',
     )
     await expect(page.locator('.empty-state')).toContainText('Aucun résultat pour ces mots-clés')
     await expect(page.locator('.hadith-card')).toHaveCount(0)
     await expect(page.getByRole('alert')).not.toBeVisible()
-    await expect(page.getByRole('heading', { name: 'Hadiths proposés' })).toBeFocused()
     await expect(
       page.getByRole('link', { name: /Consulter la collection HadeethEnc/ }),
     ).toHaveAttribute('href', 'https://hadeethenc.com/fr')
@@ -137,7 +139,7 @@ test('cancels a pending request when changing mode and ignores its late response
   await fulfilled
   await expect(page.getByRole('heading', { name: 'Récitez un passage du Coran' })).toBeVisible()
   await page.getByRole('button', { name: 'Hadiths', exact: true }).click()
-  await expect(page.getByLabel('Que recherchez-vous ?')).toHaveValue('la colère')
+  await expect(page.getByLabel('Que recherchez-vous ?')).toHaveValue('')
   await expect(page.locator('.hadith-card')).not.toBeVisible()
   await expect(page.locator('.loading-panel')).not.toBeVisible()
 })

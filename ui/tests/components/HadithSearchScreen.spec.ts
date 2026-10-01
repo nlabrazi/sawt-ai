@@ -17,12 +17,13 @@ function mountScreen() {
 describe('HadithSearchScreen', () => {
   beforeEach(() => vi.mocked($fetch).mockReset())
 
-  it('fills an example without making a request', async () => {
+  it('offers a labelled search without suggestions or technical hints', () => {
     const wrapper = mountScreen()
-    await wrapper.get('.examples button').trigger('click')
-    expect((wrapper.get('input').element as HTMLInputElement).value).toBe(
-      'Ne pas se mettre en colère',
-    )
+    expect(wrapper.find('.examples').exists()).toBe(false)
+    expect(wrapper.find('.input-hint').exists()).toBe(false)
+    expect(wrapper.get('label').attributes('for')).toBe(wrapper.get('input').attributes('id'))
+    expect(wrapper.get('input').attributes('placeholder')).toBe('Rechercher un hadith')
+    expect(wrapper.get('.search-button').text()).toBe('Rechercher')
     expect($fetch).not.toHaveBeenCalled()
     wrapper.unmount()
   })
@@ -50,6 +51,7 @@ describe('HadithSearchScreen', () => {
     expect(wrapper.get('h2').text()).toBe('Hadiths proposés')
     expect(wrapper.text()).toContain('Pour « la colère »')
     expect(wrapper.get('.search-method').text()).toContain('Recherche par mots-clés : « colère »')
+    expect(wrapper.get('.result-context').attributes('open')).toBeUndefined()
     expect(wrapper.get('[role="status"]').text()).toContain('1 proposition disponible')
     await wrapper.get('.hadith-card button').trigger('click')
     await vi.dynamicImportSettled()

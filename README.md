@@ -188,9 +188,11 @@ false positives, and matching latency; it does not measure Whisper accuracy.
 Hadith search is available in the **Hadiths** mode of the Nuxt interface (Beta).
 Describe a subject in French, submit the search, and open one of the three
 proposals to read the Arabic text, translation, and available source details.
-Search text and completed results are retained when switching modes. Pending
-searches are cancelled on exit; Quran recording prevents switching modes until
-the recording is finished. Texts come from HadeethEnc and are never generated.
+The landing screen links to Quran and Hadith search, with a separate FAQ.
+The Sawt AI logo returns home and resets searches. Leaving Hadith mode clears
+the query and results. Pending searches are cancelled on exit; Quran recording
+prevents switching modes until the recording is finished. Texts come from
+HadeethEnc and are never generated.
 
 Build the current E5-base / multi_context index before the first search:
 

@@ -7,6 +7,7 @@ test.describe('Recognition Flow', () => {
   }) => {
     await setupMockApi(page)
     await page.goto('/')
+    await page.getByRole('button', { name: 'Coran', exact: true }).click()
     await page.waitForLoadState('networkidle')
 
     const audioBuffer = createSampleAudioBuffer()
@@ -67,6 +68,7 @@ test.describe('Recognition Flow', () => {
 
     await setupMockApi(page, { recognizeResponse: rejectionResponse })
     await page.goto('/')
+    await page.getByRole('button', { name: 'Coran', exact: true }).click()
     await page.waitForLoadState('networkidle')
 
     const audioBuffer = createSampleAudioBuffer()
@@ -99,6 +101,7 @@ test.describe('Recognition Flow', () => {
       recognizeErrorDetail: errorDetail,
     })
     await page.goto('/')
+    await page.getByRole('button', { name: 'Coran', exact: true }).click()
     await page.waitForLoadState('networkidle')
 
     const audioBuffer = createSampleAudioBuffer()
@@ -134,6 +137,7 @@ test.describe('Recognition Flow', () => {
     })
 
     await page.goto('/')
+    await page.getByRole('button', { name: 'Coran', exact: true }).click()
     await page.waitForLoadState('networkidle')
 
     const fileInput = page.locator('input[type="file"]')

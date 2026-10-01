@@ -2,28 +2,25 @@ import { expect, test } from '@playwright/test'
 import { defaultMockHealth, setupMockApi } from './helpers/mock-api'
 
 test.describe('Home / Idle Screen', () => {
-  test('renders the landing page with branding, titles, guidance and actions', async ({ page }) => {
+  test('renders the Quran screen with accessible actions', async ({ page }) => {
     await setupMockApi(page)
     await page.goto('/')
+    await page.getByRole('button', { name: 'Coran', exact: true }).click()
     await page.waitForLoadState('networkidle')
 
     // Brand header
-    const brand = page.locator('header.brand')
+    const brand = page.locator('button.brand')
     await expect(brand).toBeVisible()
     await expect(brand).toContainText('Sawt')
     await expect(brand).toContainText('AI')
 
-    // State label and title
-    await expect(page.locator('.state-label')).toContainText('Reconnaissance coranique')
+    await expect(page.locator('.state-label')).toHaveCount(0)
     const title = page.locator('#recognition-title')
     await expect(title).toBeVisible()
     await expect(title).toContainText('Récitez un passage du Coran')
 
-    const subtitle = page.locator('#recognition-guidance')
-    await expect(subtitle).toBeVisible()
-    await expect(subtitle).toContainText(
-      'Sawt AI vous propose la sourate et les versets correspondants.',
-    )
+    await expect(page.locator('#recognition-guidance')).toHaveCount(0)
+    await expect(page.locator('#recognition-action-hint')).toHaveCount(0)
 
     // Action buttons
     const micButton = page.getByRole('button', { name: /Commencer/i })
@@ -37,7 +34,7 @@ test.describe('Home / Idle Screen', () => {
     await expect(fileInput).toBeAttached()
 
     // Detect imam toggle inside options details
-    const optionsSummary = page.locator('summary', { hasText: 'Options de reconnaissance' })
+    const optionsSummary = page.locator('summary', { hasText: 'Options' })
     await expect(optionsSummary).toBeVisible()
     await optionsSummary.click()
 
@@ -48,7 +45,7 @@ test.describe('Home / Idle Screen', () => {
     // Footer
     const footer = page.locator('footer.app-footer')
     await expect(footer).toBeVisible()
-    await expect(footer).toContainText('Sawt AI Tous droits réservés')
+    await expect(footer).toContainText('Sawt AI')
     await expect(footer.getByRole('link', { name: 'GitHub' })).toBeVisible()
     await expect(footer.getByRole('link', { name: 'Portfolio' })).toBeVisible()
     await expect(footer.getByRole('link', { name: 'Contact' })).toBeVisible()
@@ -70,9 +67,12 @@ test.describe('Home / Idle Screen', () => {
 
     await setupMockApi(page, { health: customHealth })
     await page.goto('/')
+    await page.getByRole('button', { name: 'Coran', exact: true }).click()
     await page.waitForLoadState('networkidle')
 
     const uploadHint = page.locator('.upload-hint')
+    await expect(uploadHint).not.toBeVisible()
+    await page.locator('summary', { hasText: 'Options' }).click()
     await expect(uploadHint).toBeVisible()
     await expect(uploadHint).toContainText('max 5 Mo')
     await expect(uploadHint).toContainText('max 15 sec')
@@ -94,10 +94,11 @@ test.describe('Home / Idle Screen', () => {
 
     await setupMockApi(page, { health: customHealth })
     await page.goto('/')
+    await page.getByRole('button', { name: 'Coran', exact: true }).click()
     await page.waitForLoadState('networkidle')
 
     // Open options details
-    const optionsSummary = page.locator('summary', { hasText: 'Options de reconnaissance' })
+    const optionsSummary = page.locator('summary', { hasText: 'Options' })
     await expect(optionsSummary).toBeVisible()
     await optionsSummary.click()
 
@@ -113,6 +114,7 @@ test.describe('Home / Idle Screen', () => {
     await page.setViewportSize({ width: 375, height: 667 })
     await setupMockApi(page)
     await page.goto('/')
+    await page.getByRole('button', { name: 'Coran', exact: true }).click()
     await page.waitForLoadState('networkidle')
 
     const title = page.locator('#recognition-title')
