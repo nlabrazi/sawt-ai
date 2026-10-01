@@ -23,7 +23,7 @@ def load_index(config: HadithConfig):
 
     try:
         meta = json.loads(config.meta_path.read_text(encoding="utf-8"))
-        if meta["schema_version"] != 1 or meta["model"] != config.model_name or meta["language"] != config.language:
+        if meta["schema_version"] not in (1, 2) or meta["model"] != config.model_name or meta["language"] != config.language:
             raise ValueError("Index configuration mismatch")
         if hashlib.sha256(config.index_path.read_bytes()).hexdigest() != meta["index_sha256"]:
             raise ValueError("Index/metadata checksum mismatch")
@@ -47,12 +47,48 @@ def load_index(config: HadithConfig):
         raise HadithIndexError("Index Hadith absent, incompatible ou invalide.") from exc
 
 
+def load_search_documents(config: HadithConfig) -> dict[str, str]:
+    """Source snapshot is search evidence only; results still come from the API."""
+    try:
+        meta = json.loads(config.meta_path.read_text(encoding="utf-8"))
+        if (
+            meta["schema_version"] != 2 or meta["model"] != config.model_name
+            or meta["language"] != config.language or meta["base_url"] != config.base_url
+        ):
+            raise ValueError("Rebuild or upgrade the Hadith index to schema 2")
+        if hashlib.sha256(config.index_path.read_bytes()).hexdigest() != meta["index_sha256"]:
+            raise ValueError("Index/metadata checksum mismatch")
+        documents = meta["search_documents"]
+        if (
+            not isinstance(documents, dict) or not documents
+            or set(documents) != {row["hadeethenc_id"] for row in meta["items"]}
+            or any(not hid.isascii() or not hid.isdigit() for hid in documents)
+            or any(not isinstance(text, str) or not text.strip() for text in documents.values())
+        ):
+            raise ValueError("Incomplete search documents")
+        digest = hashlib.sha256(json.dumps(documents, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+        if digest != meta["search_documents_sha256"]:
+            raise ValueError("Search documents checksum mismatch")
+        return documents
+    except Exception as exc:
+        raise HadithIndexError("Textes de recherche Hadith absents, incompatibles ou invalides.") from exc
+
+
 class HadithIndex:
     def __init__(self, config: HadithConfig | None = None):
         self.config = config or HadithConfig.from_env()
         self._resources = None
+        self._documents = None
+        self._documents_lock = Lock()
         self._load_lock = Lock()
         self._encode_lock = Lock()
+
+    def source_documents(self) -> dict[str, str]:
+        if self._documents is None:
+            with self._documents_lock:
+                if self._documents is None:
+                    self._documents = load_search_documents(self.config)
+        return self._documents
 
     def load(self):
         if self._resources is None:

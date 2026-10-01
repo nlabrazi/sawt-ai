@@ -25,7 +25,8 @@ sys.path.insert(0, str(API_DIR))
 from app.core.hadith_config import HadithConfig
 from app.services.hadeethenc_client import HadeethEncClient, HadeethEncError
 from app.services.hadith_documents import build_documents
-from app.services.hadith_index import load_embedding_model
+from app.services.hadith_index import load_embedding_model, load_index
+from app.services.hadith_lexical import source_search_documents
 
 
 def build_search_text(payload: dict, categories: dict[str, str]) -> str:
@@ -94,6 +95,42 @@ def _build_passages(records, categories, strategy, model):
     return passages
 
 
+def attach_search_documents(meta, records):
+    documents = source_search_documents(records)
+    if set(documents) != {row["hadeethenc_id"] for row in meta["items"]}:
+        raise ValueError("Search documents do not cover exactly the indexed IDs")
+    meta["schema_version"] = 2
+    meta["search_documents"] = documents
+    meta["search_documents_sha256"] = hashlib.sha256(
+        json.dumps(documents, sort_keys=True, ensure_ascii=False).encode()
+    ).hexdigest()
+
+
+def upgrade_search_documents(config, cache_dir):
+    """Upgrade metadata from the original cached records without re-encoding."""
+    _, ids, meta = load_index(config)
+    records = []
+    for hid in sorted(set(ids), key=int):
+        record = json.loads((cache_dir / f"{hid}.json").read_text(encoding="utf-8"))
+        if (
+            record.get("language") != config.language or record.get("base_url") != config.base_url
+            or str(record["payload"].get("id")) != hid
+        ):
+            raise ValueError("Cached source does not match the index")
+        records.append(record)
+    source_hash = hashlib.sha256(json.dumps(records, sort_keys=True, ensure_ascii=False).encode()).hexdigest()
+    if source_hash != meta.get("source_sha256"):
+        raise ValueError("Source snapshot changed; rebuild the index instead of upgrading")
+    attach_search_documents(meta, records)
+    temporary = config.meta_path.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    backup = config.meta_path.with_suffix(".before-search-documents.json")
+    if not backup.exists():
+        backup.write_bytes(config.meta_path.read_bytes())
+    temporary.replace(config.meta_path)
+    print(f"Métadonnées mises à jour : {len(records)} fiches ; embeddings inchangés", flush=True)
+
+
 def save_index(config, records, categories, model, *, batch_size=16):
     import numpy as np
 
@@ -140,6 +177,7 @@ def save_index(config, records, categories, model, *, batch_size=16):
         "source_sha256": hashlib.sha256(json.dumps(records, sort_keys=True, ensure_ascii=False).encode()).hexdigest(),
         "items": [{"hadeethenc_id": hid, "language": config.language} for hid in hadith_ids],
     }
+    attach_search_documents(meta, records)
     temporary_meta = config.meta_path.with_suffix(".json.tmp")
     temporary_meta.write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     # A checksum prevents serving mismatched files if interrupted between replacements.
@@ -151,6 +189,7 @@ def save_index(config, records, categories, model, *, batch_size=16):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--cache-dir", type=Path, default=API_DIR / ".cache" / "hadeethenc")
+    parser.add_argument("--upgrade-search-documents", action="store_true", help="Add source texts to an existing index using its exact cached snapshot, without encoding")
     parser.add_argument("--refresh", action="store_true", help="Refetch all source content instead of resuming cached downloads")
     parser.add_argument("--fetch-only", action="store_true")
     parser.add_argument("--workers", type=int, choices=range(1, 5), default=4)
@@ -159,6 +198,11 @@ def main():
     if args.batch_size < 1:
         parser.error("--batch-size must be positive")
     config = HadithConfig.from_env()
+    if args.upgrade_search_documents:
+        if args.refresh or args.fetch_only:
+            parser.error("Metadata upgrade cannot be combined with --refresh or --fetch-only")
+        upgrade_search_documents(config, args.cache_dir / config.language)
+        return
     records, categories = fetch_corpus(
         HadeethEncClient(config.base_url),
         config,
