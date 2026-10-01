@@ -9,7 +9,7 @@ from scripts import build_hadith_index as builder
 
 
 def test_download_resumes_and_refresh_replaces_source(tmp_path):
-    config = HadithConfig("https://example.test", "fr", "model", tmp_path / "index", tmp_path / "meta")
+    config = HadithConfig("https://example.test", "fr", "model", "original", tmp_path / "index", tmp_path / "meta")
     client = Mock()
     client.list_categories.return_value = [{"id": "1", "title": "Catégorie"}]
     client.iter_hadith_ids.return_value = ["2", "1", "3"]
@@ -26,7 +26,7 @@ def test_download_resumes_and_refresh_replaces_source(tmp_path):
 
 
 def test_incomplete_download_fails_and_preserves_previous_index(tmp_path, monkeypatch):
-    config = HadithConfig("https://example.test", "fr", "model", tmp_path / "index", tmp_path / "meta")
+    config = HadithConfig("https://example.test", "fr", "model", "original", tmp_path / "index", tmp_path / "meta")
     config.index_path.write_bytes(b"previous index")
     client = Mock()
     client.list_categories.return_value = [{"id": "1", "title": "Catégorie"}]

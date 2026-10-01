@@ -31,7 +31,9 @@ def load_index(config: HadithConfig):
             embeddings = archive["embeddings"].astype(np.float32)
         rows = meta["items"]
         ids = [row["hadeethenc_id"] for row in rows]
-        if not ids or len(ids) != len(set(ids)) or any(not isinstance(i, str) or not i.isascii() or not i.isdigit() for i in ids):
+        # Multi-embedding strategies store several passages per hadith, so
+        # duplicate IDs are expected and intentional — do not require uniqueness.
+        if not ids or any(not isinstance(i, str) or not i.isascii() or not i.isdigit() for i in ids):
             raise ValueError("Invalid IDs")
         if any(row["language"] != config.language for row in rows):
             raise ValueError("Invalid language")
@@ -79,7 +81,26 @@ class HadithIndex:
             if vector.shape != (matrix.shape[1],) or not np.isfinite(vector).all() or norm <= 0:
                 raise ValueError("Invalid query embedding")
             scores = matrix @ (vector / norm)
-            best = np.argsort(-scores, kind="stable")[:limit]
-            return [(ids[row], float(scores[row])) for row in best]
+            return _aggregate_scores(ids, scores, limit)
         except Exception as exc:
             raise HadithIndexError("Impossible d'encoder la recherche Hadith.") from exc
+
+
+def _aggregate_scores(ids: list[str], scores, limit: int) -> list[tuple[str, float]]:
+    """Return top-k (hadith_id, score) pairs using max-per-ID aggregation.
+
+    When an index stores several passages per hadith (multi / multi_context
+    strategies), a single hadith may appear multiple times in *ids*. Taking
+    the maximum score across all its passages before ranking ensures that
+    each hadith is returned at most once and is ranked by its best passage.
+
+    For single-embedding indexes (ids are unique) the result is identical to
+    a plain argsort, so this function is strategy-agnostic.
+    """
+    best: dict[str, float] = {}
+    for hadith_id, score in zip(ids, scores.tolist()):
+        if hadith_id not in best or score > best[hadith_id]:
+            best[hadith_id] = score
+
+    ranked = sorted(best.items(), key=lambda x: x[1], reverse=True)
+    return ranked[:limit]

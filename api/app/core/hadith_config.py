@@ -6,12 +6,17 @@ from pathlib import Path
 
 ASSETS_DIR = Path(__file__).resolve().parents[2] / "assets"
 
+# Strategies that produce multiple embeddings per hadith ID.
+# For these, rank() aggregates scores with max-per-ID before sorting.
+MULTI_EMBEDDING_STRATEGIES = frozenset({"multi", "multi_context"})
+
 
 @dataclass(frozen=True)
 class HadithConfig:
     base_url: str
     language: str
     model_name: str
+    strategy: str
     index_path: Path
     meta_path: Path
 
@@ -20,7 +25,8 @@ class HadithConfig:
         return cls(
             base_url=os.getenv("HADEETHENC_BASE_URL", "https://hadeethenc.com/api/v1").rstrip("/"),
             language=os.getenv("HADITH_LANGUAGE", "fr"),
-            model_name=os.getenv("HADITH_EMBEDDING_MODEL", "intfloat/multilingual-e5-small"),
+            model_name=os.getenv("HADITH_EMBEDDING_MODEL", "intfloat/multilingual-e5-base"),
+            strategy=os.getenv("HADITH_INDEX_STRATEGY", "multi_context"),
             index_path=Path(os.getenv("HADITH_INDEX_PATH", str(ASSETS_DIR / "hadith_index.npz"))),
             meta_path=Path(os.getenv("HADITH_INDEX_META_PATH", str(ASSETS_DIR / "hadith_index_meta.json"))),
         )
