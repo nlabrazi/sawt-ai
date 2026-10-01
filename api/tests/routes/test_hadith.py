@@ -80,7 +80,22 @@ def test_search_returns_an_empty_list_without_a_technical_error(client, service)
     service.search.return_value = HadithSearchResponse(query="la colère", results=[])
     response = client.post("/hadith/search", json={"query": "la colère"})
     assert response.status_code == 200
-    assert response.json() == {"query": "la colère", "results": []}
+    assert response.json() == {"query": "la colère", "results": [], "search_mode": "semantic", "search_terms": []}
+
+
+@pytest.mark.parametrize("query", ["couronne", "hadith couronne"])
+def test_http_keyword_search_rejects_unrelated_semantic_candidates(client, service, query):
+    from app.services.hadith_search_service import HadithSearchService
+
+    index = Mock()
+    index.source_documents.return_value = {"1": "Un effort couronné de succès", "2": "Conseil sur la colère"}
+    source = Mock()
+    service.search.side_effect = HadithSearchService(index=index, client=source).search
+    response = client.post("/hadith/search", json={"query": query})
+    assert response.status_code == 200
+    assert response.json() == {"query": query, "results": [], "search_mode": "keywords", "search_terms": ["couronne"]}
+    index.rank.assert_not_called()
+    source.get_hadith.assert_not_called()
 
 
 def test_search_offloads_inference_from_the_event_loop(client, service, monkeypatch):

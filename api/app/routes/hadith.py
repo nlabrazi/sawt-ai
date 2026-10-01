@@ -1,6 +1,6 @@
 # ROLE
 # ----
-# Endpoint API pour rechercher des hadiths par requête sémantique française.
+# Endpoint API pour rechercher des hadiths par mots-clés ou phrase française.
 
 from fastapi import APIRouter, HTTPException
 from fastapi.concurrency import run_in_threadpool

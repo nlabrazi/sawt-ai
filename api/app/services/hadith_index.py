@@ -104,11 +104,13 @@ class HadithIndex:
                         raise HadithIndexError("Impossible de charger le moteur Hadith.") from exc
         return self._resources
 
-    def rank(self, query: str, limit: int = 3) -> list[tuple[str, float]]:
-        import numpy as np
-
+    def rank(self, query: str, limit: int = 3, *, candidate_ids: set[str] | None = None) -> list[tuple[str, float]]:
         if not 1 <= limit <= 5:
             raise ValueError("limit must be between 1 and 5")
+        if candidate_ids == set():
+            return []
+        import numpy as np
+
         matrix, ids, model = self.load()
         try:
             with self._encode_lock:
@@ -117,12 +119,12 @@ class HadithIndex:
             if vector.shape != (matrix.shape[1],) or not np.isfinite(vector).all() or norm <= 0:
                 raise ValueError("Invalid query embedding")
             scores = matrix @ (vector / norm)
-            return _aggregate_scores(ids, scores, limit)
+            return _aggregate_scores(ids, scores, limit, candidate_ids=candidate_ids)
         except Exception as exc:
             raise HadithIndexError("Impossible d'encoder la recherche Hadith.") from exc
 
 
-def _aggregate_scores(ids: list[str], scores, limit: int) -> list[tuple[str, float]]:
+def _aggregate_scores(ids: list[str], scores, limit: int, *, candidate_ids: set[str] | None = None) -> list[tuple[str, float]]:
     """Return top-k (hadith_id, score) pairs using max-per-ID aggregation.
 
     When an index stores several passages per hadith (multi / multi_context
@@ -135,6 +137,8 @@ def _aggregate_scores(ids: list[str], scores, limit: int) -> list[tuple[str, flo
     """
     best: dict[str, float] = {}
     for hadith_id, score in zip(ids, scores.tolist()):
+        if candidate_ids is not None and hadith_id not in candidate_ids:
+            continue
         if hadith_id not in best or score > best[hadith_id]:
             best[hadith_id] = score
 

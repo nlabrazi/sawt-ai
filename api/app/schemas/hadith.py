@@ -23,3 +23,5 @@ class HadithResult(BaseModel):
 class HadithSearchResponse(BaseModel):
     query: str
     results: list[HadithResult]
+    search_mode: Literal["keywords", "semantic"] = "semantic"
+    search_terms: list[str] = Field(default_factory=list)

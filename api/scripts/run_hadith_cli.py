@@ -18,7 +18,7 @@ def main():
         requirements = [line for line in (API_DIR / "requirements.txt").read_text().splitlines()
                         if line.startswith(("sentence-transformers==", "transformers=="))]
         subprocess.run([str(python), "-m", "pip", "install", "--no-cache-dir", "--disable-pip-version-check", *requirements], check=True)
-    os.execv(str(python), [str(python), str(API_DIR / "scripts" / "search_hadith.py"), "--variant", "benchmark", *sys.argv[1:]])
+    os.execv(str(python), [str(python), str(API_DIR / "scripts" / "search_hadith.py"), *sys.argv[1:]])
 
 
 if __name__ == "__main__":

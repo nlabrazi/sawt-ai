@@ -174,3 +174,16 @@ def test_aggregate_scores_on_unique_ids_matches_plain_argsort():
     result = _aggregate_scores(ids, scores, limit=3)
     assert [hid for hid, _ in result] == ["20", "30", "10"]
     assert [s for _, s in result] == pytest.approx([0.9, 0.75, 0.6])
+
+
+def test_keyword_filter_runs_before_top_k_and_keeps_best_passage(tmp_path, monkeypatch):
+    index, _, _ = make_index(tmp_path, monkeypatch)
+    assert index.rank("couronne", 1, candidate_ids={"1"}) == [("1", 0.0)]
+    scores = np.array([0.99, 0.5, 0.6, 0.4])
+    assert _aggregate_scores(["9", "1", "1", "2"], scores, 1, candidate_ids={"1", "2"}) == [("1", 0.6)]
+
+
+def test_empty_keyword_filter_does_not_load_the_model(tmp_path, monkeypatch):
+    index, _, loader = make_index(tmp_path, monkeypatch)
+    assert index.rank("couronne", candidate_ids=set()) == []
+    loader.assert_not_called()
