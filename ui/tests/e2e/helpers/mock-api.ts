@@ -1,4 +1,6 @@
 import type { Page } from '@playwright/test'
+import type { HadithSearchResponse } from '../../../app/types/hadith'
+import { hadithFixture } from '../../fixtures/hadith'
 
 export interface MockVerseData {
   sourate_id: number
@@ -99,6 +101,8 @@ export async function setupMockApi(
   page: Page,
   options: {
     health?: typeof defaultMockHealth
+    hadithResponse?: HadithSearchResponse
+    hadithStatus?: number
     recognizeResponse?: Record<string, unknown>
     recognizeStatus?: number
     recognizeErrorDetail?: string
@@ -121,6 +125,30 @@ export async function setupMockApi(
         headers: corsHeaders,
         contentType: 'application/json',
         body: JSON.stringify(options.health ?? defaultMockHealth),
+      })
+    },
+  )
+
+  await page.route(
+    (url) => url.pathname === '/hadith/search',
+    async (route) => {
+      if (route.request().method() === 'OPTIONS') {
+        await route.fulfill({ status: 204, headers: corsHeaders })
+        return
+      }
+      const status = options.hadithStatus ?? 200
+      const body =
+        status >= 400
+          ? { detail: 'Recherche indisponible' }
+          : (options.hadithResponse ?? {
+              query: route.request().postDataJSON().query,
+              results: [hadithFixture],
+            })
+      await route.fulfill({
+        status,
+        headers: corsHeaders,
+        contentType: 'application/json',
+        body: JSON.stringify(body),
       })
     },
   )

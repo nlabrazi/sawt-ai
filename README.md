@@ -185,6 +185,24 @@ Add transcriptions observed from real audio to this file before tuning detection
 thresholds. This benchmark measures exact passage accuracy, precision, recall,
 false positives, and matching latency; it does not measure Whisper accuracy.
 
+Hadith search is available in the **Hadiths** mode of the Nuxt interface (Beta).
+Describe a subject in French, submit the search, and open one of the three
+proposals to read the Arabic text, translation, and available source details.
+Search text and completed results are retained when switching modes. Pending
+searches are cancelled on exit; Quran recording prevents switching modes until
+the recording is finished. Texts come from HadeethEnc and are never generated.
+
+Build the current E5-base / multi_context index before the first search:
+
+```bash
+docker compose exec api python scripts/build_hadith_index.py
+```
+
+The index and metadata are local artifacts ignored by Git. Restart the API if it
+has already loaded an older index. Results require Internet access to HadeethEnc.
+The UI labels results as proposals: nearest neighbours may not answer the query,
+and the provisional retrieval benchmark does not establish religious accuracy.
+
 Try the current Hadith benchmark candidate from the project root (Docker required):
 
 ```bash
@@ -196,16 +214,16 @@ experiment with corrected passage boundaries. From the `api` directory, use `bas
 The launcher prepares its Python dependencies inside Docker on first use.
 See the guide below to rebuild the experiment caches on a fresh checkout.
 
-Hadith retrieval experiments (terminal only):
+Try the current built index from the terminal:
 
 ```bash
 python api/scripts/build_hadith_index.py
-python api/scripts/diagnose_hadith_retrieval.py --strategy original --reuse-original-index --provisional-labels
+python api/scripts/search_hadith.py "Ne pas se mettre en colère"
 ```
 
 See [`api/evaluation/HADITH_SEARCH.md`](api/evaluation/HADITH_SEARCH.md) for the
 official HadeethEnc corpus, reproducible E5 comparisons, token truncation diagnostics,
-and the human review required before validating the benchmark or enabling a UI.
+and the human review required before validating retrieval quality.
 
 End-to-end backend audio smoke benchmark (generated locally, with no downloaded corpus):
 

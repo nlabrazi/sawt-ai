@@ -9,6 +9,54 @@ fournit directement `hadeeth`, `hadeeth_ar`, `attribution`, `grade`, `explanatio
 et `hints`. Aucun rapporteur ou numéro de recueil n'est déduit d'un texte.
 Les chaînes affichées restent celles de la source, y compris ses éventuelles coquilles.
 
+## Rechercher dans l’interface (bêta)
+
+Le sélecteur **Coran / Hadiths** donne accès à une recherche française de 3 à
+300 caractères. Le formulaire appelle `POST /hadith/search` avec `limit: 3`.
+Les exemples remplissent le champ ; le bouton ou Entrée déclenche la recherche.
+Le panneau de lecture affiche uniquement les champs officiels disponibles :
+arabe, traduction, qualification, explication et attribution, avec le lien source.
+
+L’interface conserve la formulation et les résultats terminés lorsqu’on change de
+mode, mais annule une requête encore en cours. Cette annulation côté navigateur
+empêche une réponse tardive de modifier l’écran ; elle n’interrompt pas un calcul
+qui a déjà démarré dans le thread pool de l’API. Le mode Coran repart sur une
+nouvelle session au retour. Le changement de mode reste bloqué pendant la demande
+d’accès au micro, l’enregistrement et la préparation de l’audio.
+
+L’index doit être construit avant la première recherche (commande ci-dessous).
+Le modèle est chargé au premier appel ; les fiches sont récupérées en direct sur
+HadeethEnc. Le chargement et le réseau peuvent donc ajouter de la latence.
+
+Les résultats sont des **propositions**, sans pourcentage de confiance affiché.
+Une liste vide signifie qu’aucune fiche exploitable n’a été retournée, sans
+conclure à l’absence du hadith. Le moteur n’a pas encore de détection calibrée des
+requêtes sans réponse ; le cas « couronne » reste une limite connue.
+
+## Tests du parcours Hadith
+
+Depuis la racine du projet :
+
+```bash
+api/.venv/bin/python -m pytest -c api/pytest.ini api/tests
+```
+
+Depuis `ui` :
+
+```bash
+npm test
+npm run format:check
+npm run lint
+npm run build
+npm run test:e2e
+```
+
+Les tests HTTP utilisent une application FastAPI minimale, sans démarrer les
+modèles Coran. Les tests frontend et Playwright utilisent des réponses contrôlées,
+sans appeler HadeethEnc ni mesurer la pertinence du classement. Ils couvrent les
+états de recherche, les réponses périmées, l’annulation, la conservation de l’état,
+la lecture au clavier, le retour du focus et le parcours mobile.
+
 ## Essayer une phrase depuis le terminal
 
 Depuis le dossier `api` (Docker doit être démarré) :
@@ -162,13 +210,25 @@ mesurer l'accord avec ces candidats ; cela ne marque aucun label comme validé
 humainement et ne remplace pas la relecture religieuse. Les probes de couverture
 restent hors des métriques tant qu'aucune réponse attendue n'est identifiée.
 
-Dans l'environnement Python contenant les dépendances API :
+Ces expériences demandent un index **E5-small / original**, distinct de l’index
+actuel E5-base / multi_context. Depuis la racine, dans l’environnement Python
+contenant les dépendances API, reconstruire la référence dans le cache pour
+préserver l’index utilisé par l’interface et les rapports historiques :
 
 ```bash
-python api/scripts/diagnose_hadith_retrieval.py --strategy original --reuse-original-index --provisional-labels
-python api/scripts/diagnose_hadith_retrieval.py --strategy semantic_first --provisional-labels
-python api/scripts/diagnose_hadith_retrieval.py --strategy multi --provisional-labels
-python api/scripts/diagnose_hadith_retrieval.py --strategy multi --model intfloat/multilingual-e5-base --provisional-labels --compare-to api/evaluation/hadith_retrieval/multilingual-e5-small_multi.json
+HADITH_EMBEDDING_MODEL=intfloat/multilingual-e5-small \
+HADITH_INDEX_STRATEGY=original \
+HADITH_INDEX_PATH=api/.cache/hadith_retrieval/original_index.npz \
+HADITH_INDEX_META_PATH=api/.cache/hadith_retrieval/original_index_meta.json \
+python api/scripts/build_hadith_index.py
+
+HADITH_EMBEDDING_MODEL=intfloat/multilingual-e5-small \
+HADITH_INDEX_PATH=api/.cache/hadith_retrieval/original_index.npz \
+HADITH_INDEX_META_PATH=api/.cache/hadith_retrieval/original_index_meta.json \
+python api/scripts/diagnose_hadith_retrieval.py --strategy original --reuse-original-index --provisional-labels --output-dir api/.cache/hadith_retrieval/reports
+python api/scripts/diagnose_hadith_retrieval.py --strategy semantic_first --provisional-labels --output-dir api/.cache/hadith_retrieval/reports
+python api/scripts/diagnose_hadith_retrieval.py --strategy multi --provisional-labels --output-dir api/.cache/hadith_retrieval/reports
+python api/scripts/diagnose_hadith_retrieval.py --strategy multi --model intfloat/multilingual-e5-base --provisional-labels --output-dir api/.cache/hadith_retrieval/reports --compare-to api/.cache/hadith_retrieval/reports/multilingual-e5-small_multi.json
 ```
 
 Pour reproduire les mesures CPU, utiliser quatre threads PyTorch/OpenMP/MKL
