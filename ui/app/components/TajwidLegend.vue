@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import ChevronDown from '@lucide/vue/dist/esm/icons/chevron-down.mjs'
-import Palette from '@lucide/vue/dist/esm/icons/palette.mjs'
+import { ChevronDown, Palette } from '@lucide/vue'
 import { computed } from 'vue'
 
 import type { TajwidToken } from '~/utils/parseTajwid'

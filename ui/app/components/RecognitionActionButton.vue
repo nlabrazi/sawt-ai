@@ -1,7 +1,5 @@
 <script setup lang="ts">
-import LoaderCircle from '@lucide/vue/dist/esm/icons/loader-circle.mjs'
-import Mic from '@lucide/vue/dist/esm/icons/mic.mjs'
-import Square from '@lucide/vue/dist/esm/icons/square.mjs'
+import { LoaderCircle, Mic, Square } from '@lucide/vue'
 import { computed, ref } from 'vue'
 
 const props = withDefaults(
@@ -10,6 +8,7 @@ const props = withDefaults(
     loading?: boolean
     isRecording?: boolean
     audioLevel?: number
+    showLabel?: boolean
     loadingLabel?: string
   }>(),
   {
@@ -17,6 +16,7 @@ const props = withDefaults(
     loading: false,
     isRecording: false,
     audioLevel: 0,
+    showLabel: true,
     loadingLabel: 'Analyse en cours',
   },
 )
@@ -47,7 +47,7 @@ const actionLabel = computed(() => {
 
 const visibleLabel = computed(() => {
   if (props.loading) return props.loadingLabel
-  return props.isRecording ? 'Arrêter et analyser' : 'Commencer'
+  return props.isRecording ? 'Arrêter et analyser' : ''
 })
 
 function handleClick() {
@@ -100,7 +100,7 @@ function handlePressEnd() {
       </span>
     </span>
 
-    <span class="button-label">{{ visibleLabel }}</span>
+    <span v-if="showLabel && visibleLabel" class="button-label">{{ visibleLabel }}</span>
   </button>
 </template>
 
@@ -108,7 +108,7 @@ function handlePressEnd() {
 .action-button {
   --visual-size: 172px;
   width: 230px;
-  min-height: 224px;
+  min-height: 200px;
   padding: 8px 12px 4px;
   border: 0;
   border-radius: 32px;
@@ -154,6 +154,21 @@ function handlePressEnd() {
   background: rgba(59, 130, 246, 0.3);
   filter: blur(16px);
   transition: opacity 120ms linear;
+}
+
+.action-button:not(.is-recording):not(.is-loading):not(:disabled) .button-ring {
+  animation: idlePulse 3.6s ease-in-out infinite;
+}
+
+@keyframes idlePulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.65;
+  }
+  50% {
+    transform: scale(1.045);
+    opacity: 1;
+  }
 }
 
 .button-ring {
@@ -288,7 +303,7 @@ function handlePressEnd() {
   .action-button {
     --visual-size: 150px;
     width: 204px;
-    min-height: 202px;
+    min-height: 178px;
     gap: 16px;
   }
 

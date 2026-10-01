@@ -1,0 +1,2444 @@
+{
+  "label_status": "provisional_candidates_not_human_validated",
+  "runtime": {
+    "python": "3.11.15",
+    "device": "cpu",
+    "torch_threads": 4,
+    "packages": {
+      "torch": "2.8.0",
+      "numpy": "1.26.4",
+      "sentence-transformers": "3.4.1",
+      "transformers": "4.48.3"
+    }
+  },
+  "model": "intfloat/multilingual-e5-small",
+  "model_revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3",
+  "strategy": "semantic_first",
+  "snapshot_sha256": "0991a4f74ba6884361b26cc42fb2a6f2f7c4e106997ae8e1eb709b773ddd3ce5",
+  "documents_sha256": "f111e3b7d038a6b40e80ff724ae61d45e89dd98682c31acbf51572e134b0f762",
+  "benchmark_sha256": "5b2a39cbef4496b478c94ac7af066566c1b8ff1e2aa6bd857d599ef606322779",
+  "prefix_audit": {
+    "all_passages_prefixed": true,
+    "all_queries_prefixed": true
+  },
+  "hadith_count": 1790,
+  "embedding_count": 1790,
+  "embedding_build_ms": null,
+  "truncation": {
+    "max_tokens": 512,
+    "truncated_documents": 796,
+    "lost_sections": {
+      "explanation": 183,
+      "hadith": 15,
+      "hints": 13
+    },
+    "partially_truncated_sections": {
+      "explanation": 613,
+      "hadith": 166,
+      "hints": 15
+    }
+  },
+  "query_count": 20,
+  "top_1_accuracy": 0.5,
+  "top_3_accuracy": 0.6,
+  "mean_latency_ms": 9.656410399986726,
+  "latency_scope": "warm query embedding + cosine + max score per hadith; excludes HTTP and model load",
+  "results": [
+    {
+      "query": "Je cherche le hadith où le Prophète conseille à quelqu'un de ne pas se mettre en colère",
+      "query_text": "query: Je cherche le hadith où le Prophète conseille à quelqu'un de ne pas se mettre en colère",
+      "query_tokens": 27,
+      "expected_ids": [
+        "4709"
+      ],
+      "top_1_hit": false,
+      "top_3_hit": false,
+      "latency_ms": 9.67068299996754,
+      "top_5": [
+        {
+          "id": "6108",
+          "score": 0.8637384176254272,
+          "title": "Un homme demanda : \" Ô, Messager d'Allah ! Quand quelqu'un parmi nous rencontre son frère ou son ami, peut-il s'incliner devant lui ? - Non, dit-il. - Il dit : Peut-il le serrer contre lui et l'embrasser ? - Non, dit-il. - Il dit : Alors, il le prend par la main et lui serre la main ? - Oui, dit-il. \"",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "8929",
+          "score": 0.8636051416397095,
+          "title": "Parmi les bonnes œuvres que le messager d'Allah (sur lui la paix et le salut) nous a engagées à accomplir, il y a le fait de ne pas lui désobéir, de ne pas nous griffer le visage, de ne pas invoquer le malheur contre nous, de ne pas déchirer nos vêtements et de ne pas nous tirer les cheveux.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "11227",
+          "score": 0.862886905670166,
+          "title": "Par Celui qui détient mon âme dans Sa main ! Une époque viendra à l'homme où le tueur ne saura pas pourquoi il tue, et où celui qui est tué ne saura pas pourquoi il a été tué !",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "10971",
+          "score": 0.8613699674606323,
+          "title": "Le Prophète (sur lui la paix et le salut) est venu me rendre visite sans monter une mule ou un cheval.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "64691",
+          "score": 0.8600112795829773,
+          "title": "Voulez-vous que je vous informe du meilleur des témoins ? C'est celui qui apporte son témoignage avant qu'on l'interroge !",
+          "winning_document": "semantic_first"
+        }
+      ],
+      "expected_documents": [
+        {
+          "id": "4709",
+          "rank": 22,
+          "score": 0.8552190065383911,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/4709",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: Ne te mets pas colère !\n\nLes caractères louables\n\nLa mise en garde contre la colère et ses causes car elle est l'ensemble du mal et le fait de s'en prémunir est l'ensemble du bien.\r\n\nLa colère pour Allah, comme la colère lors de la violation des interdits sacrés d'Allah fait partie de la colère louable.\r\n\nLa répétition des paroles si besoin est jusqu'à ce que l'interlocuteur les retienne et comprenne leur importance.\r\n\nLe mérite de la demande de recommandation au savant.\n\nD'après  (qu'Allah l'agrée) : Un homme a dit au Prophète (qu'Allah le couvre d'éloges et le préserve) : « Fais-moi une recommandation ! » Il (qu'Allah le couvre d'éloges et le préserve) a dit : «  Ne te mets pas colère !  » L’homme répéta à plusieurs reprises [sa demande] et [à chaque fois] il (qu'Allah le couvre d'éloges et le préserve) a dit : « Ne te mets pas en colère ! »\n\nUn des Compagnons (qu'Allah les agrée) a demandé au Prophète (qu'Allah le couvre d'éloges et le préserve) de lui indiquer une chose qui lui serait bénéfique. Alors, il lui a ordonné de ne pas se mettre en colère. Et la signification de cela est d'éviter les causes qui amènent à la colère et de contrôler sa personne si la colère survient de sorte que cette colère ne soit pas suivie d'un meurtre, ou d'une frappe, ou d'une insulte, ou ce qui ressemble à cela.\r\n\r\nEt l'homme a réitéré plusieurs fois sa demande de recommandation mais le Prophète (qu'Allah le couvre d'éloges et le préserve) ne lui a rien rajouté comme recommandation si ce n'est : \" Ne te mets pas en colère. \"",
+              "token_count": 471,
+              "retained_token_count": 471,
+              "truncated": false,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 8,
+                  "retained_tokens": 8,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 6,
+                  "retained_tokens": 6,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 36,
+                  "retained_tokens": 36,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 32,
+                  "retained_tokens": 32,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 31,
+                  "retained_tokens": 31,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 14,
+                  "retained_tokens": 14,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 134,
+                  "retained_tokens": 134,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 206,
+                  "retained_tokens": 206,
+                  "status": "retained"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "Le vrai fort c'est celui qui arrive à se contrôler quand il s'énerve",
+      "query_text": "query: Le vrai fort c'est celui qui arrive à se contrôler quand il s'énerve",
+      "query_tokens": 25,
+      "expected_ids": [
+        "5351"
+      ],
+      "top_1_hit": true,
+      "top_3_hit": true,
+      "latency_ms": 10.981643000150143,
+      "top_5": [
+        {
+          "id": "5351",
+          "score": 0.8452821969985962,
+          "title": "Le fort n'est pas celui qui terrasse autrui, le fort, c'est celui qui maîtrise sa personne au moment de la colère.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "11227",
+          "score": 0.8379288911819458,
+          "title": "Par Celui qui détient mon âme dans Sa main ! Une époque viendra à l'homme où le tueur ne saura pas pourquoi il tue, et où celui qui est tué ne saura pas pourquoi il a été tué !",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "6108",
+          "score": 0.8362026214599609,
+          "title": "Un homme demanda : \" Ô, Messager d'Allah ! Quand quelqu'un parmi nous rencontre son frère ou son ami, peut-il s'incliner devant lui ? - Non, dit-il. - Il dit : Peut-il le serrer contre lui et l'embrasser ? - Non, dit-il. - Il dit : Alors, il le prend par la main et lui serre la main ? - Oui, dit-il. \"",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "6010",
+          "score": 0.8321450352668762,
+          "title": "Je suis entré voir le Prophète (sur lui la paix et le salut) alors qu’il souffrait de douleurs fiévreuses. Je l'ai alors touché",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "5736",
+          "score": 0.8316967487335205,
+          "title": "Quand vous voyez des flatteurs, jetez-leur de la terre au visage !",
+          "winning_document": "semantic_first"
+        }
+      ],
+      "expected_documents": [
+        {
+          "id": "5351",
+          "rank": 1,
+          "score": 0.8452821969985962,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/5351",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: Le fort n'est pas celui qui terrasse autrui, le fort, c'est celui qui maîtrise sa personne au moment de la colère.\n\nLes caractères louables\n\nLe mérite de l'indulgence et de la maîtrise de soi au moment de la colère et le fait que cela fait partie des œuvres vertueuses auxquelles l'Islam a incité.\r\n\nLutter contre soi-même au moment de la colère est plus difficile que de lutter contre l'ennemi.\r\n\nL'Islam a changé la compréhension qu'avaient les gens de la force du temps du paganisme préislamique par les nobles caractères ; ainsi, la personne la plus forte est celle qui maîtrise les brides de sa personne.\r\n\nLe fait de s'éloigner de la colère étant donné ce qu'elle entraîne comme préjudices sur les individus et la société.\n\nAboû Hourayrah (qu'Allah l'agrée) relate que le Messager d'Allah  (qu'Allah le couvre d'éloges et le préserve) a dit : « Le fort n'est pas celui qui terrasse autrui, le fort, c'est celui qui maîtrise sa personne au moment de la colère. »\n\nLe Prophète (qu'Allah le couvre d'éloges et le préserve) explique que la véritable force n'est pas la force physique ou celle de celui qui terrasse autrui parmi les forts ; celui qui est vraiment fort, c'est celui qui lutte contre sa propre personne et la domine au moment où la colère s'intensifie ; ceci montre en effet la force de sa capacité à contenir sa personne et de dominer Satan.",
+              "token_count": 365,
+              "retained_token_count": 365,
+              "truncated": false,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 31,
+                  "retained_tokens": 31,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 6,
+                  "retained_tokens": 6,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 42,
+                  "retained_tokens": 42,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 25,
+                  "retained_tokens": 25,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 50,
+                  "retained_tokens": 50,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 32,
+                  "retained_tokens": 32,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 76,
+                  "retained_tokens": 76,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 99,
+                  "retained_tokens": 99,
+                  "status": "retained"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "Un hadith qui dit que nos actes comptent selon l'intention qu'on avait",
+      "query_text": "query: Un hadith qui dit que nos actes comptent selon l'intention qu'on avait",
+      "query_tokens": 23,
+      "expected_ids": [
+        "4560",
+        "66511"
+      ],
+      "top_1_hit": false,
+      "top_3_hit": false,
+      "latency_ms": 10.210121999989497,
+      "top_5": [
+        {
+          "id": "3753",
+          "score": 0.8593572378158569,
+          "title": "Un homme avait l'habitude de prêter de l'argent aux gens. Il disait à son servant : ' Si tu rencontres une personne en difficulté, sois conciliant ! Peut-être qu’Allah le sera avec nous",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "10104",
+          "score": 0.8586233854293823,
+          "title": "Le temps a tourné comme le jour où Allah a créé les cieux et la terre. L'année compte douze mois, dont quatre sacrés, trois qui se suivent : Dhul Qa'dah, Dhul Ḥijja, Al-Muḥarram et Rajab, le mois de Muḍar.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "8929",
+          "score": 0.8583898544311523,
+          "title": "Parmi les bonnes œuvres que le messager d'Allah (sur lui la paix et le salut) nous a engagées à accomplir, il y a le fait de ne pas lui désobéir, de ne pas nous griffer le visage, de ne pas invoquer le malheur contre nous, de ne pas déchirer nos vêtements et de ne pas nous tirer les cheveux.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "4810",
+          "score": 0.8583789467811584,
+          "title": "Ô Mes serviteurs ! Certes, Je Me suis interdit l’injustice et Je l’ai rendue interdite entre vous. Ne soyez donc pas injustes les uns envers les autres !",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "3757",
+          "score": 0.8575232028961182,
+          "title": "Nous apportions au Prophète (sur lui la paix et le salut) sa part de lait. Il revenait au cours de la nuit et nous saluait de sorte à se faire entendre de celui qui était éveillé sans pour autant réveiller celui qui dormait.",
+          "winning_document": "semantic_first"
+        }
+      ],
+      "expected_documents": [
+        {
+          "id": "4560",
+          "rank": 1125,
+          "score": 0.8243369460105896,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/4560",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: Certes, les œuvres ne valent que par les intentions et chaque individu sera rétribué en fonction de son intention\n\nLes oeuvres du coeur\n\nL'incitation à la sincérité. En effet, Allah n'accepte comme oeuvre que celle dont on recherche Son Visage.\r\n\nLorsque la personne responsable accomplit des oeuvres par lesquelles on peut se rapprocher d'Allah, Exalté soit-Il, mais elle les fait de manière habituelle, alors elle n'obtiendra pas de rétribution pour celles-ci jusqu'à ce qu'elle ait l'intention de se rapprocher d'Allah à travers ces oeuvres.\n\n'Oumar ibn Al-Khaṭṭâb (qu'Allah l'agrée) relate que le Messager d'Allah (qu'Allah le couvre d'éloges et le préserve) a dit : « Certes, les œuvres ne valent que par les intentions et l'individu sera rétribué en fonction de son intention. Ainsi donc, quiconque dont l'émigration est vers Allah et Son , alors son émigration sera vers Allah et Son  ; et quiconque dont l'émigration est pour un intérêt mondain qu'il veut acquérir ou pour une femme qu'il veut épouser, alors son émigration sera pour ce vers quoi il a émigré. » Et dans l'expression d'Al Bukhârî : «  Certes, les œuvres ne valent que par les intentions et chaque individu sera rétribué en fonction de son intention. »\n\nLe Prophète (qu'Allah le couvre d'éloges et le préserve) explique que toutes les œuvres sont considérées en fonction de l'intention. Ce décret est général et concerne l'ensemble des œuvres, qu'il s'agisse des adorations ou des transactions externes. Ainsi donc, quiconque vise par son œuvre l'acquisition d'un profit n'obtiendra que cet avantage et n'aura pas de rétribution ; et quiconque œuvre dans le but de se rapprocher d'Allah, Exalté soit-Il, obtiendra la rétribution et la récompense de son œuvre, même s'il s'agit d'une œuvre habituelle et normale, comme le fait de manger et boire.\r\n\r\nEnsuite, il (qu'Allah le couvre d'éloges et le préserve) a cité un exemple pour montrer l'effet de l'intention sur les oeuvres même si elles sont similaires dans la forme apparente. Il a expliqué que quiconque vise la satisfaction de son Seigneur à travers son émigration et le délaissement de son pays, alors son émigration est une émigration religieuse légale acceptée pour laquelle la personne sera rétribuée en raison de la véracité de son intention. Mais quiconque vise un avantage mondain à travers son émigration, que ce soit de l'argent ou un bien, une position, un commerce, une épouse, etc. Alors, la personne n'obtiendra de son émigration que cet avantage dont il a eu comme intention et il n'aura aucune part de la récompense et de la rétribution [pour cette émigration].",
+              "token_count": 727,
+              "retained_token_count": 512,
+              "truncated": true,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 27,
+                  "retained_tokens": 27,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 6,
+                  "retained_tokens": 6,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 30,
+                  "retained_tokens": 30,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 81,
+                  "retained_tokens": 81,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 205,
+                  "retained_tokens": 205,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 374,
+                  "retained_tokens": 159,
+                  "status": "truncated"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "66511",
+          "rank": 270,
+          "score": 0.8385937809944153,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/66511",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: Les actes ne valent que par les intentions\n\nLes oeuvres du coeur\n\nL'incitation à la sincérité. En effet, Allah n'accepte comme oeuvre que celle dont on recherche Son Visage.\r\n\nLorsque la personne responsable accomplit des oeuvres par lesquelles on peut se rapprocher d'Allah, Exalté soit-Il, mais elle les fait de manière habituelle, alors elle n'obtiendra pas de rétribution pour celles-ci jusqu'à ce qu'elle ait l'intention de se rapprocher d'Allah à travers ces oeuvres.\n\nL’intention permet de distinguer les cultes les uns des autres, et de distinguer les cultes des habitudes.\n\nD’après l’Émir des Croyants, Abû Hafs ‘Umar b. al‑Khattâb — qu’Allah l’agrée — qui a dit: j’ai entendu le Messager d’Allah ﷺ dire : « Les actes ne valent que par les intentions, et chacun n’aura que ce qu’il a eu l’intention de faire. Celui dont l’émigration fut pour Allah et Son Messager, son émigration est pour Allah et Son Messager ; et celui dont l’émigration fut pour un intérêt mondain qu’il convoitait ou une femme qu’il voulait épouser, son émigration n’est que vers ce pour quoi il a émigré. »\n\nLe Prophète (qu'Allah le couvre d'éloges et le préserve) explique que toutes les œuvres sont considérées en fonction de l'intention. Ce décret est général et concerne l'ensemble des œuvres, qu'il s'agisse des adorations ou des transactions externes. Ainsi donc, quiconque vise par son œuvre l'acquisition d'un profit n'obtiendra que cet avantage et n'aura pas de rétribution ; et quiconque œuvre dans le but de se rapprocher d'Allah, Exalté soit-Il, obtiendra la rétribution et la récompense de son œuvre, même s'il s'agit d'une œuvre habituelle et normale, comme le fait de manger et boire.\r\n\r\nEnsuite, il (qu'Allah le couvre d'éloges et le préserve) a cité un exemple pour montrer l'effet de l'intention sur les oeuvres même si elles sont similaires dans la forme apparente. Il a expliqué que quiconque vise la satisfaction de son Seigneur à travers son émigration et le délaissement de son pays, alors son émigration est une émigration religieuse légale acceptée pour laquelle la personne sera rétribuée en raison de la véracité de son intention. Mais quiconque vise un avantage mondain à travers son émigration, que ce soit de l'argent ou un bien, une position, un commerce, une épouse, etc. Alors, la personne n'obtiendra de son émigration que cet avantage dont il a eu comme intention et il n'aura aucune part de la récompense et de la rétribution [pour cette émigration].",
+              "token_count": 697,
+              "retained_token_count": 512,
+              "truncated": true,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 10,
+                  "retained_tokens": 10,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 6,
+                  "retained_tokens": 6,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 30,
+                  "retained_tokens": 30,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 81,
+                  "retained_tokens": 81,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 27,
+                  "retained_tokens": 27,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 165,
+                  "retained_tokens": 165,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 374,
+                  "retained_tokens": 189,
+                  "status": "truncated"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "Il faut souhaiter pour son frère ce qu'on souhaite pour soi",
+      "query_text": "query: Il faut souhaiter pour son frère ce qu'on souhaite pour soi",
+      "query_tokens": 19,
+      "expected_ids": [
+        "4717",
+        "66520"
+      ],
+      "top_1_hit": false,
+      "top_3_hit": false,
+      "latency_ms": 11.967985000183035,
+      "top_5": [
+        {
+          "id": "6108",
+          "score": 0.8572821021080017,
+          "title": "Un homme demanda : \" Ô, Messager d'Allah ! Quand quelqu'un parmi nous rencontre son frère ou son ami, peut-il s'incliner devant lui ? - Non, dit-il. - Il dit : Peut-il le serrer contre lui et l'embrasser ? - Non, dit-il. - Il dit : Alors, il le prend par la main et lui serre la main ? - Oui, dit-il. \"",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "6460",
+          "score": 0.8486523628234863,
+          "title": "Lorsque l'homme dépense pour sa famille et en escompte la récompense, c'est pour lui une aumône.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "5348",
+          "score": 0.8442362546920776,
+          "title": "Ne méprise rien du bien, ne serait-ce que de rencontrer ton frère avec un visage souriant. \"",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "4717",
+          "score": 0.8409212827682495,
+          "title": "Aucun de vous ne croira vraiment jusqu'à ce qu'il aime pour son frère ce qu'il aime pour lui-même.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "5926",
+          "score": 0.840693473815918,
+          "title": "Il était trois hommes parmi les fils d'Israël : un lépreux, un chauve et un aveugle. Allah voulut alors les éprouver et leur envoya un Ange.",
+          "winning_document": "semantic_first"
+        }
+      ],
+      "expected_documents": [
+        {
+          "id": "4717",
+          "rank": 4,
+          "score": 0.8409212827682495,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/4717",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: Aucun de vous ne croira vraiment jusqu'à ce qu'il aime pour son frère ce qu'il aime pour lui-même.\n\nLes caractères louables\n\nL'obligation de l'amour de l'individu pour son frère tout comme il l'aime pour lui-même ; cela parce que l'infirmation de la foi envers quiconque n'aime pas pour son frère ce qu'il aime pour lui-même indique l'obligation de cela.\r\n\nLa fraternité en Allah est au-dessus de la fraternité de filiation. En effet, son droit est encore plus obligatoire.\r\n\nL'interdiction de tout ce qui infirme cet amour parmi des paroles et des actes, comme : la tricherie, la médisance, l'envie et l'inimitié contre la personne du musulman, son argent, ou son honneur.\r\n\nL'emploi de certaines expressions stimulantes à l'action, en raison de sa parole : \" pour son frère. \"\r\n\nAl Karmânî (qu'Allah lui fasse miséricorde) a dit : \" Et parmi la foi, il y a aussi le fait de détester pour son frère ce que l'on déteste pour soi comme mal et qu'il n'a pas mentionné ; cela parce que l'amour d'une chose implique nécessairement certains de ses opposés. Ainsi, le fait de ne pas l'avoir mentionné textuellement suffit largement. \"\n\nD'après Anas (qu'Allah l'agrée) : Le Prophète ﷺ a dit : \" Aucun de vous ne croira vraiment jusqu'à ce qu'il aime pour son frère ce qu'il aime pour lui-même. \"\n\nLe Prophète ﷺ a expliqué que la foi complète de quiconque parmi les musulmans ne se concrétisera pas jusqu'à ce qu'il aime pour son frère ce qu'il aime pour lui-même comme obéissances et types de biens dans la religion et la vie d'ici-bas ; et il répugne pour lui ce qu'il répugne pour lui-même. Ainsi, s'il voit chez son frère musulman un manque dans sa religion, alors il s'efforce de le réformer ; et s'il voit un bien en lui, alors il l'encourage, l'aide et le conseille sincèrement concernant son affaire religieuse ou son affaire mondaine.",
+              "token_count": 531,
+              "retained_token_count": 512,
+              "truncated": true,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 28,
+                  "retained_tokens": 28,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 6,
+                  "retained_tokens": 6,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 68,
+                  "retained_tokens": 68,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 29,
+                  "retained_tokens": 29,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 59,
+                  "retained_tokens": 59,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 26,
+                  "retained_tokens": 26,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 97,
+                  "retained_tokens": 97,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 56,
+                  "retained_tokens": 56,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 158,
+                  "retained_tokens": 139,
+                  "status": "truncated"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "66520",
+          "rank": 7,
+          "score": 0.8398056626319885,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/66520",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: Aucun de vous ne croira vraiment jusqu'à ce qu'il aime pour son frère ce qu'il aime pour lui-même.\n\nLes caractères louables\n\nL'obligation de l'amour de l'individu pour son frère tout comme il l'aime pour lui-même ; cela parce que l'infirmation de la foi envers quiconque n'aime pas pour son frère ce qu'il aime pour lui-même indique l'obligation de cela.\r\n\nLa fraternité en Allah est au-dessus de la fraternité de filiation. En effet, son droit est encore plus obligatoire.\r\n\nL'interdiction de tout ce qui infirme cet amour parmi des paroles et des actes, comme : la tricherie, la médisance, l'envie et l'inimitié contre la personne du musulman, son argent, ou son honneur.\r\n\nL'emploi de certaines expressions stimulantes à l'action, en raison de sa parole : \" pour son frère. \"\r\n\nAl Karmânî (qu'Allah lui fasse miséricorde) a dit : \" Et parmi la foi, il y a aussi le fait de détester pour son frère ce que l'on déteste pour soi comme mal et qu'il n'a pas mentionné ; cela parce que l'amour d'une chose implique nécessairement certains de ses opposés. Ainsi, le fait de ne pas l'avoir mentionné textuellement suffit largement. \"\n\nD’après Abû Ḥamza Anas b. Mâlik — qu’Allah l’agrée —, et d’après Abû Ya‘la Shaddâd b. Aws — qu’Allah l’agrée —, le Prophète ﷺ a dit : \" Aucun de vous ne croira vraiment jusqu'à ce qu'il aime pour son frère ce qu'il aime pour lui-même. \"\n\nLe Prophète ﷺ a expliqué que la foi complète de quiconque parmi les musulmans ne se concrétisera pas jusqu'à ce qu'il aime pour son frère ce qu'il aime pour lui-même comme obéissances et types de biens dans la religion et la vie d'ici-bas ; et il répugne pour lui ce qu'il répugne pour lui-même. Ainsi, s'il voit chez son frère musulman un manque dans sa religion, alors il s'efforce de le réformer ; et s'il voit un bien en lui, alors il l'encourage, l'aide et le conseille sincèrement concernant son affaire religieuse ou son affaire mondaine.",
+              "token_count": 569,
+              "retained_token_count": 512,
+              "truncated": true,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 28,
+                  "retained_tokens": 28,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 6,
+                  "retained_tokens": 6,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 68,
+                  "retained_tokens": 68,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 29,
+                  "retained_tokens": 29,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 59,
+                  "retained_tokens": 59,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 26,
+                  "retained_tokens": 26,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 97,
+                  "retained_tokens": 97,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 94,
+                  "retained_tokens": 94,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 158,
+                  "retained_tokens": 101,
+                  "status": "truncated"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "Le conseil de parler seulement pour dire du bien sinon se taire",
+      "query_text": "query: Le conseil de parler seulement pour dire du bien sinon se taire",
+      "query_tokens": 19,
+      "expected_ids": [
+        "5437"
+      ],
+      "top_1_hit": false,
+      "top_3_hit": false,
+      "latency_ms": 11.074524999912683,
+      "top_5": [
+        {
+          "id": "3055",
+          "score": 0.837416410446167,
+          "title": "La pudeur n'apporte que du bien.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "3311",
+          "score": 0.8358550071716309,
+          "title": "Ô Abâ Dharr ! Je pense que tu es faible, et j’aime pour toi ce que j’aime pour moi-même. Ne prends pas le commandement de deux personnes, et ne te charge pas de la tutelle des biens de l’orphelin !",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "4952",
+          "score": 0.8356730937957764,
+          "title": "Ne dis pas : « Sur toi la paix ! » car c’est ainsi que l’on salue les morts. Dis plutôt : « Que la paix soit sur toi ! »",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "5807",
+          "score": 0.8356703519821167,
+          "title": "Ils ne m’ont laissé d’autres choix que de me solliciter avec rudesse ou de me traiter d’avare. Or, je ne suis pas avare !",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "6094",
+          "score": 0.8338329792022705,
+          "title": "« Qu’un voisin n’empêche pas son voisin de faire passer sa poutre dans son mur. » Ensuite, Abû Hurayrah (qu’Allah l’agrée) dit : \" Pourquoi vous vois-je vous en détourner ? Par Allah ! Je vais vous les jeter sur le dos ! \"",
+          "winning_document": "semantic_first"
+        }
+      ],
+      "expected_documents": [
+        {
+          "id": "5437",
+          "rank": 151,
+          "score": 0.8203948140144348,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/5437",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: Quiconque croit en Allah et au Jour Dernier, qu'il dise du bien ou qu'il se taise\n\nLes caractères louables\n\nLa foi en Allah et au Jour Dernier est la base de tout bien et cela pousse à l'accomplissement du bien.\r\n\nLa mise en garde contre les dégâts de la langue.\r\n\nLa religion de l'islam est une religion de cordialité et de générosité.\r\n\nCes bribes font partie des branches de la foi et sont parmi les bonnes manières louables.\r\n\nLa profusion de paroles peut amener à des choses répugnées et interdites ; et la sécurité est dans l'absence de paroles, excepté dans le bien.\n\nAboû Hourayrah (qu'Allah l'agrée) relate que le Messager d'Allah  (qu'Allah le couvre d'éloges et le préserve) a dit : « Quiconque croit en Allah et au Jour Dernier, qu'il dise du bien ou qu'il se taise. Quiconque croit en Allah et au Jour Dernier, qu'il honore son voisin. Et quiconque croit en Allah et au Jour Dernier, qu'il honore son invité. »\n\nLe Prophète (qu'Allah le couvre d'éloges et le préserve) explique que le serviteur qui croit en Allah et au Jour Dernier, dont le retour est vers Lui pour y être rétribué pour ses oeuvres, alors sa foi l'incite à accomplir les bribes suivantes :\r\n\r\nLa première : Dire de belles paroles : parmi la proclamation de la gloire d'Allah, Son unicité, l'ordonnance du convenable, l'interdiction du blâmable, la réforme entre les gens, etc. Et s'il ne le fait pas, alors qu'il s'attache au silence, qu'il s'abstienne de causer du tort et qu'il préserve sa langue.\r\n\r\nLa seconde : Honorer le voisin en étant bienfaisant envers lui et en ne lui causant aucun tort.\r\n\r\nLa troisième  : Honorer l'invité qui vient te visiter en lui parlant agréablement, en lui donnant à manger, et ce qui ressemble à cela.",
+              "token_count": 500,
+              "retained_token_count": 500,
+              "truncated": false,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 27,
+                  "retained_tokens": 27,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 6,
+                  "retained_tokens": 6,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 29,
+                  "retained_tokens": 29,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 13,
+                  "retained_tokens": 13,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 19,
+                  "retained_tokens": 19,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 22,
+                  "retained_tokens": 22,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 38,
+                  "retained_tokens": 38,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 118,
+                  "retained_tokens": 118,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 224,
+                  "retained_tokens": 224,
+                  "status": "retained"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "Qui mérite le plus ma bonne compagnie ? Il répond trois fois la mère",
+      "query_text": "query: Qui mérite le plus ma bonne compagnie ? Il répond trois fois la mère",
+      "query_tokens": 19,
+      "expected_ids": [
+        "4182"
+      ],
+      "top_1_hit": true,
+      "top_3_hit": true,
+      "latency_ms": 8.851987999833,
+      "top_5": [
+        {
+          "id": "4182",
+          "score": 0.8599591255187988,
+          "title": "Ô Messager d’Allah ! Quelle est la personne qui mérite le plus que je lui tienne bonne compagnie ? Ta mère, puis ta mère, puis ta mère, ensuite ton père et enfin du plus proche au plus proche.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "7041",
+          "score": 0.8525570631027222,
+          "title": "Nul n'a parlé au berceau, excepté trois",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "3436",
+          "score": 0.8433343768119812,
+          "title": "Usayr ibn ‘Amr ou Usayr ibn Jâbir (qu’Allah l’agrée) a dit : « Lorsque ‘Umar ibn Al-Khaṭṭâb (qu’Allah l’agrée) recevait les renforts du Yémen, il leur demandait : « Uways Ibn ‘Âmir est-il parmi vous ? »",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "5472",
+          "score": 0.8417380452156067,
+          "title": "Ô Allah ! Pardonne-moi, fais-moi miséricorde et fais-moi rejoindre la compagnie la plus élevée.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "65053",
+          "score": 0.8389577865600586,
+          "title": "L'un de vous aimerait-il, en rentrant auprès de sa famille, y trouver trois énormes chamelles pleines et grasses ?",
+          "winning_document": "semantic_first"
+        }
+      ],
+      "expected_documents": [
+        {
+          "id": "4182",
+          "rank": 1,
+          "score": 0.8599591255187988,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/4182",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: Ô Messager d’Allah ! Quelle est la personne qui mérite le plus que je lui tienne bonne compagnie ? Ta mère, puis ta mère, puis ta mère, ensuite ton père et enfin du plus proche au plus proche.\n\nLes mérites de la piété filiale\n\nAbû Hurayrah (qu’Allah l’agrée) relate qu’un homme vint trouver le Messager d’Allah (sur lui la paix et le salut) et lui demanda : « Ô Messager d’Allah ! Quelle est la personne qui mérite le plus que je lui tienne bonne compagnie ? - Ta mère, répondit le Prophète (sur lui la paix et le salut). - Ensuite qui ? continua l’homme. - Ta mère ! répéta le Prophète (sur lui la paix et le salut). - Ensuite qui ? poursuivit l'homme. Ta mère ! réitéra le Prophète (sur lui la paix et le salut). - Ensuite qui ? demanda-t-il - Ton père ! conclut le Prophète (sur lui la paix et le salut). Rapporté par al-Bukhârî et Muslim. Dans une autre version : « Ô Messager d’Allah ! Quelle est la personne qui mérite le plus qu’on entretienne des bonnes relations avec elle ? » Le Prophète (sur lui la paix et le salut) répondit : « Ta mère, puis ta mère et encore ta mère. Ensuite, ton père. Et enfin, du plus proche au plus proche. »\n\nCe hadith indique que chacun des deux parents mérite qu’on lui tienne bonne compagnie et qu’on s’occupe parfaitement de ses affaires : {( Mais accompagne-les ici-bas de façon convenable.)} [Coran : 31/15]. Cependant, le droit de la mère est supérieur à celui du père de quelques degrés car le Prophète n’a évoqué le droit du père qu’après avoir insisté trois fois sur celui de la mère. En effet, la place de la mère est supérieure à celle du père bien que tous les deux soient associés dans l’éducation des enfants : l’un avec son argent et sa responsabilité, l’autre avec son travail à la maison afin de les nourrir, les habiller, les coucher, ainsi que d’autres activités. La mère a plus enduré pour ses enfants que le père. Elle a porté ses enfants pendant neuf mois, subissant pour eux peine sur peine, faiblesse sur faiblesse, etc. Ensuite, elle les a péniblement accouchés jusqu’à ce que la mort vienne, à peu de choses près, la saisir étant donné les souffrances qui l'on atteinte. Elle les a aussi allaités pendant deux années en restant éveillée lors de ses moments de repos et en s’occupant de leur bien-être malgré sa fatigue intense due aux douleurs. C’est pour cela que la Révélation s’exprime en employant les termes suivants : {( Et Nous avons enjoint à l’homme de la bonté envers ses père et mère : sa mère l’a péniblement porté et en a péniblement accouché, et sa gestation et son sevrage durent trente mois.)} [Coran : 46/15]. Ainsi, Allah a vivement conseillé à l'homme d’être bon et exemplaire envers ses parents en rappelant comme causes seulement celles qu’endure la mère et en désignant de ce fait son immense droit et son privilège important. Parmi la bonne compagnie envers les parents, il y a le fait de dépenser pour leur nourriture, leur boisson, leur logement, leurs vêtements et tout ce qui englobe les besoins quotidiens de la vie s’ils en ont besoin. En effet, si les parents ont un niveau de vie bas ou moyen et que toi tu vis aisément, alors élève-les à ton niveau de vie ou même plus encore. Et ceci est la réelle vertu de la bonne compagnie envers eux. Souviens-toi de ce que [le Prophète] Yûsuf, Joseph (sur lui la paix) a accompli pour ses parents au moment où il était en possession d’un royaume. Il a placé ses parents sur le trône après les avoir fait venir de la campagne. Parmi la bonne compagnie, il y a aussi tout ce qui réunit ses bons comportements, notamment la parole d’Allah : {( Et ton Seigneur a décrété : N’adorez que Lui ! Et faites preuve de bonté envers les père et mère : et si l’un d’eux ou tous deux doivent atteindre la vieillesse auprès de toi, alors ne leur dis point : « Pfff ! » Et ne les brusque pas ! Mais, plutôt, adresse-leur des paroles respectueuses. Et par miséricorde, abaisse pour eux l’aile de l’humilité et dis : « Ô mon Seigneur ! Fais-leur miséricorde à tous les deux comme ils m’ont élevé tout petit. »)} [Coran : 17/24]. Ainsi donc, évite de leur tenir des propos rudes et sévères, protège-les de tout mal et adoucis tes paroles lorsque tu t’adresses à eux. En outre, abaisse-leur ton « aile », fais preuve d’humilité envers eux en leur obéissant et « humidifie » ta langue par des invocations en leur faveur qui émergent du plus profond de ton cœur et de ton âme et dis : « Ô mon Seigneur ! Fais-leur miséricorde à tous les deux comme ils m’ont élevé tout petit. » Enfin, n’oublie pas d’avoir une attention toute particulière envers ta mère conformément à la révélation coranique et en suivant à la lettre la logique du hadith du Prophète (sur lui la paix et le salut) à ce sujet.",
+              "token_count": 1292,
+              "retained_token_count": 512,
+              "truncated": true,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 46,
+                  "retained_tokens": 46,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 9,
+                  "retained_tokens": 9,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 262,
+                  "retained_tokens": 262,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 971,
+                  "retained_tokens": 191,
+                  "status": "truncated"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "Une femme est pardonnée après avoir donné à boire à un chien assoiffé",
+      "query_text": "query: Une femme est pardonnée après avoir donné à boire à un chien assoiffé",
+      "query_tokens": 22,
+      "expected_ids": [
+        "10100"
+      ],
+      "top_1_hit": true,
+      "top_3_hit": true,
+      "latency_ms": 9.042784000030224,
+      "top_5": [
+        {
+          "id": "10100",
+          "score": 0.8546106219291687,
+          "title": "Un chien qui était sur le point de mourir de soif tournait autour d’un point d’eau. C’est alors que l'une des prostituées du peuple des enfants d’Israël le vit, elle décida de prendre son chausson afin de le remplir d’eau puis elle l’abreuva. Allah lui pardonna ses péchés grâce à son geste.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "10959",
+          "score": 0.8362796306610107,
+          "title": "Le Messager d'Allah (sur lui la paix et le salut) fut saisi alors que sa tête était entre ma poitrine et [le haut de] mon torse, lorsque son âme sortit, je n'avais jamais senti une odeur aussi bonne que celle-ci auparavant.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "10552",
+          "score": 0.8290921449661255,
+          "title": "Une nuit, alors que Usayd ibn Ḥuḍayr récitait [le Coran] dans son clos de dattes, son cheval se mit à bondir. Il poursuivit la récitation et son cheval bondit à nouveau. Il continua et la bête fit un troisième bond. Usayd dit : \" Craignant qu'il ne piétine Yaḥyâ, je me rendis auprès de lui. C'est alors que je vis une sorte de nuage au-dessus de ma tête et dans lequel il y avait comme des lampes. Il s'éleva au ciel jusqu'à ce que je ne le vis plus...\"",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "64655",
+          "score": 0.8280722498893738,
+          "title": "Une femme a égorgé une brebis à l'aide d'une pierre [tranchante]. Le Prophète (sur lui la paix et le salut) fut alors questionné à propos de cela et il ordonna de la manger.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "3124",
+          "score": 0.8277604579925537,
+          "title": "Une fois, le Messager d’Allah (sur lui la paix et le salut) donna en offrande un mouton.",
+          "winning_document": "semantic_first"
+        }
+      ],
+      "expected_documents": [
+        {
+          "id": "10100",
+          "rank": 1,
+          "score": 0.8546106219291687,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/10100",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: Un chien qui était sur le point de mourir de soif tournait autour d’un point d’eau. C’est alors que l'une des prostituées du peuple des enfants d’Israël le vit, elle décida de prendre son chausson afin de le remplir d’eau puis elle l’abreuva. Allah lui pardonna ses péchés grâce à son geste.\n\nL'unicité des noms et des attributs\n\nLe mérite de l'Islam et ses qualités\n\nLes droits des animaux en Islam\n\nAbû Hurayrah (qu'Allah l'agrée) relate : « Pendant qu’un homme parcourait un chemin, il eut une grande soif. Il trouva un puits et y descendit pour se désaltérer. Ensuite, il remonta et c’est alors qu’il vit un chien haleter en léchant le sable humide à cause de sa soif intense. L’homme s’est alors dit : \" Ce chien a aussi soif que moi ! \" Il redescendit donc dans le puits, remplit sa chaussure d’eau, la saisit entre ses dents, puis donna à boire au chien. Allah lui en sut gré et lui pardonna ses péchés. Les Compagnons demandèrent : \" Ô Messager d’Allah ! Serons-nous [aussi] rétribués pour les bienfaits dispensés aux animaux ? \" Alors, le Prophète (sur lui la paix et le salut) leur répondit : \" Oui ! Tout bienfait dispensé à un être vivant sera récompensé. \" » Dans une autre version : « Allah lui en sut gré, Il lui pardonna ses péchés et ensuite Il le fit entrer au Paradis. » Et dans une autre version encore : « Un chien qui était sur le point de mourir de soif tournait autour d’un point d’eau. C’est alors que l'une des prostituées du peuple des enfants d’Israël le vit, elle décida de prendre son chausson afin de le remplir d’eau puis elle l’abreuva. Allah lui pardonna ses péchés grâce à son geste. »\n\nAu cours d’un voyage, un homme en chemin eut une grande soif. Il trouva un puits et il y descendit afin de se désaltérer. Ensuite, une fois sa soif étanchée, il remonta. C’est alors qu’il vit un chien haleter en léchant le sable humide à cause de sa soif intense. L’homme se dit alors : « Par Allah ! Ce chien a aussi soif que moi ! » Il redescendit donc dans le puits, remplit sa chaussure d’eau, la saisit entre ses dents, puis remonta en s’aidant de ses mains et donna à boire au chien. Après que cet homme eut abreuvé le chien, Allah lui sut gré de son geste, Il lui pardonna ses péchés et le fit entrer au Paradis. Lorsque le Prophète (sur lui la paix et le salut) raconta cette histoire aux Compagnons, ils demandèrent : « Ô Messager d’Allah ! Serons-nous [aussi] rétribués pour les bienfaits dispensés aux animaux ? » C’est-à-dire : les animaux sont-ils aussi des causes permettant d'acquérir une récompense ? Le Prophète (sur lui la paix et le salut) leur répondit par l’affirmative en précisant : « Tout bienfait dispensé à un être vivant sera récompensé. » C’est-à-dire [ici] : le fait de l’abreuver. En effet, tout être vivant, tout organe a besoin d’eau. S’il n’y avait pas d’eau, alors chaque animal, chaque être, chaque organe dépérirait et finirait par mourir. Et dans une autre version, une prostituée issue du peuple des enfants d’Israël vit un chien tourner autour d’un point d’eau et qui était sur le point de mourir de soif car incapable d'atteindre l’eau [qui s'y trouvait]. Elle décida alors de prendre son chausson afin de le remplir d’eau et ensuite elle l’abreuva. A la suite de cela, Allah lui pardonna ses péchés grâce à son geste.",
+              "token_count": 978,
+              "retained_token_count": 512,
+              "truncated": true,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 86,
+                  "retained_tokens": 86,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 11,
+                  "retained_tokens": 11,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 10,
+                  "retained_tokens": 10,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 6,
+                  "retained_tokens": 6,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 366,
+                  "retained_tokens": 366,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 495,
+                  "retained_tokens": 29,
+                  "status": "truncated"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "Une femme punie parce qu'elle avait enfermé un chat sans le nourrir",
+      "query_text": "query: Une femme punie parce qu'elle avait enfermé un chat sans le nourrir",
+      "query_tokens": 23,
+      "expected_ids": [
+        "58193"
+      ],
+      "top_1_hit": false,
+      "top_3_hit": true,
+      "latency_ms": 9.51805499994407,
+      "top_5": [
+        {
+          "id": "8361",
+          "score": 0.849798321723938,
+          "title": "Elle n’est pas impure, elle fait simplement partie de ceux et celles qui viennent et se mêlent à vous !",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "58193",
+          "score": 0.846137523651123,
+          "title": "Une femme a été châtiée pour avoir emprisonné une chatte jusqu'à ce qu'elle meure. Pour cela, elle est entrée en Enfer. Elle ne l'a ni nourrie, ni abreuvée lorsqu'elle l'a enfermée et elle ne l'a pas non plus laissé se nourrir des bestioles de la terre.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "11206",
+          "score": 0.8202924728393555,
+          "title": "Elles ont dit vrai ! Ils subissent un supplice que seuls les animaux entendent !",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "10966",
+          "score": 0.8196896314620972,
+          "title": "On m'a certes fait peur pour la cause d'Allah alors que personne d'autre n'avait peur. On m'a certes causé du tort pour la cause d'Allah alors que personne ne subissait de tort. Certes, trente jours et nuits passèrent alors que Bilâl et moi n'avions aucune nourriture qu'un être vivant pouvait manger excepté cachée sous l'aisselle de Bilâl !",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "8372",
+          "score": 0.8184514045715332,
+          "title": "Elle doit le gratter à sec, puis le frotter du bout des doigts avec de l'eau, puis l'asperger [d'eau] et ensuite elle peut prier avec ce vêtement.",
+          "winning_document": "semantic_first"
+        }
+      ],
+      "expected_documents": [
+        {
+          "id": "58193",
+          "rank": 2,
+          "score": 0.846137523651123,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/58193",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: Une femme a été châtiée pour avoir emprisonné une chatte jusqu'à ce qu'elle meure. Pour cela, elle est entrée en Enfer. Elle ne l'a ni nourrie, ni abreuvée lorsqu'elle l'a enfermée et elle ne l'a pas non plus laissé se nourrir des bestioles de la terre.\n\nLes caractéristiques du Paradis et de l'Enfer\n\nAbdallah ibn 'Umar (qu'Allah l’agrée, lui et son père) relate que le Messager d'Allah (sur lui la paix et le salut) a dit : « Une femme a été châtiée pour avoir emprisonné une chatte jusqu'à ce qu'elle meure. Pour cela, elle est entrée en Enfer. Elle ne l'a ni nourrie, ni abreuvée lorsqu'elle l'a enfermée et elle ne l'a pas non plus laissée se nourrir des bestioles de la terre. »\n\nDans ce hadith, le Prophète (sur lui la paix et le salut) a informé au sujet d'une femme entrée en Enfer - et nous cherchons refuge auprès d'Allah contre le fait d'y entrer. La cause de son entrée en Enfer est qu'elle a enfermé une chatte jusqu'à ce que mort s'en suive. Elle ne l'a ni nourrie, ni abreuvée, elle ne l'a pas non plus laissée aller ici et là manger des insectes de la terre ou chercher par elle-même sa propre subsistance. Et si une telle menace concerne [celui qui fait du mal aux] animaux, qu'en sera-t-il de celui qui nuit à un être humain dont la vie est sacrée parmi ceux qui sont à sa charge comme : une épouse, un enfant, un serviteur et autre ?",
+              "token_count": 411,
+              "retained_token_count": 411,
+              "truncated": false,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 80,
+                  "retained_tokens": 80,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 12,
+                  "retained_tokens": 12,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 124,
+                  "retained_tokens": 124,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 191,
+                  "retained_tokens": 191,
+                  "status": "retained"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "Planter un arbre dont les animaux mangent rapporte une récompense",
+      "query_text": "query: Planter un arbre dont les animaux mangent rapporte une récompense",
+      "query_tokens": 21,
+      "expected_ids": [
+        "3911"
+      ],
+      "top_1_hit": true,
+      "top_3_hit": true,
+      "latency_ms": 8.608919999915088,
+      "top_5": [
+        {
+          "id": "3911",
+          "score": 0.8486618995666504,
+          "title": "Il n’est pas un musulman qui plante un arbre sans que tout ce qui en est mangé, volé ou prélevé ne soit considéré comme une aumône de sa part.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "3583",
+          "score": 0.848213791847229,
+          "title": "Le bien est attaché au toupet des chevaux jusqu’au Jour de la Résurrection.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "4181",
+          "score": 0.8476097583770752,
+          "title": "Celui qui met à disposition un cheval dans le sentier d’Allah, parce qu’il a foi en Allah et croit en Sa promesse, trouvera dans sa balance, au Jour de la Résurrection, la nourriture de son cheval ainsi que sa boisson, son urine et son crottin.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "10100",
+          "score": 0.8454839587211609,
+          "title": "Un chien qui était sur le point de mourir de soif tournait autour d’un point d’eau. C’est alors que l'une des prostituées du peuple des enfants d’Israël le vit, elle décida de prendre son chausson afin de le remplir d’eau puis elle l’abreuva. Allah lui pardonna ses péchés grâce à son geste.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "6048",
+          "score": 0.8414642810821533,
+          "title": "Le Messager d’Allah (sur lui la paix et le salut) fut interrogé au sujet de l’or ou de l’argent que l’on trouve par terre. Il répondit : \" Observe bien comment sont la bourse et le cordon, puis fais-en l’annonce pendant un an. Si personne ne les reconnaît, tu peux alors les dépenser. Toutefois, considère-les comme quelque chose que l’on t’a confié. Et si un jour leur propriétaire vient les réclamer, rends-les-lui ! \"",
+          "winning_document": "semantic_first"
+        }
+      ],
+      "expected_documents": [
+        {
+          "id": "3911",
+          "rank": 1,
+          "score": 0.8486618995666504,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/3911",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: Il n’est pas un musulman qui plante un arbre sans que tout ce qui en est mangé, volé ou prélevé ne soit considéré comme une aumône de sa part.\n\nLe mérite de l'Islam et ses qualités\n\nJâbir (qu’Allah l’agrée) relate que le Messager d’Allah (sur lui la paix et le salut) a dit : « Il n’est pas un musulman qui plante un arbre sans que tout ce qui en est mangé, volé ou prélevé ne soit considéré comme une aumône de sa part. » Dans une autre version : « Il n’est pas un musulman qui plante un arbre dont se nourrit un homme, un animal ou toute autre chose, sans que cela ne soit considéré comme une aumône de sa part. » Et dans une autre version : « Il n’est pas un musulman qui plante un arbre ou cultive une terre dont se nourrit un humain, un animal ou toute autre chose, sans que cela ne soit considéré comme une aumône de sa part !\n\nSignification du hadith : « Il n’est pas un musulman qui plante un arbre… » ni ne cultive de terre dont un être vivant parmi les créatures se nourrit, sans qu’il ne soit récompensé pour cela. Et même après sa mort, son œuvre continue de perdurer et d’être rétribuée tant que la terre qu'il a cultivée et l'arbre qu'il a planté existent. Dans le hadith de ce chapitre, il y a une incitation à cultiver la terre et planter des arbres car ces deux actions procurent un profit dans la religion. En effet, la personne obtiendra une aumône pour tout ce qui sera mangé de cette terre ou de cet arbre. Et plus étonnant encore, même ce qu’on en vole sera aussi considéré comme une aumône de sa part. Par exemple, si une personne venait à voler des dattes d’un palmier, son propriétaire en obtiendrait une récompense, et cela même s’il venait à porter plainte au tribunal contre le voleur. Le Jour de la Résurrection, Allah, Exalté soit-Il, lui comptabilisera une aumône pour le vol de son bien. De même, si des bêtes ou des insectes venaient à manger des terres cultivées, leur propriétaire obtiendrait encore une fois la récompense d’une aumône pour cela. Ce hadith a précisément mentionné le musulman car c’est le seul qui bénéficie de la récompense de l’aumône dans cette vie d’ici-bas et dans l’au-delà.",
+              "token_count": 593,
+              "retained_token_count": 512,
+              "truncated": true,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 41,
+                  "retained_tokens": 41,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 10,
+                  "retained_tokens": 10,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 179,
+                  "retained_tokens": 179,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 359,
+                  "retained_tokens": 278,
+                  "status": "truncated"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "Ne pas mépriser les petits gestes de bien même accueillir quelqu'un avec le sourire",
+      "query_text": "query: Ne pas mépriser les petits gestes de bien même accueillir quelqu'un avec le sourire",
+      "query_tokens": 23,
+      "expected_ids": [
+        "5348"
+      ],
+      "top_1_hit": true,
+      "top_3_hit": true,
+      "latency_ms": 9.124484000039956,
+      "top_5": [
+        {
+          "id": "5348",
+          "score": 0.8507178425788879,
+          "title": "Ne méprise rien du bien, ne serait-ce que de rencontrer ton frère avec un visage souriant. \"",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "5500",
+          "score": 0.850297749042511,
+          "title": "Vos biens ne suffiront jamais à contenter les gens, alors contentez-les plutôt avec un visage souriant et un bon comportement.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "8929",
+          "score": 0.8412327766418457,
+          "title": "Parmi les bonnes œuvres que le messager d'Allah (sur lui la paix et le salut) nous a engagées à accomplir, il y a le fait de ne pas lui désobéir, de ne pas nous griffer le visage, de ne pas invoquer le malheur contre nous, de ne pas déchirer nos vêtements et de ne pas nous tirer les cheveux.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "10970",
+          "score": 0.8410358428955078,
+          "title": "Il n'y avait pas une personne plus chère [à leurs yeux] que le Messager d'Allah (sur lui la paix et le salut) et lorsqu'ils le voyaient, ils ne se levaient pas du fait qu'ils savaient qu'il détestait cela.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "6108",
+          "score": 0.8387393951416016,
+          "title": "Un homme demanda : \" Ô, Messager d'Allah ! Quand quelqu'un parmi nous rencontre son frère ou son ami, peut-il s'incliner devant lui ? - Non, dit-il. - Il dit : Peut-il le serrer contre lui et l'embrasser ? - Non, dit-il. - Il dit : Alors, il le prend par la main et lui serre la main ? - Oui, dit-il. \"",
+          "winning_document": "semantic_first"
+        }
+      ],
+      "expected_documents": [
+        {
+          "id": "5348",
+          "rank": 1,
+          "score": 0.8507178425788879,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/5348",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: Ne méprise rien du bien, ne serait-ce que de rencontrer ton frère avec un visage souriant. \"\n\nLes caractères louables\n\nLe mérite de l'amour mutuel entre les croyants, de se sourire et de se réjouir lors de la rencontre.\r\n\nLa perfection et la globalité de cette Charî'ah, le fait qu'elle soit venue avec tout ce qui est un bien pour les musulmans et unit leur parole.\r\n\nL'incitation à accomplir tout acte de bien même si infime en apparence.\r\n\nLa recommandation de faire entrer la joie chez les musulmans ; du fait que cela participe à concrétiser la familiarité entre eux.\n\nAboû Dharr (qu'Allah l'agrée) relate : « Le Prophète (qu'Allah le couvre d'éloges et le préserve) m'a dit : \" Ne méprise rien du bien, ne serait-ce que de rencontrer ton frère avec un visage souriant. \" »\n\nLe Prophète (qu'Allah le couvre d'éloges et le préserve) a incité à accomplir tout acte de bien et de ne rien en mépriser, même s'il s'agit d'une chose [apparemment] infime. Parmi cela, il y a le fait d'avoir un visage radieux et de sourire lors de la rencontre [avec son frère]. Il faut donc que le musulman y soit assidu ; ceci, du fait de ce qui s'y trouve d'amabilité à l'égard du frère musulman et d'opportunité de lui procurer de la joie.",
+              "token_count": 351,
+              "retained_token_count": 351,
+              "truncated": false,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 24,
+                  "retained_tokens": 24,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 6,
+                  "retained_tokens": 6,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 28,
+                  "retained_tokens": 28,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 36,
+                  "retained_tokens": 36,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 19,
+                  "retained_tokens": 19,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 32,
+                  "retained_tokens": 32,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 69,
+                  "retained_tokens": 69,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 133,
+                  "retained_tokens": 133,
+                  "status": "retained"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "Je cherche le conseil de faciliter les choses et de ne pas faire fuir les gens",
+      "query_text": "query: Je cherche le conseil de faciliter les choses et de ne pas faire fuir les gens",
+      "query_tokens": 22,
+      "expected_ids": [
+        "5866"
+      ],
+      "top_1_hit": false,
+      "top_3_hit": false,
+      "latency_ms": 8.579385999837541,
+      "top_5": [
+        {
+          "id": "10563",
+          "score": 0.8449468612670898,
+          "title": "Cherche-moi des pierres pour me nettoyer et ne m'apporte ni os, ni crottin !",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "6368",
+          "score": 0.838939368724823,
+          "title": "Tu te dois d’écouter et d’obéir, dans la difficulté comme dans l’aisance, dans ce qui te plaît comme dans ce qui te déplaît, et même si tu bénéficies de privilèges.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "5948",
+          "score": 0.8387471437454224,
+          "title": "Cette façon de vous disperser dans les sentiers et les oueds ne vous est inspirée que par le diable !",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "4295",
+          "score": 0.8383738398551941,
+          "title": "Laissez-moi ! Je ne vous ai pas délaissés. En fait, ce qui a anéanti quiconque était avant vous fut leurs [incessantes] questions et leurs divergences avec leurs Prophètes",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "4813",
+          "score": 0.8381155729293823,
+          "title": "On m'a présenté les actes de ma communauté, les bons comme les mauvais. J’ai constaté que l’une de leurs belles œuvres était le fait d’ôter du chemin les choses nuisibles et que l’une de leurs mauvaises œuvres était la glaire laissée dans la mosquée sans être enfouie.",
+          "winning_document": "semantic_first"
+        }
+      ],
+      "expected_documents": [
+        {
+          "id": "5866",
+          "rank": 14,
+          "score": 0.8344612121582031,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/5866",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: Facilitez et ne rendez pas difficile ! Annoncez de bonnes nouvelles et ne faites pas fuir !\n\nLes caractères louables\n\nLe devoir du croyant est de faire aimer Allah aux gens et de les encourager dans le bien.\r\n\nIl convient à celui qui invite les gens à Allah d'observer avec sagesse comment transmettre l'appel de l'Islam aux gens.\r\n\nLe fait d'annoncer les bonnes nouvelles fait naître la joie, l'acceptation et l'apaisement du coeur quant au prédicateur et à ce qu'il présente aux gens.\r\n\nLe fait de rendre compliqué fait naître l'envie de fuir, de se détourner et le doute vis-à-vis des paroles du prédicateur.\r\n\nL'étendue de la miséricorde d'Allah envers Ses serviteurs et le fait qu'Il leur a agréé une religion bienveillante et une Charî'ah (Législation) facilitée.\r\n\nLa facilité ordonnée est ce avec quoi la Charî'ah est venue.\n\nAnas ibn Mâlik (qu'Allah l'agrée) relate que le Prophète (qu'Allah le couvre d'éloges et le préserve) a dit : « Facilitez et ne rendez pas difficile ! Annoncez de bonnes nouvelles et ne faites pas fuir ! »\n\nLe Prophète (qu'Allah le couvre d'éloges et le préserve) ordonne d'alléger et de faciliter les choses pour les gens et de ne pas leur rendre compliqué les choses, qu'il s'agisse de leurs affaires religieuses et mondaines. Et ceci, dans les limites de ce qu'Allah a autorisé et prescrit.\r\n\r\nIl encourage aussi (qu'Allah le couvre d'éloges et le préserve) à leur faire la bonne annonce du bien et à ne pas les en faire fuir.",
+              "token_count": 416,
+              "retained_token_count": 416,
+              "truncated": false,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 22,
+                  "retained_tokens": 22,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 6,
+                  "retained_tokens": 6,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 23,
+                  "retained_tokens": 23,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 30,
+                  "retained_tokens": 30,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 42,
+                  "retained_tokens": 42,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 37,
+                  "retained_tokens": 37,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 52,
+                  "retained_tokens": 52,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 17,
+                  "retained_tokens": 17,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 66,
+                  "retained_tokens": 66,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 117,
+                  "retained_tokens": 117,
+                  "status": "retained"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "Qui est vraiment ruiné le jour du jugement malgré ses prières et ses bonnes actions ?",
+      "query_text": "query: Qui est vraiment ruiné le jour du jugement malgré ses prières et ses bonnes actions ?",
+      "query_tokens": 24,
+      "expected_ids": [
+        "3165"
+      ],
+      "top_1_hit": true,
+      "top_3_hit": true,
+      "latency_ms": 9.948058999952991,
+      "top_5": [
+        {
+          "id": "3165",
+          "score": 0.8751291036605835,
+          "title": "Le ruiné de ma communauté c’est celui qui, au Jour de la Résurrection, viendra avec des prières, des jeûnes et des aumônes légales, mais aura insulté untel, calomnié untel, fait couler le sang d’untel et frappé untel. On donnera alors ses bonnes actions à celui-ci et à celui-là.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "3415",
+          "score": 0.873700737953186,
+          "title": "Qui est donc celui qui jure en Mon nom et prétend que Je ne pardonnerai jamais à untel ? Certes, Je lui ai pardonné, et J’ai annulé tes œuvres !",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "5799",
+          "score": 0.8728018999099731,
+          "title": "Certes, par son bon comportement, le croyant atteint le degré de celui qui jeûne le jour et prie la nuit.\"",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "6183",
+          "score": 0.8694348931312561,
+          "title": "Le Messager d’Allah (sur lui la paix et le salut) tenait fermement au jeûne du lundi et du jeudi.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "64681",
+          "score": 0.867206335067749,
+          "title": "Vous serez certes avides de pouvoir, et [cette avidité] sera une source de regrets au Jour de la Résurrection. Quelle bonne personne que celle qui allaite et quelle mauvaise personne que celle qui sèvre !",
+          "winning_document": "semantic_first"
+        }
+      ],
+      "expected_documents": [
+        {
+          "id": "3165",
+          "rank": 1,
+          "score": 0.8751291036605835,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/3165",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: Le ruiné de ma communauté c’est celui qui, au Jour de la Résurrection, viendra avec des prières, des jeûnes et des aumônes légales, mais aura insulté untel, calomnié untel, fait couler le sang d’untel et frappé untel. On donnera alors ses bonnes actions à celui-ci et à celui-là.\n\nLes vertus et les convenances\n\nLes caractères blâmables\n\nLe Messager d’Allah (sur lui la paix et le salut) demanda : « Savez-vous qui est le ruiné ? » Ils répondirent : « Le ruiné, pour nous, c’est celui qui n’a ni argent, ni biens ! » Il dit alors : « Le ruiné de ma communauté, c’est celui qui, au Jour de la Résurrection, viendra avec des prières, des jeûnes et des aumônes légales, mais aura insulté untel, calomnié untel, fait couler le sang d’untel et frappé untel. On donnera alors ses bonnes actions à celui-ci et à celui-là. Et si ses bonnes actions s’épuisent avant que l’on ait réglé ses comptes, on prendra alors une partie de leurs péchés et on l’en chargera. Ensuite, il sera jeté dans le feu. »\n\nLe Prophète (sur lui la paix et le salut) a demandé à ses Compagnons (qu’Allah soit satisfait d’eux ) : « Savez-vous qui est le ruiné ? » Ils lui ont donc répondu par ce qui est connu chez les gens, disant que le ruiné c’est le pauvre, celui qui n’a ni argent, ni biens matériels. Mais, le Prophète (sur lui la paix et le salut) leur a alors dit que le ruiné, dans cette communauté, c’est celui qui se présentera au Jour de la Résurrection avec de nombreuses actions pieuses, comme : la prière, le jeûne, l’aumône légale, etc. Mais qui, dans un même temps, aura insulté untel, frappé untel, spolié celui-ci, accusé celui-là et versé le sang de tel autre. Les gens demanderont alors réparation, et ce qu’ils n’auront pas récupéré dans ce bas monde, ils le récupéreront dans l’au-delà. C’est ainsi qu’on leur rendra ce qu’il leur est dû : ils prendront de ses bonnes actions en toute équité, le talion sera accompli en toute vérité et lorsque ses bonnes actions seront épuisées, on le chargera de leurs péchés à eux ; puis, on le jettera en Enfer.",
+              "token_count": 619,
+              "retained_token_count": 512,
+              "truncated": true,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 89,
+                  "retained_tokens": 89,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 8,
+                  "retained_tokens": 8,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 6,
+                  "retained_tokens": 6,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 204,
+                  "retained_tokens": 204,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 308,
+                  "retained_tokens": 201,
+                  "status": "truncated"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "Trois choses accompagnent le mort à la tombe mais seules ses actions restent",
+      "query_text": "query: Trois choses accompagnent le mort à la tombe mais seules ses actions restent",
+      "query_tokens": 23,
+      "expected_ids": [
+        "4240"
+      ],
+      "top_1_hit": true,
+      "top_3_hit": true,
+      "latency_ms": 9.682084999894869,
+      "top_5": [
+        {
+          "id": "4240",
+          "score": 0.8742762804031372,
+          "title": "Trois choses accompagnent le mort jusqu’à sa tombe : sa famille, sa fortune et son œuvre. Deux d’entre elles reviennent tandis qu’une seule reste : sa famille et sa fortune reviennent et son œuvre reste.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "8870",
+          "score": 0.8380087018013,
+          "title": "Lorsque quatre personnes témoignent en faveur d'un musulman, Allah le fait entrer au Paradis !",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "5319",
+          "score": 0.8375132083892822,
+          "title": "Le Messager d’Allah (sur lui la paix et le salut) fut enveloppé dans plusieurs linceuls de couleur blanche, du Yémen, et qui n’avaient ni manches, ni turban.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "8929",
+          "score": 0.836520791053772,
+          "title": "Parmi les bonnes œuvres que le messager d'Allah (sur lui la paix et le salut) nous a engagées à accomplir, il y a le fait de ne pas lui désobéir, de ne pas nous griffer le visage, de ne pas invoquer le malheur contre nous, de ne pas déchirer nos vêtements et de ne pas nous tirer les cheveux.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "5445",
+          "score": 0.8340603709220886,
+          "title": "Il en est parmi eux dont le Feu arrivera aux chevilles, d’autres aux genoux, d’autres à la taille et d’autres aux clavicules !",
+          "winning_document": "semantic_first"
+        }
+      ],
+      "expected_documents": [
+        {
+          "id": "4240",
+          "rank": 1,
+          "score": 0.8742762804031372,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/4240",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: Trois choses accompagnent le mort jusqu’à sa tombe : sa famille, sa fortune et son œuvre. Deux d’entre elles reviennent tandis qu’une seule reste : sa famille et sa fortune reviennent et son œuvre reste.\n\nLe blâme de l'amour de la vie d'ici-bas\n\nAnas (qu’Allah l’agrée) relate que le Messager d’Allah (sur lui la paix et le salut) a dit : « Trois choses accompagnent le mort jusqu’à sa tombe : sa famille, sa fortune et son œuvre. Deux d’entre elles reviennent tandis qu’une seule reste : sa famille et sa fortune reviennent et son œuvre reste. »\n\nCe hadith signifie que lorsque l’individu meurt, les gens, sa famille, ses biens - c’est-à-dire : ses esclaves, ses serviteurs et ce qu'il possède - ainsi que ses œuvres suivent son convoi funéraire jusqu’à sa tombe. Puis, sa famille et ses biens retournent et seules ses œuvres restent avec lui ; si celles-ci étaient bonnes alors cela sera un bien pour lui, et si au contraire, elles étaient mauvaises, cela sera un mal pour lui.",
+              "token_count": 274,
+              "retained_token_count": 274,
+              "truncated": false,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 52,
+                  "retained_tokens": 52,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 16,
+                  "retained_tokens": 16,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 86,
+                  "retained_tokens": 86,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 116,
+                  "retained_tokens": 116,
+                  "status": "retained"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "Quelqu'un demande un conseil sur l'islam et on lui dit de croire puis de rester droit",
+      "query_text": "query: Quelqu'un demande un conseil sur l'islam et on lui dit de croire puis de rester droit",
+      "query_tokens": 26,
+      "expected_ids": [
+        "65018",
+        "66524"
+      ],
+      "top_1_hit": false,
+      "top_3_hit": true,
+      "latency_ms": 11.189217999799439,
+      "top_5": [
+        {
+          "id": "8262",
+          "score": 0.8549025058746338,
+          "title": "\" Le Messager d'Allah (sur lui la paix et le salut) a-t-il imploré le pardon en ta faveur ? - Oui, et pour toi aussi ! \" dit-il, avant de réciter ce verset : {(Et implore le pardon pour tes péchés, ainsi que pour les croyants et les croyantes)}.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "65018",
+          "score": 0.8544536828994751,
+          "title": "! Dis-moi quelque chose concernant l'Islam de sorte que je n'interroge personne à son propos autre que toi. \" Il a dit : \" Dis : Je crois en Allah, puis fais preuve de droiture.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "3001",
+          "score": 0.8535951375961304,
+          "title": "Ma sœur avait fait le vœu de se rendre à la Maison sacrée d’Allah en marchant et pieds nus. Elle me commanda de demander pour elle un avis juridique au Messager d’Allah (sur lui la paix et le salut). Je lui demandais donc et il me répondit : « Qu’elle commence à pied. Ensuite, qu’elle monte à cheval.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "6108",
+          "score": 0.8535420894622803,
+          "title": "Un homme demanda : \" Ô, Messager d'Allah ! Quand quelqu'un parmi nous rencontre son frère ou son ami, peut-il s'incliner devant lui ? - Non, dit-il. - Il dit : Peut-il le serrer contre lui et l'embrasser ? - Non, dit-il. - Il dit : Alors, il le prend par la main et lui serre la main ? - Oui, dit-il. \"",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "6368",
+          "score": 0.8534769415855408,
+          "title": "Tu te dois d’écouter et d’obéir, dans la difficulté comme dans l’aisance, dans ce qui te plaît comme dans ce qui te déplaît, et même si tu bénéficies de privilèges.",
+          "winning_document": "semantic_first"
+        }
+      ],
+      "expected_documents": [
+        {
+          "id": "65018",
+          "rank": 2,
+          "score": 0.8544536828994751,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/65018",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: ! Dis-moi quelque chose concernant l'Islam de sorte que je n'interroge personne à son propos autre que toi. \" Il a dit : \" Dis : Je crois en Allah, puis fais preuve de droiture.\n\nLa foi en Allah (Exalté et Magnifié soit-Il)\n\nLa purification des âmes\n\nLe fondement de la Religion est la foi en Allah, Sa seigneurie, Sa divinité, Ses noms et Ses attributs.\r\n\nL'importance de la droiture après la foi, le fait de perdurer dans l'adoration et la fermeté sur cela.\r\n\nLa foi est une condition de l'acceptation des œuvres.\r\n\nLa foi en Allah englobe ce qui incombe comme croyance parmi les croyances de la foi et ses fondements mais aussi ce qui découle de cela comme œuvres du cœur, soumission à Allah et le fait de se soumettre à Allah, en apparence et dans son for intérieur.\r\n\nLa droiture est l'attachement à la voie en accomplissant les devoirs et en délaissant les interdits.\n\nD'après Sufyân ibn 'AbdiLlah Ath-Thaqafî (qu'Allah l'agrée) qui a dit : J'ai dit : \" Ô Messager d'Allah  ! Dis-moi quelque chose concernant l'Islam de sorte que je n'interroge personne à son propos autre que toi. \" Il a dit : \" Dis : Je crois en Allah, puis fais preuve de droiture. \"\n\nLe Compagnon Sufyân ibn 'AbdiLlah (qu'Allah l'agrée) a demandé au Prophète ﷺ de lui enseigner une parole globale concernant les significations de l'Islam à laquelle il s'attacherait de sorte qu'il ne demande ensuite à personne d'autre que lui. Alors, le Prophète ﷺ lui a dit : \" Dis : J'unifie Allah et je crois qu'Il est mon Seigneur, mon Dieu, mon Créateur et Celui que j'adore en toute vérité, sans associé à Lui. \" Ensuite, qu'il se soumette à l'obéissance d'Allah en s'acquittant des obligations d'Allah et en délaissant Ses interdits, et qu'il perdure sur cela.",
+              "token_count": 498,
+              "retained_token_count": 498,
+              "truncated": false,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 45,
+                  "retained_tokens": 45,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 16,
+                  "retained_tokens": 16,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 6,
+                  "retained_tokens": 6,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 30,
+                  "retained_tokens": 30,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 28,
+                  "retained_tokens": 28,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 14,
+                  "retained_tokens": 14,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 67,
+                  "retained_tokens": 67,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 25,
+                  "retained_tokens": 25,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 88,
+                  "retained_tokens": 88,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 175,
+                  "retained_tokens": 175,
+                  "status": "retained"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "66524",
+          "rank": 7,
+          "score": 0.8521919250488281,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/66524",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: ! Dis-moi quelque chose concernant l'Islam de sorte que je n'interroge personne à son propos autre que toi. \" Il a dit : \" Dis : Je crois en Allah, puis fais preuve de droiture.\n\nLa foi en Allah (Exalté et Magnifié soit-Il)\n\nLa purification des âmes\n\nLe fondement de la Religion est la foi en Allah, Sa seigneurie, Sa divinité, Ses noms et Ses attributs.\r\n\nL'importance de la droiture après la foi, le fait de perdurer dans l'adoration et la fermeté sur cela.\r\n\nLa foi est une condition de l'acceptation des œuvres.\r\n\nLa foi en Allah englobe ce qui incombe comme croyance parmi les croyances de la foi et ses fondements mais aussi ce qui découle de cela comme œuvres du cœur, soumission à Allah et le fait de se soumettre à Allah, en apparence et dans son for intérieur.\r\n\nLa droiture est l'attachement à la voie en accomplissant les devoirs et en délaissant les interdits.\n\nD’après Abû ‘Amr — ou Abû ‘Amra — Sufyân b. ‘Abd Allâh — qu’Allah l’agrée —, a dit : J'ai dit : \" Ô Messager d'Allah  ! Dis-moi quelque chose concernant l'Islam de sorte que je n'interroge personne à son propos autre que toi. \" Il a dit : \" Dis : Je crois en Allah, puis fais preuve de droiture. \"\n\nLe Compagnon Sufyân ibn 'AbdiLlah (qu'Allah l'agrée) a demandé au Prophète ﷺ de lui enseigner une parole globale concernant les significations de l'Islam à laquelle il s'attacherait de sorte qu'il ne demande ensuite à personne d'autre que lui. Alors, le Prophète ﷺ lui a dit : \" Dis : J'unifie Allah et je crois qu'Il est mon Seigneur, mon Dieu, mon Créateur et Celui que j'adore en toute vérité, sans associé à Lui. \" Ensuite, qu'il se soumette à l'obéissance d'Allah en s'acquittant des obligations d'Allah et en délaissant Ses interdits, et qu'il perdure sur cela.",
+              "token_count": 508,
+              "retained_token_count": 508,
+              "truncated": false,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 45,
+                  "retained_tokens": 45,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 16,
+                  "retained_tokens": 16,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 6,
+                  "retained_tokens": 6,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 30,
+                  "retained_tokens": 30,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 28,
+                  "retained_tokens": 28,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 14,
+                  "retained_tokens": 14,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 67,
+                  "retained_tokens": 67,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 25,
+                  "retained_tokens": 25,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 98,
+                  "retained_tokens": 98,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 175,
+                  "retained_tokens": 175,
+                  "status": "retained"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "Le hadith qui explique que la religion est la sincérité",
+      "query_text": "query: Le hadith qui explique que la religion est la sincérité",
+      "query_tokens": 18,
+      "expected_ids": [
+        "4309",
+        "66516"
+      ],
+      "top_1_hit": true,
+      "top_3_hit": true,
+      "latency_ms": 9.558229000049323,
+      "top_5": [
+        {
+          "id": "66516",
+          "score": 0.8779115676879883,
+          "title": "La religion, c’est la sincérité",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "4308",
+          "score": 0.8767184019088745,
+          "title": "La bonté c'est le bon comportement. Quant au péché, c'est ce qui s'agite dans ta poitrine et que tu répugnerais que les gens apprennent.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "4810",
+          "score": 0.8737376928329468,
+          "title": "Ô Mes serviteurs ! Certes, Je Me suis interdit l’injustice et Je l’ai rendue interdite entre vous. Ne soyez donc pas injustes les uns envers les autres !",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "4309",
+          "score": 0.871968686580658,
+          "title": "La religion, c’est la sincérité",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "3414",
+          "score": 0.8712462186813354,
+          "title": "Au Jour de la Résurrection, la personne la plus heureuse de mon intercession sera celle qui aura dit : \"Il n'est de divinité [digne d'adoration] qu'Allah\" sincèrement de son cœur ou de toute sa personne",
+          "winning_document": "semantic_first"
+        }
+      ],
+      "expected_documents": [
+        {
+          "id": "4309",
+          "rank": 4,
+          "score": 0.871968686580658,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/4309",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: La religion, c’est la sincérité\n\nLe droit de l'imam envers ses sujets\n\nL'ordre de la sincérité pour tout le monde.\r\n\nL'immense statut de la sincérité dans la religion.\r\n\nLa religion englobe des croyances, des paroles et des œuvres.\r\n\nParmi la sincérité, il y a la purification de l'âme contre le fait de tromper celui que l'on conseille, et il y a le fait de lui vouloir du bien.\r\n\nLa bonne manière d'enseigner qu'avait le Messager (qu'Allah le couvre d'éloges et le préserve) de sorte qu'il mentionne la chose de manière générale, puis la détaille ensuite.\r\n\nLe fait de commencer par ce qui est le plus important et de progresser ainsi. En effet, le Prophète (qu'Allah le couvre d'éloges et le préserve) a commencé par la sincérité envers Allah, ensuite envers Son Livre, puis envers Son Messager (qu'Allah le couvre d'éloges et le préserve), ensuite envers les imams des musulmans, enfin envers les musulmans en général.\n\nTamîm Ad-Dârî (qu'Allah l'agrée) relate que le Prophète (qu'Allah le couvre d'éloges et le préserve) a dit : \"La religion, c’est la sincérité.\" Nous demandâmes : Envers qui ? Il répondit : \"Envers Allah, Son Livre, Son Messager, les imams des musulmans et les musulmans en général.\"\n\nLe Prophète (qu'Allah le couvre d'éloges et le préserve) informe du fait que la religion s'établit sur la sincérité et la véridicité, jusqu'à ce que l'individu s'en acquitte totalement, comme Allah l'a imposée, sans manquement ni tromperie.\r\n\r\nIl a alors été demandé au Prophète (qu'Allah le couvre d'éloges et le préserve) envers qui devait être cette sincérité ? Il a alors répondu :\r\n\r\nPremièrement : La sincérité envers Allah, Gloire et Pureté à Lui et qu'il soit Exalté, est d'œuvrer sincèrement pour Lui, sans Lui associer qui ou quoi que ce soit, de croire en Sa Seigneurie, Sa Divinité, Ses Noms et Ses attributs, tout en considérant et respectant Son Ordre et en appelant à la foi en Lui.\r\n\r\nDeuxièmement : La sincérité envers Son Livre qui est le noble Coran, à savoir : nous croyons qu'il est Sa Parole, le dernier de Ses Livres, et qu'il a certes abrogé l'ensemble des législations l'ayant précédé. Nous lui accordons toute notre considération, nous le récitons comme il doit l'être, nous œuvrons selon ses versets clairs, nous nous soumettons à ses versets équivoques, nous le défendons contre l'interprétation de ceux qui le dénaturent, nous prenons leçon de ses exhortations, nous propageons ses sciences et nous appelons à lui.\r\n\r\nTroisièmement : La sincérité envers Son Messager Mouḥammad (qu'Allah le couvre d'éloges et le préserve), à savoir : nous croyons qu'il est le dernier des Messagers, nous le déclarons véridique dans ce qu'il nous a apporté, nous appliquons son ordre et nous évitons ses interdits. Nous n'adorons Allah qu'à travers ce qu'il a apporté, nous accordons toute considération à son droit, nous le respectons, nous diffusons son appel, nous propageons sa législation et nous nions les accusations portées à son encontre.\r\n\r\nQuatrièmement : La sincérité envers les les imams [et dirigeants] des musulmans en les soutenant dans la vérité, en ne leur disputant pas le commandement, en les écoutant et en leur obéissant dans l'obéissance à Allah.\r\n\r\nCinquièmement : La sincérité envers les musulmans, en général, en étant bienfaisant à leur égard, en les invitant [au bien et à la droiture], en s'abstenant de leur faire du tort, en aimant le bien pour eux, en s'entraidant avec eux dans la bonté et la piété.",
+              "token_count": 1028,
+              "retained_token_count": 512,
+              "truncated": true,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 11,
+                  "retained_tokens": 11,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 12,
+                  "retained_tokens": 12,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 14,
+                  "retained_tokens": 14,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 15,
+                  "retained_tokens": 15,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 18,
+                  "retained_tokens": 18,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 44,
+                  "retained_tokens": 44,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 49,
+                  "retained_tokens": 49,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 101,
+                  "retained_tokens": 101,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 94,
+                  "retained_tokens": 94,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 666,
+                  "retained_tokens": 150,
+                  "status": "truncated"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "66516",
+          "rank": 1,
+          "score": 0.8779115676879883,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/66516",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: La religion, c’est la sincérité\n\nLes devoirs de l'imam\n\nL'ordre de la sincérité pour tout le monde.\r\n\nL'immense statut de la sincérité dans la religion.\r\n\nLa religion englobe des croyances, des paroles et des œuvres.\r\n\nParmi la sincérité, il y a la purification de l'âme contre le fait de tromper celui que l'on conseille, et il y a le fait de lui vouloir du bien.\r\n\nLa bonne manière d'enseigner qu'avait le Messager (qu'Allah le couvre d'éloges et le préserve) de sorte qu'il mentionne la chose de manière générale, puis la détaille ensuite.\r\n\nLe fait de commencer par ce qui est le plus important et de progresser ainsi. En effet, le Prophète (qu'Allah le couvre d'éloges et le préserve) a commencé par la sincérité envers Allah, ensuite envers Son Livre, puis envers Son Messager (qu'Allah le couvre d'éloges et le préserve), ensuite envers les imams des musulmans, enfin envers les musulmans en général.\n\nD’après Abû Ruqayya Tamîm b. Aws ad‑Dârî — qu’Allah l’agrée —, le Prophète ﷺ a dit : \"La religion, c’est la sincérité.\" Nous demandâmes : Envers qui ? Il répondit : \"Envers Allah, Son Livre, Son Messager, les imams des musulmans et les musulmans en général.\"\n\nLe Prophète ﷺ a indiqué que la religion repose sur la sincérité et la loyauté, de sorte qu’elle soit accomplie comme Allah l’a prescrit, parfaitement, sans manquement ni tromperie. On dit : « À qui s’adresse cette sincérité-conseil (an‑nasiha) ? » Il répondit : Premièrement : envers Allah — en Lui vouant l’exclusivité des œuvres, en se gardant de tout associé dans Sa seigneurie, Sa divinité et Ses Noms et Attributs, en exaltant Son ordre et en appelant à croire en Lui. Deuxièmement : envers Son Livre, le Coran : croire qu’il est la Parole d’Allah, que Son dernier Livre abroge les législations antérieures, le vénérer, le réciter comme il se doit, agir selon ses versets explicites, se soumettre à ses ambiguïtés, défendre sa juste interprétation contre les déformateurs, tirer profit de ses exhortations, diffuser ses sciences et y appeler. Troisièmement : envers Son Messager Muḥammad ﷺ : croire à sa prophétie et à son Message, suivre sa Sunna, se conformer à ce qu’il a apporté, exécuter ses ordres, éviter ses interdits, ne vouer l’adoration à Allah que selon ce qu’il a instauré, magnifier son droit, le vénérer, propager son appel, diffuser sa Loi et repousser les accusations mensongères portées contre lui. Quatrièmement : envers les dirigeants des musulmans : les assister dans la vérité, ne pas contester leur autorité, et leur obéir dans l’obéissance à Allah. Cinquièmement : envers les musulmans en général : leur faire du bien, les appeler (au bien), s’abstenir de leur nuire, aimer pour eux le bien, et coopérer avec eux dans la piété et la crainte d’Allah.",
+              "token_count": 824,
+              "retained_token_count": 512,
+              "truncated": true,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 11,
+                  "retained_tokens": 11,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 8,
+                  "retained_tokens": 8,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 14,
+                  "retained_tokens": 14,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 15,
+                  "retained_tokens": 15,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 18,
+                  "retained_tokens": 18,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 44,
+                  "retained_tokens": 44,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 49,
+                  "retained_tokens": 49,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 101,
+                  "retained_tokens": 101,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 91,
+                  "retained_tokens": 91,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 469,
+                  "retained_tokens": 157,
+                  "status": "truncated"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "Les meilleurs sont ceux qui apprennent le Coran et l'enseignent",
+      "query_text": "query: Les meilleurs sont ceux qui apprennent le Coran et l'enseignent",
+      "query_tokens": 21,
+      "expected_ids": [
+        "5913"
+      ],
+      "top_1_hit": true,
+      "top_3_hit": true,
+      "latency_ms": 9.801208999988376,
+      "top_5": [
+        {
+          "id": "5913",
+          "score": 0.8981232643127441,
+          "title": "Le meilleur d'entre vous est celui qui a appris le Coran et l'a enseigné.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "5383",
+          "score": 0.8640025854110718,
+          "title": "Lisez le Coran car il viendra, certes, le Jour de la Résurrection intercéder au profit de ses compagnons.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "10856",
+          "score": 0.8607187867164612,
+          "title": "Certes, je crains deux choses pour ma communauté : le Coran et le lait. Quant au lait, c'est le fait que les gens recherchent la campagne et suivent leurs plaisirs et ensuite délaissent les prières [en groupe à la mosquée]. Quant au Coran, c'est le fait que les hypocrites l'apprennent afin de polémiquer avec les croyants.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "8899",
+          "score": 0.8592863082885742,
+          "title": "Le premier à être jugé au Jour de la Résurrection sera un homme mort en martyr. On le fera venir devant Allah Qui lui rappellera Ses bienfaits en sa faveur qu’il reconnaîtra. Alors, Allah lui demandera : ' Qu’as-tu fait ? - Il répondra : J’ai combattu pour Ta cause jusqu’à mourir en martyr ! '",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "3709",
+          "score": 0.8581761121749878,
+          "title": "Le meilleur des compagnons, auprès d’Allah, Exalté soit-Il, est celui qui est le meilleur envers son compagnon ! Et le meilleur des voisins, auprès d’Allah, Exalté soit-Il, est celui qui est le meilleur envers son voisin !",
+          "winning_document": "semantic_first"
+        }
+      ],
+      "expected_documents": [
+        {
+          "id": "5913",
+          "rank": 1,
+          "score": 0.8981232643127441,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/5913",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: Le meilleur d'entre vous est celui qui a appris le Coran et l'a enseigné.\n\nLe mérite de la considération du Coran\n\nL'explication de la noblesse du Coran et du fait qu'il est la meilleure parole ; ceci, parce qu'il est la parole d'Allah\r\n\nLe meilleur de ceux qui apprennent est celui qui enseigne à autrui et ne se contente pas uniquement de sa personne.\r\n\nL'apprentissage du Coran et son enseignement inclut la récitation, les sens et les décrets.\n\n'Outhmân (qu'Allah l'agrée) relate que le Prophète (qu'Allah le couvre d'éloges et le préserve) a dit : «  Le meilleur d'entre vous est celui qui a appris le Coran et l'a enseigné. »\n\nLe Prophète (qu'Allah le couvre d'éloges et le préserve) informe que le meilleur des musulmans et le plus élevé en degrés auprès d'Allah est celui qui a appris le Coran en récitation, mémorisation, psalmodie, compréhension et interprétation, puis a enseigné à autrui ce qu'il possédait comme sciences du Coran et l'a mis en œuvre.",
+              "token_count": 288,
+              "retained_token_count": 288,
+              "truncated": false,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 23,
+                  "retained_tokens": 23,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 10,
+                  "retained_tokens": 10,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 35,
+                  "retained_tokens": 35,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 28,
+                  "retained_tokens": 28,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 24,
+                  "retained_tokens": 24,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 65,
+                  "retained_tokens": 65,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 99,
+                  "retained_tokens": 99,
+                  "status": "retained"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "La récompense des parents qui ont perdu trois enfants avant la puberté",
+      "query_text": "query: La récompense des parents qui ont perdu trois enfants avant la puberté",
+      "query_tokens": 20,
+      "expected_ids": [
+        "8875"
+      ],
+      "top_1_hit": false,
+      "top_3_hit": false,
+      "latency_ms": 8.300935000079335,
+      "top_5": [
+        {
+          "id": "10417",
+          "score": 0.8382093906402588,
+          "title": "Trois hommes qui étaient de sortie furent surpris par la pluie alors qu'ils marchaient. Ils cherchèrent aussitôt refuge à l'intérieur d'une grotte qui se trouvait dans la montagne, un rocher tomba soudainement et vint obstruer la sortie de la grotte.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "65053",
+          "score": 0.8351402282714844,
+          "title": "L'un de vous aimerait-il, en rentrant auprès de sa famille, y trouver trois énormes chamelles pleines et grasses ?",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "8871",
+          "score": 0.8344549536705017,
+          "title": "Il n'est pas une femme parmi vous qui perde trois de ses enfants [littéralement : qui les avance (pour l'au-delà)] sans qu'ils ne soient pour elle une protection contre l'Enfer !",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "8875",
+          "score": 0.8340842723846436,
+          "title": "Il n'est pas un musulman qui perde trois de ses enfants, avant que ceux-ci n'aient atteint la puberté, sans qu'Allah ne l'introduise au Paradis par Sa miséricorde envers eux.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "4959",
+          "score": 0.8322098255157471,
+          "title": "Ô Messager d’Allah ! Aurais-je une récompense par rapport aux enfants d’Abû Salamah du fait que je dépense pour eux et que je ne les abandonne pas à leur propre sort, bien qu'ils soient mes enfants ? Il répondit : « Oui, tu auras la récompense de ce que tu auras dépensé pour eux !",
+          "winning_document": "semantic_first"
+        }
+      ],
+      "expected_documents": [
+        {
+          "id": "8875",
+          "rank": 4,
+          "score": 0.8340842723846436,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/8875",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: Il n'est pas un musulman qui perde trois de ses enfants, avant que ceux-ci n'aient atteint la puberté, sans qu'Allah ne l'introduise au Paradis par Sa miséricorde envers eux.\n\nLes caractéristiques du Paradis et de l'Enfer\n\nAnas (qu'Allah l'agrée) relate que le Messager d'Allah (sur lui la paix et le salut) a dit : « Il n'est pas un musulman qui perde trois de ses enfants, avant que ceux-ci n'aient atteint la puberté, sans qu'Allah ne l'introduise au Paradis par Sa miséricorde envers eux. »\n\nAucun musulman ne voit mourir trois de ses enfants, garçons ou filles, qui n'ont pas atteint l'âge de puberté, sans que cela ne soit pour lui une cause d'entrée au Paradis.",
+              "token_count": 193,
+              "retained_token_count": 193,
+              "truncated": false,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 49,
+                  "retained_tokens": 49,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 12,
+                  "retained_tokens": 12,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 83,
+                  "retained_tokens": 83,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 45,
+                  "retained_tokens": 45,
+                  "status": "retained"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "Enlever un obstacle de la route fait partie des branches de la foi",
+      "query_text": "query: Enlever un obstacle de la route fait partie des branches de la foi",
+      "query_tokens": 21,
+      "expected_ids": [
+        "3276",
+        "6468"
+      ],
+      "top_1_hit": false,
+      "top_3_hit": false,
+      "latency_ms": 8.75105800014353,
+      "top_5": [
+        {
+          "id": "5434",
+          "score": 0.8499554395675659,
+          "title": "Celui qui a peur part en voyage aux premières heures de la nuit, et celui qui part en voyage aux premières heures de la nuit arrive à bon port. Notez-bien que la marchandise d’Allah est précieuse, Notez bien que la marchandise d’Allah est le Paradis !",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "4813",
+          "score": 0.849071741104126,
+          "title": "On m'a présenté les actes de ma communauté, les bons comme les mauvais. J’ai constaté que l’une de leurs belles œuvres était le fait d’ôter du chemin les choses nuisibles et que l’une de leurs mauvaises œuvres était la glaire laissée dans la mosquée sans être enfouie.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "8309",
+          "score": 0.8482071757316589,
+          "title": "Prenez garde aux invocations de celui qui subit l’injustice, car elles montent au ciel comme si elles étaient des flammes !",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "10869",
+          "score": 0.8464739918708801,
+          "title": "Lorsque que l'un d’entre vous fait la prière, qu'il prie devant un obstacle, ne serait-ce qu'une flèche !",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "5948",
+          "score": 0.8456603288650513,
+          "title": "Cette façon de vous disperser dans les sentiers et les oueds ne vous est inspirée que par le diable !",
+          "winning_document": "semantic_first"
+        }
+      ],
+      "expected_documents": [
+        {
+          "id": "3276",
+          "rank": 6,
+          "score": 0.8452802896499634,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/3276",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: La foi comporte un peu plus de soixante ou soixante-dix branches. La meilleure d’entre elle est l’attestation qu’il n’y a aucune divinité digne d’être adorée en dehors d’Allah et la plus infime consiste à ôter ce qui est nuisible du chemin. La pudeur est également une branche de la foi.\n\nLes branches / ramifications de la foi\n\nAbû Hurayrah (qu’Allah l’agrée) relate que le Messager d’Allah (sur lui la paix et le salut) a dit : « La foi comporte un peu plus de soixante ou soixante-dix branches. La meilleure d’entre elle est l’attestation qu’il n’y a aucune divinité digne d’être adorée en dehors d’Allah et la plus infime consiste à ôter ce qui est nuisible du chemin. La pudeur est également une branche de la foi. »\n\nLa foi ne se résume pas à une seule caractéristique ou une seule branche. Elle est composée de plusieurs branches : un peu plus de soixante ou soixante-dix. La meilleure de ces branches est la parole qui atteste qu’il n’y a aucune divinité qui mérite l’adoration en dehors d’Allah et la plus infime consiste à ôter du chemin ce qui est nuisible pour les passants comme une pierre, une branche épineuse, ou autre. Être pudique est également une branche de la foi. Ainsi, les actes font partie de foi selon les gens de la tradition et du groupe (« Ahl as-sunnah wa-l-jamâ'ah ») ; et c'est la vérité qu'indiquent les textes et celle-ci en fait partie.",
+              "token_count": 397,
+              "retained_token_count": 397,
+              "truncated": false,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 83,
+                  "retained_tokens": 83,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 10,
+                  "retained_tokens": 10,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 120,
+                  "retained_tokens": 120,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 180,
+                  "retained_tokens": 180,
+                  "status": "retained"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "6468",
+          "rank": 213,
+          "score": 0.8274285197257996,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/6468",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: La foi comporte soixante-dix et quelques - ou soixante et quelques - branches. La meilleure d’entre elles est la parole : \" Il n’est de divinité [digne d'adoration] qu'Allah \", et la moindre  consiste à ôter ce qui est nuisible du chemin\n\nL'augmentation de la Foi et sa diminution\n\nLa foi a des niveaux, certains d'entre eux sont meilleurs que d'autres.\r\n\nLa foi est parole, acte et croyance.\r\n\nLa pudeur à l'égard d'Allah, Exalté soit-Il, implique qu'Il ne te voit pas là où Il t'a interdit d'être, et qu'Il ne te trouve pas absent là où Il t'a ordonné d'être.\r\n\nLa mention du nombre [des branches de la foi] ne signifie pas qu'elle y soit limitée. Cela indique plutôt la multitude des œuvres de celle-ci. En effet, les Arabes mentionnaient parfois un nombre pour une chose, sans pour autant  vouloir infirmer autre que lui.\n\nAboû Hourayrah (qu'Allah l'agrée) relate que le Messager d'Allah (qu'Allah le couvre d'éloges et le préserve) a dit : « La foi comporte soixante-dix et quelques - ou soixante et quelques - branches. La meilleure d’entre elles est la parole : \" Il n’est de divinité [digne d'adoration] qu'Allah \", et la moindre  consiste à ôter ce qui est nuisible du chemin, et la pudeur est une branche de la foi. »\n\nLe Prophète (qu'Allah le couvre d'éloges et le préserve) informe que la foi possède de nombreuses branches et caractéristiques qui englobent des œuvres, des croyances et des paroles.\r\n\r\nQue la plus haute et la meilleure des caractéristiques de la foi est de dire : \" Il n'est de divinité [digne d'adoration] qu'Allah \" en connaissant sa signification et en œuvrant selon ses implications, à savoir qu'Allah est le Seul et Unique Dieu qui soit digne d'adoration, Lui Seul, et sans qui ou quoi que ce soit d'autre.\r\n\r\nEt que la moindre des œuvres de la foi consiste à ôter ce qui nuit aux gens sur leurs chemins.\r\n\r\nEnsuite, il a informé (qu'Allah le couvre d'éloges et le préserve) que la pudeur fait partie des caractéristiques de la foi. C'est un comportement qui pousse à l'accomplissement de ce qui est beau et au délaissement de ce qui est laid.",
+              "token_count": 595,
+              "retained_token_count": 512,
+              "truncated": true,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 68,
+                  "retained_tokens": 68,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 11,
+                  "retained_tokens": 11,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 18,
+                  "retained_tokens": 18,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 11,
+                  "retained_tokens": 11,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 60,
+                  "retained_tokens": 60,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 65,
+                  "retained_tokens": 65,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 125,
+                  "retained_tokens": 125,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 233,
+                  "retained_tokens": 150,
+                  "status": "truncated"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "Ne pas apprendre la religion pour se vanter devant les savants ou se disputer",
+      "query_text": "query: Ne pas apprendre la religion pour se vanter devant les savants ou se disputer",
+      "query_tokens": 22,
+      "expected_ids": [
+        "65047"
+      ],
+      "top_1_hit": true,
+      "top_3_hit": true,
+      "latency_ms": 8.907355000019379,
+      "top_5": [
+        {
+          "id": "65047",
+          "score": 0.8652467727661133,
+          "title": "N'apprenez pas la science pour vous en pavaner auprès des savants, ni pour vous disputer avec les ignorants",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "5948",
+          "score": 0.8550783395767212,
+          "title": "Cette façon de vous disperser dans les sentiers et les oueds ne vous est inspirée que par le diable !",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "6985",
+          "score": 0.8531264662742615,
+          "title": "N’invoquez pas les uns contre les autres la malédiction d’Allah, ni Sa colère, ni l’Enfer !",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "5501",
+          "score": 0.8522964715957642,
+          "title": "Si vous ne pouvez faire autrement que de vous rassembler, donnez au passage son droit ! - Les Compagnons demandèrent : Quel est son droit ? - Il dit : Baisser le regard, s’abstenir de toute nuisance, répondre au salut, ordonner le convenable et interdire le blâmable.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "6384",
+          "score": 0.8522458672523499,
+          "title": "Les meilleurs de vos gouverneurs sont ceux que vous aimez et qui vous aiment, en faveur desquels vous invoquez Allah et qui L’invoquent en votre faveur. Et les pires sont ceux que vous haïssez et qui vous haïssent, que vous maudissez et qui vous maudissent.",
+          "winning_document": "semantic_first"
+        }
+      ],
+      "expected_documents": [
+        {
+          "id": "65047",
+          "rank": 1,
+          "score": 0.8652467727661133,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/65047",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: N'apprenez pas la science pour vous en pavaner auprès des savants, ni pour vous disputer avec les ignorants\n\nLes maladies du coeur\n\nLe blâme de la passion et des plaisirs\n\nMerit and Significance of Knowledge\n\nLa menace de l'Enfer à l'égard de quiconque apprend la science pour s'en pavaner, pour polémiquer ou pour se mettre en avant dans les assises, et pour toute affaire du même genre.\r\n\nL'importance de la sincérité de l'intention pour quiconque apprend la science et l'enseigne.\r\n\nL'intention est la base des œuvres et c'est en fonction d'elle que se fait la rétribution.\n\nJâbir ibn 'Abdillah (qu'Allah l'agrée, lui et son père) relate que le Prophète (qu’Allah le couvre d’éloges et le préserve) a dit : « N'apprenez pas la science pour vous en pavaner auprès des savants, ni pour vous disputer avec les ignorants, ni pour vous en servir afin de choisir la meilleure place dans les assises. Quiconque fait cela, alors le Feu ! Le Feu ! »\n\nLe Prophète (qu’Allah le couvre d’éloges et le préserve) a informé que quiconque recherche la science pour se pavaner, se vanter auprès des savants et montrer qu'il est un savant comme eux, ou pour prendre la parole et se disputer avec les simples d'esprit et les dépourvus d'intelligence, ou encore qui apprend afin de se mettre en avant dans les assises et d'y avoir la préséance sur autrui. Ainsi, quiconque fait cela mérite l'Enfer pour son ostentation et son absence de sincérité dans la recherche de la science pour Allah.",
+              "token_count": 414,
+              "retained_token_count": 414,
+              "truncated": false,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 28,
+                  "retained_tokens": 28,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 5,
+                  "retained_tokens": 5,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 11,
+                  "retained_tokens": 11,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 8,
+                  "retained_tokens": 8,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 52,
+                  "retained_tokens": 52,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 26,
+                  "retained_tokens": 26,
+                  "status": "retained"
+                },
+                {
+                  "section": "hints",
+                  "tokens": 26,
+                  "retained_tokens": 26,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 111,
+                  "retained_tokens": 111,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 143,
+                  "retained_tokens": 143,
+                  "status": "retained"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "query": "Allah accorde sa miséricorde à ceux qui sont miséricordieux",
+      "query_text": "query: Allah accorde sa miséricorde à ceux qui sont miséricordieux",
+      "query_tokens": 20,
+      "expected_ids": [
+        "6405"
+      ],
+      "top_1_hit": false,
+      "top_3_hit": false,
+      "latency_ms": 9.359485000004497,
+      "top_5": [
+        {
+          "id": "7185",
+          "score": 0.8846991658210754,
+          "title": "Ô Allah, fais miséricorde à ceux qui se rasent les cheveux ! - Ils demandèrent : Et ceux qui se les coupent, ô envoyé d’Allah ? - Il dit alors : Ô Allah, fais miséricorde à ceux qui se rasent les cheveux ! - Ils demandèrent : Et ceux qui se les coupent, ô envoyé d’Allah ? - Il dit à nouveau : Ô Allah, fais miséricorde à ceux qui se rasent les cheveux ! - Ils demandèrent : Et ceux qui se les coupent, ô envoyé d’Allah ? - Il répondit : Et à ceux qui se les coupent !",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "3556",
+          "score": 0.8836846351623535,
+          "title": "Quand Allah créa Adam (sur lui la paix et le salut), Il [lui] dit : \" Va saluer ce groupe - il s'agissait d'un groupe d'Anges assis - et écoute quelle sera leur réponse ! Ce sera ta salutation et celle de ta descendance. - Adam dit : \" Que le salut soit sur vous !\" Ils répondirent : \" Que le salut et la miséricorde d'Allah soient sur toi !\" Ils ajoutèrent donc : \" et la miséricorde d'Allah\".",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "3716",
+          "score": 0.8816519975662231,
+          "title": "Qu'Allah fasse miséricorde à un homme bienveillant lorsqu’il vend, conciliant lorsqu’il achète et lorsqu’il réclame son dû !",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "5022",
+          "score": 0.8807864189147949,
+          "title": "Ô Allah ! Voilà untel fils d’untel sous Ta protection et dans Ton voisinage. Préserve-le donc de l’épreuve de la tombe et du châtiment de l’Enfer. Certes, Tu es Digne de loyauté et de louanges. Ô Allah ! Pardonne-lui et fais-lui miséricorde, Tu es certes Celui qui pardonne et Le Très Miséricordieux.",
+          "winning_document": "semantic_first"
+        },
+        {
+          "id": "6334",
+          "score": 0.8763798475265503,
+          "title": "Le Paradis et l’Enfer ont polémiqué. Le Paradis a dit : \" Ce sont les faibles et les pauvres qui entrent en mon sein ! \" et l’Enfer a dit : \" Ce sont les tyrans et les orgueilleux qui entrent en mon sein ! \" Allah a alors dit à l’Enfer : \" Tu es Mon châtiment ! Par toi, Je Me venge de qui je veux ! \" Et Il a dit au Paradis : \" Tu es Ma miséricorde ! Par toi, Je fais miséricorde à qui Je veux ! \"",
+          "winning_document": "semantic_first"
+        }
+      ],
+      "expected_documents": [
+        {
+          "id": "6405",
+          "rank": 36,
+          "score": 0.8685683608055115,
+          "source_url": "https://hadeethenc.com/fr/browse/hadith/6405",
+          "documents": [
+            {
+              "kind": "semantic_first",
+              "search_text": "passage: C'est une miséricorde qu'Allah a placée dans le cœur de Ses serviteurs. Allah n'accorde Sa miséricorde qu'aux miséricordieux d'entre Ses serviteurs.\n\nLes caractères louables\n\nUsâmah ibn Zayd (qu'Allah l'agrée, lui et son père) dit : « On apporta au Messager d'Allah (sur lui la paix et le salut) le fils de sa fille dans un état d'agonie, les yeux du Messager d'Allah (sur lui la paix et le salut) s'emplirent alors de larmes. Sa'd (qu'Allah l'agréé) demanda : « Qu'est- ce donc, Ô Messager d'Allah ?! » Le Prophète (sur lui la paix et le salut) répondit : « C'est une miséricorde qu'Allah a placée dans le cœur de Ses serviteurs. Allah n'accorde Sa miséricorde qu'aux miséricordieux d'entre Ses serviteurs. »\n\nUsâmah ibn Zayd (qu'Allah l'agrée) surnommé le bien aimé, fils du bien-aimé du Prophète (sur lui la paix et le salut), évoqua que l'une des filles du Messager d'Allah (sur lui la paix et le salut) envoya un émissaire pour l'informer que son fils était à l'agonie, c'est à dire aux portes de la mort et qu'elle voulait qu'il soit présent. Quand l'émissaire vint au Prophète (sur lui la paix et le salut) et l'en informa, celui-ci lui répliqua : « Ordonne-lui de patienter et d'escompter la récompense auprès d'Allah ! C'est à Allah qu'appartient ce qu'Il a pris et ce qu'Il a donné. Toute chose auprès de Lui a un terme fixé ! » Le Prophète (sur lui la paix et le salut) ordonna à l'émissaire que sa fille avait envoyé, la mère de l'enfant, de lui transmettre ses paroles : « C'est à Allah qu'appartient ce qu'Il a pris » est une phrase immense, car si toute chose appartient à Allah et qu'Il te reprend ce qu'Il t'a donné, alors c'est Son bien, et s'Il te donne quelque chose, c'est aussi Son bien. Alors pourquoi se mettre en colère si Allah récupère ce qu'il ta donné et qui Lui appartient ? Par conséquent, si Allah nous prend une chose que l'on aime, nous devons dire : « Ceci appartient à Allah, Il peut récupérer ce qu'Il veut et Il peut donner ce qu'Il veut. » Ainsi, l'une des traditions prophétiques pour l'individu est de dire, lorsqu'un malheur le touche : « Nous sommes à Allah et c'est à Allah que nous retournerons », c'est-à-dire que nous appartenons à Allah qui peut faire de nous ce qu'Il veut, et de même pour les choses que l'on aime, s'Il les récupère c'est Son bien et c'est à Allah qu'appartient ce qu'Il a pris et ce qu'Il a donné. Donc, ce qu'Il t'a donné ne t'appartient pas, mais appartient à Allah; c'est [d'ailleurs] pourquoi, tu ne peux utiliser ce qu'Allah t'a donné que d'une manière conforme à ce qu'Il t'a permis. Cela prouve [aussi] que ce qu'Allah nous a donné, constitue bien notre propriété. La parole du Messager d'Allah (sur lui la paix et le salut) : « Toute chose a auprès de Lui un terme fixé ! », c'est-à-dire un terme bien déterminé. Si tu as la certitude en cela, tu seras absolument contenté. Cette dernière phrase signifie que l'individu ne peut modifier le destin qui a été prescrit, ni en l'avançant ni en le retardant comme Allah, Exalté soit-Il, a dit : {(A chaque communauté un terme. Quand leur terme arrive, ils ne peuvent ni le retarder d’une heure, ni l’avancer.)} [Coran : 10/49]. Donc si la chose destinée ne peut être avancée ni retardée, à quoi bon de s'angoisser et s'énerver ? En effet, le fait que tu t'angoisses ou que tu t'énerves ne changera rien au destin. Ensuite, l'émissaire prévint la fille du Prophète (sur lui la paix et le salut) des propos de son père, mais celle-ci insista pour qu'il vienne à sa rencontre en le renvoyant de nouveau auprès de lui. Le Prophète (sur lui la paix et le salut) et un groupe de ses Compagnons se levèrent et arrivèrent auprès de sa fille. L'enfant qui s'agitait, c'est-à-dire se convulsait, fut porté au Prophète (sur lui la paix et le salut) dont les yeux s’emplirent de larmes qui se mirent à couler. Sa'd Ibn 'Ubâdah (qu'Allah l'agréé), le chef des Khazraj, qui était en compagnie du Prophète (sur lui la paix et le salut) demanda alors : « Qu'est- ce donc ? » Il pensait que le Messager d'Allah (sur lui la paix et le salut) pleurait de colère. Le Prophète (sur lui la paix et le salut) répondit : « C'est une miséricorde qu'Allah a placée dans le cœur de Ses serviteurs. », c'est-à-dire, j'ai pleuré par miséricorde envers cet enfant et non par colère envers le destin. Puis, le Prophète (sur lui la paix et le salut) dit : « Allah n'accorde Sa miséricorde qu'aux miséricordieux d'entre Ses serviteurs. » On a donc la preuve qu'il est autorisé de pleurer par miséricorde envers une personne atteinte d'un malheur.",
+              "token_count": 1391,
+              "retained_token_count": 512,
+              "truncated": true,
+              "sections": [
+                {
+                  "section": "title",
+                  "tokens": 44,
+                  "retained_tokens": 44,
+                  "status": "retained"
+                },
+                {
+                  "section": "categories",
+                  "tokens": 6,
+                  "retained_tokens": 6,
+                  "status": "retained"
+                },
+                {
+                  "section": "hadith",
+                  "tokens": 175,
+                  "retained_tokens": 175,
+                  "status": "retained"
+                },
+                {
+                  "section": "explanation",
+                  "tokens": 1162,
+                  "retained_tokens": 283,
+                  "status": "truncated"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "embedding_source": "cached_experiment",
+  "embedding_preparation_ms": 14.837295000006634,
+  "document_tokenizer": "intfloat/multilingual-e5-small",
+  "document_tokenizer_revision": "614241f622f53c4eeff9890bdc4f31cfecc418b3"
+}

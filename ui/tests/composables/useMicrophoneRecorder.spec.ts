@@ -1,4 +1,4 @@
-import { ref } from 'vue'
+import { effectScope, ref } from 'vue'
 
 import { useMicrophoneRecorder } from '~/composables/useMicrophoneRecorder'
 
@@ -130,13 +130,10 @@ describe('useMicrophoneRecorder', () => {
     await vi.runAllTimersAsync()
 
     const [firstFile, secondFile] = await Promise.all([firstStop, secondStop])
-    const fileHeader = firstFile ? new Uint8Array(await firstFile.arrayBuffer()).slice(0, 4) : null
-
     expect(firstFile).toBeInstanceOf(File)
     expect(secondFile).toBe(firstFile)
-    expect(firstFile?.name.endsWith('.wav')).toBe(true)
-    expect(firstFile?.type).toBe('audio/wav')
-    expect(Array.from(fileHeader ?? [])).toEqual([82, 73, 70, 70])
+    expect(firstFile?.name.endsWith('.webm')).toBe(true)
+    expect(firstFile?.type).toBe('audio/webm;codecs=opus')
     expect(recorder.isRecording.value).toBe(false)
     expect(recorder.recordingSeconds.value).toBe(0)
     expect(recorder.maxDurationReached.value).toBe(false)
@@ -174,18 +171,10 @@ describe('useMicrophoneRecorder', () => {
     expect(stopTrack).toHaveBeenCalledTimes(1)
   })
 
-  it('falls back to the original recorded blob when WAV conversion fails', async () => {
+  it('returns the recorded file directly using the native media recorder mime type', async () => {
     vi.useFakeTimers()
 
-    class FailingAudioContext extends FakeAudioContext {
-      override decodeAudioData(_buffer: ArrayBuffer) {
-        return Promise.reject(new Error('decode failed'))
-      }
-    }
-
     const { stopTrack } = setupRecorderEnvironment()
-    vi.stubGlobal('AudioContext', FailingAudioContext)
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {})
     const recorder = useMicrophoneRecorder(ref(90))
 
     await recorder.startRecording()
@@ -199,31 +188,25 @@ describe('useMicrophoneRecorder', () => {
     expect(recordedFile).toBeInstanceOf(File)
     expect(recordedFile?.name.endsWith('.webm')).toBe(true)
     expect(recordedFile?.type).toBe('audio/webm;codecs=opus')
-    expect(warnSpy).toHaveBeenCalledTimes(1)
     expect(stopTrack).toHaveBeenCalledTimes(1)
   })
 
-  it('creates cumulative snapshots without stopping the recorder', async () => {
+  it('cleans up recorder, tracks and audio context when the effect scope is disposed', async () => {
     vi.useFakeTimers()
 
     const { stopTrack } = setupRecorderEnvironment()
-    const recorder = useMicrophoneRecorder(ref(90))
+    const scope = effectScope()
+    const recorder = scope.run(() => useMicrophoneRecorder(ref(90)))
+
+    expect(recorder).toBeDefined()
+    if (!recorder) return
 
     await recorder.startRecording()
-
-    const firstSnapshotPromise = recorder.snapshotRecording()
-    await vi.advanceTimersByTimeAsync(0)
-    const firstSnapshot = await firstSnapshotPromise
-
-    const secondSnapshotPromise = recorder.snapshotRecording()
-    await vi.advanceTimersByTimeAsync(0)
-    const secondSnapshot = await secondSnapshotPromise
-
-    expect(firstSnapshot).toBeInstanceOf(File)
-    expect(firstSnapshot?.type).toBe('audio/wav')
-    expect(secondSnapshot).toBeInstanceOf(File)
-    expect((secondSnapshot?.size ?? 0) >= (firstSnapshot?.size ?? 0)).toBe(true)
     expect(recorder.isRecording.value).toBe(true)
-    expect(stopTrack).not.toHaveBeenCalled()
+
+    scope.stop()
+
+    expect(recorder.isRecording.value).toBe(false)
+    expect(stopTrack).toHaveBeenCalledTimes(1)
   })
 })

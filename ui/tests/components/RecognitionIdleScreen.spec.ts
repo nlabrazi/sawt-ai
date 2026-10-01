@@ -12,7 +12,7 @@ describe('RecognitionIdleScreen', () => {
     expect(wrapper.find('.lucide-flask-conical').exists()).toBe(true)
   })
 
-  it('explains the Quran recognition purpose before the primary action', () => {
+  it('keeps the microphone accessible without repeating instructions', () => {
     const wrapper = mount(RecognitionIdleScreen, {
       props: {
         detectImam: true,
@@ -20,14 +20,11 @@ describe('RecognitionIdleScreen', () => {
     })
 
     expect(wrapper.text()).toContain('Récitez un passage du Coran')
-    expect(wrapper.text()).toContain(
-      'Sawt AI vous propose la sourate et les versets correspondants.',
-    )
-    expect(wrapper.text()).toContain(
-      'Appuyez pour commencer, puis une seconde fois pour arrêter et analyser.',
-    )
+    expect(wrapper.find('.main-subtitle').exists()).toBe(false)
+    expect(wrapper.find('.recognition-action-hint').exists()).toBe(false)
     expect(wrapper.text()).toContain('Importer un fichier audio')
-    expect(wrapper.get('.button-label').text()).toBe('Commencer')
+    expect(wrapper.find('.button-label').exists()).toBe(false)
+    expect(wrapper.get('.action-button').attributes('aria-label')).toBe('Commencer la récitation')
     expect(wrapper.find('.record-action').exists()).toBe(false)
   })
 
@@ -71,7 +68,7 @@ describe('RecognitionIdleScreen', () => {
     expect(progress.attributes('aria-valuemax')).toBe('90')
     expect(progressFill.attributes('style')).toContain('width: 33.3333')
     expect(wrapper.get('.button-label').text()).toBe('Arrêter et analyser')
-    expect(wrapper.text()).toContain('Appuyez à nouveau pour arrêter et analyser.')
+    expect(wrapper.find('.recognition-action-hint').exists()).toBe(false)
     expect(wrapper.text()).not.toContain('automatiquement dès qu’un passage est reconnu')
     expect(wrapper.find('.secondary-actions').exists()).toBe(false)
   })
@@ -98,7 +95,7 @@ describe('RecognitionIdleScreen', () => {
     })
 
     expect(wrapper.text()).toContain('Préparation de l’audio')
-    expect(wrapper.text()).toContain('Votre enregistrement est terminé')
+    expect(wrapper.get('#recognition-title').attributes('aria-live')).toBe('polite')
     expect(wrapper.get('.action-button').attributes('disabled')).toBeDefined()
     expect(wrapper.get('.action-button').attributes('aria-busy')).toBe('true')
     expect(wrapper.find('.secondary-actions').exists()).toBe(false)

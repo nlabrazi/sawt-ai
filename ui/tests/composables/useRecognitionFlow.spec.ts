@@ -24,10 +24,6 @@ async function setupRecognitionFlow(options: { deferStop?: boolean } = {}) {
     isFinalizingRecording.value = false
     return new File(['audio'], 'recording.wav', { type: 'audio/wav' })
   })
-  const snapshotRecording = vi.fn(async () => {
-    return new File(['snapshot'], 'snapshot.wav', { type: 'audio/wav' })
-  })
-  const probeAudio = vi.fn()
   const recognizeAudio = vi.fn()
 
   vi.doMock('~/composables/useApiHealth', () => ({
@@ -46,7 +42,6 @@ async function setupRecognitionFlow(options: { deferStop?: boolean } = {}) {
       error: ref(null),
       result: ref(null),
       recognizeAudio,
-      probeAudio,
       reset: vi.fn(),
     }),
   }))
@@ -61,7 +56,6 @@ async function setupRecognitionFlow(options: { deferStop?: boolean } = {}) {
       audioLevel: ref(0),
       startRecording,
       stopRecording,
-      snapshotRecording,
       cleanup: vi.fn(),
     }),
   }))
@@ -78,8 +72,6 @@ async function setupRecognitionFlow(options: { deferStop?: boolean } = {}) {
     maxDurationReached,
     startRecording,
     stopRecording,
-    snapshotRecording,
-    probeAudio,
     recognizeAudio,
     releaseStop,
   }
@@ -96,14 +88,11 @@ describe('useRecognitionFlow microphone recording', () => {
 
   it('waits for a second click before stopping and analyzing the complete recording', async () => {
     vi.useFakeTimers()
-    const { flow, isRecording, stopRecording, snapshotRecording, probeAudio, recognizeAudio } =
-      await setupRecognitionFlow()
+    const { flow, isRecording, stopRecording, recognizeAudio } = await setupRecognitionFlow()
 
     await flow.onMicroClick()
     await vi.advanceTimersByTimeAsync(5_000)
 
-    expect(snapshotRecording).not.toHaveBeenCalled()
-    expect(probeAudio).not.toHaveBeenCalled()
     expect(stopRecording).not.toHaveBeenCalled()
     expect(recognizeAudio).not.toHaveBeenCalled()
     expect(isRecording.value).toBe(true)
@@ -135,23 +124,50 @@ describe('useRecognitionFlow microphone recording', () => {
   })
 
   it('stops and analyzes automatically only when the maximum duration is reached', async () => {
-    const {
-      flow,
-      maxDurationReached,
-      stopRecording,
-      snapshotRecording,
-      probeAudio,
-      recognizeAudio,
-    } = await setupRecognitionFlow()
+    const { flow, maxDurationReached, stopRecording, recognizeAudio } = await setupRecognitionFlow()
 
     await flow.onMicroClick()
     maxDurationReached.value = true
     await nextTick()
     await nextTick()
 
-    expect(snapshotRecording).not.toHaveBeenCalled()
-    expect(probeAudio).not.toHaveBeenCalled()
     expect(stopRecording).toHaveBeenCalledTimes(1)
     expect(recognizeAudio).toHaveBeenCalledWith(expect.any(File), false)
+  })
+
+  it('sets an upload error when audio duration reading times out', async () => {
+    vi.useFakeTimers()
+    const { flow } = await setupRecognitionFlow()
+    const file = new File(['corrupt-data'], 'corrupt.mp3', { type: 'audio/mpeg' })
+
+    const submitPromise = flow.submitAudio(file, true)
+    await vi.advanceTimersByTimeAsync(4500)
+    await submitPromise
+
+    expect(flow.uploadError.value).toBe('Impossible de lire ce fichier audio.')
+  })
+  it('does not submit audio whose metadata arrives after the flow was reset', async () => {
+    const { flow, recognizeAudio } = await setupRecognitionFlow()
+    const audio = document.createElement('audio')
+    Object.defineProperty(audio, 'duration', { value: 1, configurable: true })
+    const createElement = vi.spyOn(document, 'createElement').mockReturnValueOnce(audio)
+    const submit = flow.submitAudio(new File(['audio'], 'sample.wav', { type: 'audio/wav' }))
+    flow.resetApp()
+    audio.dispatchEvent(new Event('loadedmetadata'))
+    await submit
+    expect(recognizeAudio).not.toHaveBeenCalled()
+    expect(flow.uploadError.value).toBeNull()
+    createElement.mockRestore()
+  })
+
+  it('does not expose a metadata timeout after the flow was reset', async () => {
+    vi.useFakeTimers()
+    const { flow, recognizeAudio } = await setupRecognitionFlow()
+    const submit = flow.submitAudio(new File(['audio'], 'sample.wav', { type: 'audio/wav' }))
+    flow.resetApp()
+    await vi.advanceTimersByTimeAsync(4500)
+    await submit
+    expect(flow.uploadError.value).toBeNull()
+    expect(recognizeAudio).not.toHaveBeenCalled()
   })
 })

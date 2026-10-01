@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
@@ -19,6 +20,7 @@ if TYPE_CHECKING:
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 WHISPER_MODEL_NAME = os.getenv("WHISPER_MODEL_NAME", "turbo")
+DEFAULT_WHISPER_CPU_THREADS = 4
 QURAN_VERSETS_PATH = Path(
     os.getenv("QURAN_VERSETS_PATH", str(BASE_DIR / "assets" / "quran_versets.json"))
 )
@@ -28,6 +30,14 @@ MAX_VERSE_DETECTION_WORD_COUNT = 64
 whisper_model: WhisperModel | None = None
 quran_versets: list[dict[str, Any]] | None = None
 quran_verse_candidates: tuple["QuranVerseCandidate", ...] | None = None
+quran_candidate_texts: tuple[str, ...] | None = None
+quran_text_occurrences: Counter[str] | None = None
+quran_single_verse_candidates_by_sourate: (
+    dict[int, tuple[tuple[int, "QuranVerseCandidate"], ...]] | None
+) = None
+quran_candidates_by_range: (
+    dict[tuple[int, int, int], tuple[int, "QuranVerseCandidate"]] | None
+) = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -84,10 +94,33 @@ def _build_quran_verse_candidates(
 
 
 def _ensure_quran_verse_candidates_loaded() -> tuple[QuranVerseCandidate, ...]:
-    global quran_verse_candidates
+    global quran_verse_candidates, quran_candidate_texts, quran_text_occurrences
+    global quran_single_verse_candidates_by_sourate, quran_candidates_by_range
 
     if quran_verse_candidates is None:
-        quran_verse_candidates = _build_quran_verse_candidates(get_quran_versets())
+        candidates = _build_quran_verse_candidates(get_quran_versets())
+        quran_verse_candidates = candidates
+        quran_candidate_texts = tuple(candidate.normalized_text for candidate in candidates)
+
+        single_by_sourate: dict[int, list[tuple[int, QuranVerseCandidate]]] = {}
+        all_single_verse_texts: list[str] = []
+        candidates_by_range: dict[tuple[int, int, int], tuple[int, QuranVerseCandidate]] = {}
+
+        for candidate_index, candidate in enumerate(candidates):
+            candidates_by_range[
+                (candidate.sourate_id, candidate.start_verse, candidate.end_verse)
+            ] = (candidate_index, candidate)
+            if candidate.start_verse == candidate.end_verse:
+                all_single_verse_texts.append(candidate.normalized_text)
+                single_by_sourate.setdefault(candidate.sourate_id, []).append(
+                    (candidate_index, candidate)
+                )
+
+        quran_text_occurrences = Counter(all_single_verse_texts)
+        quran_single_verse_candidates_by_sourate = {
+            sourate_id: tuple(items) for sourate_id, items in single_by_sourate.items()
+        }
+        quran_candidates_by_range = candidates_by_range
 
     return quran_verse_candidates
 
@@ -98,10 +131,14 @@ def load_all_models() -> None:
     if whisper_model is None:
         from faster_whisper import WhisperModel
 
+        whisper_cpu_threads = int(
+            os.getenv("WHISPER_CPU_THREADS", str(DEFAULT_WHISPER_CPU_THREADS))
+        )
         whisper_model = WhisperModel(
             WHISPER_MODEL_NAME,
             device="cpu",
             compute_type="int8",
+            cpu_threads=whisper_cpu_threads,
         )
 
     load_quran_catalog()
@@ -131,8 +168,56 @@ def get_quran_versets() -> list[dict[str, Any]]:
     return quran_versets
 
 
+def is_catalog_candidates(candidates: Any) -> bool:
+    return (
+        quran_versets is not None
+        and quran_verse_candidates is not None
+        and candidates is quran_verse_candidates
+    )
+
+
 def get_quran_verse_candidates() -> tuple[QuranVerseCandidate, ...]:
     if quran_versets is None:
         raise RuntimeError("Quran verses are not loaded.")
 
     return _ensure_quran_verse_candidates_loaded()
+
+
+def get_quran_candidate_texts() -> tuple[str, ...]:
+    if quran_versets is None:
+        raise RuntimeError("Quran verses are not loaded.")
+
+    _ensure_quran_verse_candidates_loaded()
+    assert quran_candidate_texts is not None
+    return quran_candidate_texts
+
+
+def get_quran_text_occurrences() -> Counter[str]:
+    if quran_versets is None:
+        raise RuntimeError("Quran verses are not loaded.")
+
+    _ensure_quran_verse_candidates_loaded()
+    assert quran_text_occurrences is not None
+    return quran_text_occurrences
+
+
+def get_quran_single_verse_candidates_by_sourate(
+    sourate_id: int,
+) -> tuple[tuple[int, QuranVerseCandidate], ...]:
+    if quran_versets is None:
+        raise RuntimeError("Quran verses are not loaded.")
+
+    _ensure_quran_verse_candidates_loaded()
+    assert quran_single_verse_candidates_by_sourate is not None
+    return quran_single_verse_candidates_by_sourate.get(sourate_id, ())
+
+
+def get_quran_candidates_by_range() -> dict[
+    tuple[int, int, int], tuple[int, QuranVerseCandidate]
+]:
+    if quran_versets is None:
+        raise RuntimeError("Quran verses are not loaded.")
+
+    _ensure_quran_verse_candidates_loaded()
+    assert quran_candidates_by_range is not None
+    return quran_candidates_by_range

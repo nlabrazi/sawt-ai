@@ -1,0 +1,683 @@
+{
+  "label_status": "provisional_candidates_not_human_validated",
+  "snapshot_sha256": "0991a4f74ba6884361b26cc42fb2a6f2f7c4e106997ae8e1eb709b773ddd3ce5",
+  "changed_passages": 434,
+  "affected_ids": [
+    "10016",
+    "10019",
+    "10039",
+    "10103",
+    "10118",
+    "10119",
+    "10416",
+    "10420",
+    "10543",
+    "10548",
+    "10551",
+    "10552",
+    "10561",
+    "10567",
+    "10570",
+    "10618",
+    "10642",
+    "10648",
+    "10838",
+    "10877",
+    "10890",
+    "10891",
+    "10901",
+    "10905",
+    "10917",
+    "10918",
+    "10957",
+    "10965",
+    "10988",
+    "10992",
+    "11159",
+    "11171",
+    "11179",
+    "11188",
+    "11207",
+    "11208",
+    "11214",
+    "11218",
+    "11245",
+    "11248",
+    "11264",
+    "11290",
+    "11300",
+    "2934",
+    "2954",
+    "2957",
+    "2968",
+    "2974",
+    "2977",
+    "2979",
+    "3008",
+    "3016",
+    "3019",
+    "3035",
+    "3052",
+    "3059",
+    "3073",
+    "3081",
+    "3084",
+    "3104",
+    "3120",
+    "3148",
+    "3155",
+    "3165",
+    "3262",
+    "3306",
+    "3313",
+    "3325",
+    "3327",
+    "3331",
+    "3347",
+    "3390",
+    "3436",
+    "3444",
+    "3448",
+    "3450",
+    "3461",
+    "3462",
+    "3496",
+    "3502",
+    "3506",
+    "3516",
+    "3530",
+    "3565",
+    "3598",
+    "3628",
+    "3728",
+    "3743",
+    "3853",
+    "3876",
+    "3885",
+    "3911",
+    "3917",
+    "4181",
+    "4219",
+    "4227",
+    "4234",
+    "4245",
+    "4248",
+    "4295",
+    "4313",
+    "4316",
+    "4536",
+    "4537",
+    "4546",
+    "4560",
+    "4704",
+    "4723",
+    "4801",
+    "4820",
+    "4955",
+    "4967",
+    "4971",
+    "5026",
+    "5036",
+    "5205",
+    "5206",
+    "5213",
+    "5323",
+    "5377",
+    "5396",
+    "5456",
+    "5649",
+    "5653",
+    "5771",
+    "58062",
+    "58106",
+    "58117",
+    "58133",
+    "58138",
+    "58154",
+    "58156",
+    "58158",
+    "58164",
+    "58191",
+    "58197",
+    "58217",
+    "58226",
+    "58266",
+    "5833",
+    "5854",
+    "5864",
+    "5865",
+    "5879",
+    "5927",
+    "5930",
+    "5933",
+    "5949",
+    "5954",
+    "6033",
+    "6034",
+    "6045",
+    "6047",
+    "6072",
+    "6073",
+    "6080",
+    "6083",
+    "6084",
+    "6163",
+    "6187",
+    "6204",
+    "6269",
+    "6326",
+    "6327",
+    "6328",
+    "6335",
+    "6366",
+    "6381",
+    "6406",
+    "64598",
+    "64600",
+    "64624",
+    "64650",
+    "64653",
+    "64672",
+    "65000",
+    "65014",
+    "65045",
+    "65049",
+    "65062",
+    "65069",
+    "65073",
+    "65074",
+    "65097",
+    "65124",
+    "6612",
+    "66511",
+    "66512",
+    "66513",
+    "66516",
+    "66537",
+    "6973",
+    "7188",
+    "8272",
+    "8281",
+    "8284",
+    "8285",
+    "8296",
+    "8299",
+    "8300",
+    "8301",
+    "8317",
+    "8346",
+    "8370",
+    "8409",
+    "8411",
+    "8414",
+    "8869",
+    "8871",
+    "8876",
+    "8910",
+    "8925",
+    "8947",
+    "8952",
+    "8953",
+    "8956"
+  ],
+  "text_preservation_verified": true,
+  "comparison": {
+    "multi": {
+      "top_1_accuracy": 0.7,
+      "top_3_accuracy": 0.95,
+      "mean_latency_ms": 25.889263649969507,
+      "documents_sha256": "dbcbc905c6e296e7fae87f2f368970040328f1c5faff273026593fc20173ad84",
+      "truncation": {
+        "max_tokens": 512,
+        "truncated_documents": 0,
+        "lost_sections": {},
+        "partially_truncated_sections": {}
+      }
+    },
+    "multi_context": {
+      "top_1_accuracy": 0.85,
+      "top_3_accuracy": 0.95,
+      "mean_latency_ms": 24.608933800118393,
+      "documents_sha256": "ed0cafa108ebe32839009074b9b3c7a225c78fc06165a2707b71c61d09772cf8",
+      "truncation": {
+        "max_tokens": 512,
+        "truncated_documents": 0,
+        "lost_sections": {},
+        "partially_truncated_sections": {}
+      }
+    }
+  },
+  "coverage": {
+    "records": 1790,
+    "french_crown_matches": [],
+    "arabic_crown_matches": [],
+    "conclusion": "Requested parents/Quran/crown narration not located in this snapshot; no conclusion about all external sources or authenticity."
+  },
+  "probes_unlabelled": [
+    {
+      "query": "la couronne",
+      "before": [
+        {
+          "id": "3413",
+          "score": 0.8243176937103271,
+          "title": "(« Al-Kursî ») est, comparé au trône, tel un anneau de fer jeté dans une terre déserte.",
+          "winning_document": "title_categories",
+          "search_text": "passage: (« Al-Kursî ») est, comparé au trône, tel un anneau de fer jeté dans une terre déserte.\n\nL'unicité de la Seigneurie"
+        },
+        {
+          "id": "58226",
+          "score": 0.8241369724273682,
+          "title": "Nous n’utilisons pas pour notre œuvre celui qui la veut [c’est-à-dire : Nous ne confions pas le commandement à celui qui le demande]. Toutefois, toi - Ô Abâ Mûsâ - va au Yémen ! ou, toi - Ô 'Abdallah ibn Qays - va au Yémen !",
+          "winning_document": "hadith_explanation:3",
+          "search_text": "passage:  »"
+        },
+        {
+          "id": "4181",
+          "score": 0.8238826990127563,
+          "title": "Celui qui met à disposition un cheval dans le sentier d’Allah, parce qu’il a foi en Allah et croit en Sa promesse, trouvera dans sa balance, au Jour de la Résurrection, la nourriture de son cheval ainsi que sa boisson, son urine et son crottin.",
+          "winning_document": "hadith_explanation:2",
+          "search_text": "passage: . » Hadith rapporté par al-Bukhârî et Muslim."
+        },
+        {
+          "id": "8414",
+          "score": 0.8229209184646606,
+          "title": "Un homme a dit : \"Je vais certes faire une aumône ! \" Il sortit avec son aumône et en fit don à un voleur. Au matin, les gens disaient : \" On a fait une aumône à un voleur ! \"",
+          "winning_document": "hadith_explanation:3",
+          "search_text": "passage:  donné."
+        },
+        {
+          "id": "3911",
+          "score": 0.8227447867393494,
+          "title": "Il n’est pas un musulman qui plante un arbre sans que tout ce qui en est mangé, volé ou prélevé ne soit considéré comme une aumône de sa part.",
+          "winning_document": "hadith_explanation:2",
+          "search_text": "passage:  c’est le seul qui bénéficie de la récompense de l’aumône dans cette vie d’ici-bas et dans l’au-delà."
+        }
+      ],
+      "before_tracked_ranks": {
+        "4181": 3,
+        "58226": 2
+      },
+      "after": [
+        {
+          "id": "3413",
+          "score": 0.8243176937103271,
+          "title": "(« Al-Kursî ») est, comparé au trône, tel un anneau de fer jeté dans une terre déserte.",
+          "winning_document": "title_categories",
+          "search_text": "passage: (« Al-Kursî ») est, comparé au trône, tel un anneau de fer jeté dans une terre déserte.\n\nL'unicité de la Seigneurie"
+        },
+        {
+          "id": "3601",
+          "score": 0.8202300071716309,
+          "title": "Allah m’a ordonné de te réciter la sourate : « Al-Bayyinah » (la Preuve Évidente).",
+          "winning_document": "title_categories",
+          "search_text": "passage: Allah m’a ordonné de te réciter la sourate : « Al-Bayyinah » (la Preuve Évidente).\n\nDes mérites des compagnons (qu'Allah les agrée)"
+        },
+        {
+          "id": "4568",
+          "score": 0.8198797702789307,
+          "title": "Chaque jour où le soleil se lève, la personne doit s’acquitter d’une aumône",
+          "winning_document": "title_categories",
+          "search_text": "passage: Chaque jour où le soleil se lève, la personne doit s’acquitter d’une aumône\n\nLe mérite de l'Islam et ses qualités"
+        },
+        {
+          "id": "66527",
+          "score": 0.8198797702789307,
+          "title": "Chaque jour où le soleil se lève, la personne doit s’acquitter d’une aumône",
+          "winning_document": "title_categories",
+          "search_text": "passage: Chaque jour où le soleil se lève, la personne doit s’acquitter d’une aumône\n\nLe mérite de l'Islam et ses qualités"
+        },
+        {
+          "id": "58185",
+          "score": 0.8185311555862427,
+          "title": "La meilleure aumône est celle qui laisse de la richesse après elle, et la main supérieure (celle qui donne) est meilleure que la main inférieure (celle qui reçoit). Et commence par ceux dont tu as la charge !",
+          "winning_document": "title_categories",
+          "search_text": "passage: La meilleure aumône est celle qui laisse de la richesse après elle, et la main supérieure (celle qui donne) est meilleure que la main inférieure (celle qui reçoit). Et commence par ceux dont tu as la charge !\n\nL'aumône surérogatoire"
+        }
+      ],
+      "after_tracked_ranks": {
+        "4181": 196,
+        "58226": 1576
+      }
+    },
+    {
+      "query": "les parents reçoivent une couronne de lumière parce que leur enfant a appris et pratiqué le Coran",
+      "before": [
+        {
+          "id": "65058",
+          "score": 0.8418413400650024,
+          "title": "ils apprenaient dix versets du Messager d'Allah (qu’Allah le couvre d’éloges et le préserve) et ne passaient pas aux dix versets suivants avant d'en avoir appris la science qu'ils contiennent et comment la mettre en pratique",
+          "winning_document": "hints",
+          "search_text": "passage: Le mérite des Compagnons (qu'Allah les agrée) et leur assiduité à l'apprentissage du Coran.\r\n\nL'apprentissage du Coran se fait par l'acquisition de la science qu'il contient et sa mise en pratique, pas uniquement par sa lecture et sa mémorisation.\r\n\nLa science précède la parole et l'acte."
+        },
+        {
+          "id": "11188",
+          "score": 0.8368909955024719,
+          "title": "Ibrâhîm est mon fils et il est mort alors qu’il tétait encore ! Il a deux nourrices qui parachèvent son allaitement au Paradis.",
+          "winning_document": "hadith_explanation:2",
+          "search_text": "passage:  deux années, qui correspondent à la période complète de l’allaitement, comme le stipule le Coran. C’est un honneur qui lui est accordé, ainsi qu'à son père."
+        },
+        {
+          "id": "4181",
+          "score": 0.8359167575836182,
+          "title": "Celui qui met à disposition un cheval dans le sentier d’Allah, parce qu’il a foi en Allah et croit en Sa promesse, trouvera dans sa balance, au Jour de la Résurrection, la nourriture de son cheval ainsi que sa boisson, son urine et son crottin.",
+          "winning_document": "hadith_explanation:2",
+          "search_text": "passage: . » Hadith rapporté par al-Bukhârî et Muslim."
+        },
+        {
+          "id": "5913",
+          "score": 0.8355714082717896,
+          "title": "Le meilleur d'entre vous est celui qui a appris le Coran et l'a enseigné.",
+          "winning_document": "title_categories",
+          "search_text": "passage: Le meilleur d'entre vous est celui qui a appris le Coran et l'a enseigné.\n\nLe mérite de la considération du Coran"
+        },
+        {
+          "id": "5361",
+          "score": 0.833004891872406,
+          "title": "L’agrément d’Allah passe par l’agrément des parents, et Sa colère passe par la colère des parents.",
+          "winning_document": "title_categories",
+          "search_text": "passage: L’agrément d’Allah passe par l’agrément des parents, et Sa colère passe par la colère des parents.\n\nLes mérites de la piété filiale\n\nLes caractères louables"
+        }
+      ],
+      "before_tracked_ranks": {
+        "4181": 3,
+        "58226": 44
+      },
+      "after": [
+        {
+          "id": "65058",
+          "score": 0.8418413400650024,
+          "title": "ils apprenaient dix versets du Messager d'Allah (qu’Allah le couvre d’éloges et le préserve) et ne passaient pas aux dix versets suivants avant d'en avoir appris la science qu'ils contiennent et comment la mettre en pratique",
+          "winning_document": "hints",
+          "search_text": "passage: Le mérite des Compagnons (qu'Allah les agrée) et leur assiduité à l'apprentissage du Coran.\r\n\nL'apprentissage du Coran se fait par l'acquisition de la science qu'il contient et sa mise en pratique, pas uniquement par sa lecture et sa mémorisation.\r\n\nLa science précède la parole et l'acte."
+        },
+        {
+          "id": "5913",
+          "score": 0.8355714082717896,
+          "title": "Le meilleur d'entre vous est celui qui a appris le Coran et l'a enseigné.",
+          "winning_document": "title_categories",
+          "search_text": "passage: Le meilleur d'entre vous est celui qui a appris le Coran et l'a enseigné.\n\nLe mérite de la considération du Coran"
+        },
+        {
+          "id": "5361",
+          "score": 0.833004891872406,
+          "title": "L’agrément d’Allah passe par l’agrément des parents, et Sa colère passe par la colère des parents.",
+          "winning_document": "title_categories",
+          "search_text": "passage: L’agrément d’Allah passe par l’agrément des parents, et Sa colère passe par la colère des parents.\n\nLes mérites de la piété filiale\n\nLes caractères louables"
+        },
+        {
+          "id": "6212",
+          "score": 0.8304486274719238,
+          "title": "Il t’a été accordé l’une des flûtes de la famille de Dâwud !",
+          "winning_document": "title_categories",
+          "search_text": "passage: Il t’a été accordé l’une des flûtes de la famille de Dâwud !\n\nLe mérite de la considération du Coran\n\nLe mérite des compagnons (qu'Allah les agrée)"
+        },
+        {
+          "id": "5372",
+          "score": 0.8302068114280701,
+          "title": "Celui qui souhaite que sa subsistance lui soit étendue et que le terme de son existence lui soit repoussé, qu'il entretienne ses liens de parenté.",
+          "winning_document": "hints",
+          "search_text": "passage: La parenté désigne les proches parents du côté du père et de la mère. Et plus quelqu'un est proche, plus il est en droit que les liens de parenté soient entretenus.\r\n\nLa récompense est en fonction même de l'œuvre. Ainsi donc, quiconque entretient les liens de parenté par la bonté et la bienfaisance,  Allah entretient sa vie et sa subsistance.\r\n\nLe lien de parenté est une cause d'étendue de la subsistance et de sa largesse ; c'est aussi une cause de prolongation de la vie même si le terme de vie et la subsistance sont déjà déterminés. En effet, cela peut se manifester à travers une bénédiction dans la subsistance et la vie de sorte que l'individu accomplit durant cette dernière beaucoup plus et de manière plus bénéfique que ce que quelqu'un d'autre accomplirait. Il a aussi été dit qu'il s'agit de l'augmentation de la subsistance et de la vie, au sens réel du terme. Et Allah sait mieux."
+        }
+      ],
+      "after_tracked_ranks": {
+        "4181": 236,
+        "58226": 807
+      }
+    },
+    {
+      "query": "la colère",
+      "before": [
+        {
+          "id": "4709",
+          "score": 0.8401083946228027,
+          "title": "Ne te mets pas colère !",
+          "winning_document": "hints",
+          "search_text": "passage: La mise en garde contre la colère et ses causes car elle est l'ensemble du mal et le fait de s'en prémunir est l'ensemble du bien.\r\n\nLa colère pour Allah, comme la colère lors de la violation des interdits sacrés d'Allah fait partie de la colère louable.\r\n\nLa répétition des paroles si besoin est jusqu'à ce que l'interlocuteur les retienne et comprenne leur importance.\r\n\nLe mérite de la demande de recommandation au savant."
+        },
+        {
+          "id": "3743",
+          "score": 0.8392854332923889,
+          "title": "Qu’Allah fasse miséricorde à Moïse ! Il fut davantage offensé et pourtant, il se montra patient.",
+          "winning_document": "hadith_explanation:3",
+          "search_text": "passage:  de sa colère que j’ai pu voir ; ceci, tant que cela ne nuit pas à sa personne et à l’Islam. »"
+        },
+        {
+          "id": "3287",
+          "score": 0.838642954826355,
+          "title": "Celui qui contient sa colère alors qu’il pourrait la laisser éclater, Allah - Gloire et Pureté à Lui et qu'Il soit Exalté - l’appellera au Jour de la Résurrection devant tout le monde afin qu’il puisse choisir la Houri de son choix.",
+          "winning_document": "title_categories",
+          "search_text": "passage: Celui qui contient sa colère alors qu’il pourrait la laisser éclater, Allah - Gloire et Pureté à Lui et qu'Il soit Exalté - l’appellera au Jour de la Résurrection devant tout le monde afin qu’il puisse choisir la Houri de son choix.\n\nLa vie de l'au-delà\n\nLes caractères louables"
+        },
+        {
+          "id": "5513",
+          "score": 0.836319088935852,
+          "title": "Quiconque est imbu de lui-même et adopte une démarche hautaine, rencontrera Allah en colère contre lui. »",
+          "winning_document": "title_categories",
+          "search_text": "passage: Quiconque est imbu de lui-même et adopte une démarche hautaine, rencontrera Allah en colère contre lui. »\n\nLes caractères blâmables"
+        },
+        {
+          "id": "5351",
+          "score": 0.8352197408676147,
+          "title": "Le fort n'est pas celui qui terrasse autrui, le fort, c'est celui qui maîtrise sa personne au moment de la colère.",
+          "winning_document": "title_categories",
+          "search_text": "passage: Le fort n'est pas celui qui terrasse autrui, le fort, c'est celui qui maîtrise sa personne au moment de la colère.\n\nLes caractères louables"
+        }
+      ],
+      "before_tracked_ranks": {
+        "4181": 16,
+        "58226": 6
+      },
+      "after": [
+        {
+          "id": "4709",
+          "score": 0.8401083946228027,
+          "title": "Ne te mets pas colère !",
+          "winning_document": "hints",
+          "search_text": "passage: La mise en garde contre la colère et ses causes car elle est l'ensemble du mal et le fait de s'en prémunir est l'ensemble du bien.\r\n\nLa colère pour Allah, comme la colère lors de la violation des interdits sacrés d'Allah fait partie de la colère louable.\r\n\nLa répétition des paroles si besoin est jusqu'à ce que l'interlocuteur les retienne et comprenne leur importance.\r\n\nLe mérite de la demande de recommandation au savant."
+        },
+        {
+          "id": "3287",
+          "score": 0.838642954826355,
+          "title": "Celui qui contient sa colère alors qu’il pourrait la laisser éclater, Allah - Gloire et Pureté à Lui et qu'Il soit Exalté - l’appellera au Jour de la Résurrection devant tout le monde afin qu’il puisse choisir la Houri de son choix.",
+          "winning_document": "title_categories",
+          "search_text": "passage: Celui qui contient sa colère alors qu’il pourrait la laisser éclater, Allah - Gloire et Pureté à Lui et qu'Il soit Exalté - l’appellera au Jour de la Résurrection devant tout le monde afin qu’il puisse choisir la Houri de son choix.\n\nLa vie de l'au-delà\n\nLes caractères louables"
+        },
+        {
+          "id": "5513",
+          "score": 0.836319088935852,
+          "title": "Quiconque est imbu de lui-même et adopte une démarche hautaine, rencontrera Allah en colère contre lui. »",
+          "winning_document": "title_categories",
+          "search_text": "passage: Quiconque est imbu de lui-même et adopte une démarche hautaine, rencontrera Allah en colère contre lui. »\n\nLes caractères blâmables"
+        },
+        {
+          "id": "5351",
+          "score": 0.8352197408676147,
+          "title": "Le fort n'est pas celui qui terrasse autrui, le fort, c'est celui qui maîtrise sa personne au moment de la colère.",
+          "winning_document": "title_categories",
+          "search_text": "passage: Le fort n'est pas celui qui terrasse autrui, le fort, c'est celui qui maîtrise sa personne au moment de la colère.\n\nLes caractères louables"
+        },
+        {
+          "id": "4249",
+          "score": 0.8314221501350403,
+          "title": "Certes, j’entame la prière en désirant la prolonger, puis j’entends les pleurs d’un enfant, alors je l’allège car il m’est détestable de causer des difficultés à sa mère.",
+          "winning_document": "title_categories",
+          "search_text": "passage: Certes, j’entame la prière en désirant la prolonger, puis j’entends les pleurs d’un enfant, alors je l’allège car il m’est détestable de causer des difficultés à sa mère.\n\nSa clémence (paix et salut sur lui)"
+        }
+      ],
+      "after_tracked_ranks": {
+        "4181": 1133,
+        "58226": 841
+      }
+    },
+    {
+      "query": "la mère",
+      "before": [
+        {
+          "id": "58156",
+          "score": 0.8443260192871094,
+          "title": "Surveillez-la ! Si elle accouche d'un enfant blanc aux cheveux lisses et aux yeux teintés de rouge, ce sera l'enfant de Hilâl ibn Umayyah. Mais s'il a les yeux noirs, les cheveux crépus et les jambes fluettes, il sera à Sharîk Ibn Saḥmâ' !",
+          "winning_document": "hadith_explanation:2",
+          "search_text": "passage: -Li'ân » au moment où la femme est enceinte."
+        },
+        {
+          "id": "8414",
+          "score": 0.8254991769790649,
+          "title": "Un homme a dit : \"Je vais certes faire une aumône ! \" Il sortit avec son aumône et en fit don à un voleur. Au matin, les gens disaient : \" On a fait une aumône à un voleur ! \"",
+          "winning_document": "hadith_explanation:3",
+          "search_text": "passage:  donné."
+        },
+        {
+          "id": "6328",
+          "score": 0.8210806250572205,
+          "title": "Allah a confié l'utérus à un Ange, qui dit : \" Ô Seigneur ! Voici une goutte ! Ô Seigneur ! Voici un caillot ! Ô Seigneur ! Voici un morceau de chair ! \" Puis, quand Allah veut achever sa création, l'Ange dit : \" Ô Seigneur ! Est-ce un mâle ou une femelle ? Heureux ou malheureux ? Quelle subsistance ? Quel délai de vie ? \" Et c'est ainsi que tout sera écrit dans le ventre de sa mère.",
+          "winning_document": "hadith_explanation:2",
+          "search_text": "passage:  vie ? » Jusqu'à quel âge vivra-t-il ? Sa vie sera-t-elle longue ou courte ? « C'est ainsi que tout sera écrit dans le ventre de sa mère » : l'Ange écrit ce qu'Allah lui a ordonné d'écrire pendant que l'enfant est dans le ventre de sa mère."
+        },
+        {
+          "id": "58226",
+          "score": 0.8205156326293945,
+          "title": "Nous n’utilisons pas pour notre œuvre celui qui la veut [c’est-à-dire : Nous ne confions pas le commandement à celui qui le demande]. Toutefois, toi - Ô Abâ Mûsâ - va au Yémen ! ou, toi - Ô 'Abdallah ibn Qays - va au Yémen !",
+          "winning_document": "hadith_explanation:3",
+          "search_text": "passage:  »"
+        },
+        {
+          "id": "3120",
+          "score": 0.8202540874481201,
+          "title": "Deux femmes étaient avec leurs fils respectifs lorsque le loup emporta l'enfant de l'une d'elles.",
+          "winning_document": "title_categories",
+          "search_text": "passage: Deux femmes étaient avec leurs fils respectifs lorsque le loup emporta l'enfant de l'une d'elles.\n\nLa justice\n\nLes accusations (Ad Da'âwah) et les preuves (Al Bâyyinât)"
+        }
+      ],
+      "before_tracked_ranks": {
+        "4181": 6,
+        "58226": 4
+      },
+      "after": [
+        {
+          "id": "3120",
+          "score": 0.8202540874481201,
+          "title": "Deux femmes étaient avec leurs fils respectifs lorsque le loup emporta l'enfant de l'une d'elles.",
+          "winning_document": "title_categories",
+          "search_text": "passage: Deux femmes étaient avec leurs fils respectifs lorsque le loup emporta l'enfant de l'une d'elles.\n\nLa justice\n\nLes accusations (Ad Da'âwah) et les preuves (Al Bâyyinât)"
+        },
+        {
+          "id": "10913",
+          "score": 0.8192979693412781,
+          "title": "Si vous lisez : {(La louange est à Allah...)}, récitez également : « Au Nom d’Allah, le Tout Miséricordieux, le Très Miséricordieux. » Certes, c'est la Mère du Coran, la Mère du Livre, les Sept répétées, et le verset : {(Au Nom d’Allah, le Tout Miséricordieux, le Très Miséricordieux.)} est l'un de ses sept versets.",
+          "winning_document": "title_categories",
+          "search_text": "passage: Si vous lisez : {(La louange est à Allah...)}, récitez également : « Au Nom d’Allah, le Tout Miséricordieux, le Très Miséricordieux. » Certes, c'est la Mère du Coran, la Mère du Livre, les Sept répétées, et le verset : {(Au Nom d’Allah, le Tout Miséricordieux, le Très Miséricordieux.)} est l'un de ses sept versets.\n\nExégèse des versets"
+        },
+        {
+          "id": "11301",
+          "score": 0.8182883262634277,
+          "title": "J'ai prié en compagnie d'un orphelin derrière le Prophète (sur lui la paix et le salut), dans notre demeure, et ma mère, Umm Sulaym, se tenait derrière nous.",
+          "winning_document": "title_categories",
+          "search_text": "passage: J'ai prié en compagnie d'un orphelin derrière le Prophète (sur lui la paix et le salut), dans notre demeure, et ma mère, Umm Sulaym, se tenait derrière nous.\n\nLes jugements de l'imam et du fidèle derrière lui"
+        },
+        {
+          "id": "5854",
+          "score": 0.8179998397827148,
+          "title": "Le Messager d’Allah (sur lui la paix et le salut) a interdit de vendre ce qu’engendrera une femelle encore dans le ventre de sa mère.",
+          "winning_document": "title_categories",
+          "search_text": "passage: Le Messager d’Allah (sur lui la paix et le salut) a interdit de vendre ce qu’engendrera une femelle encore dans le ventre de sa mère.\n\nLes ventes interdites"
+        },
+        {
+          "id": "4249",
+          "score": 0.8177220821380615,
+          "title": "Certes, j’entame la prière en désirant la prolonger, puis j’entends les pleurs d’un enfant, alors je l’allège car il m’est détestable de causer des difficultés à sa mère.",
+          "winning_document": "title_categories",
+          "search_text": "passage: Certes, j’entame la prière en désirant la prolonger, puis j’entends les pleurs d’un enfant, alors je l’allège car il m’est détestable de causer des difficultés à sa mère.\n\nSa clémence (paix et salut sur lui)"
+        }
+      ],
+      "after_tracked_ranks": {
+        "4181": 617,
+        "58226": 626
+      }
+    },
+    {
+      "query": "les intentions",
+      "before": [
+        {
+          "id": "65047",
+          "score": 0.8257670402526855,
+          "title": "N'apprenez pas la science pour vous en pavaner auprès des savants, ni pour vous disputer avec les ignorants",
+          "winning_document": "hints",
+          "search_text": "passage: La menace de l'Enfer à l'égard de quiconque apprend la science pour s'en pavaner, pour polémiquer ou pour se mettre en avant dans les assises, et pour toute affaire du même genre.\r\n\nL'importance de la sincérité de l'intention pour quiconque apprend la science et l'enseigne.\r\n\nL'intention est la base des œuvres et c'est en fonction d'elle que se fait la rétribution."
+        },
+        {
+          "id": "8953",
+          "score": 0.8186875581741333,
+          "title": "Ô vous, les gens ! Vous mangez deux plantes que je ne considère pas autrement que mauvaises : l’oignon et l’ail !",
+          "winning_document": "hadith_explanation:3",
+          "search_text": "passage:  personnes]."
+        },
+        {
+          "id": "58226",
+          "score": 0.8182021975517273,
+          "title": "Nous n’utilisons pas pour notre œuvre celui qui la veut [c’est-à-dire : Nous ne confions pas le commandement à celui qui le demande]. Toutefois, toi - Ô Abâ Mûsâ - va au Yémen ! ou, toi - Ô 'Abdallah ibn Qays - va au Yémen !",
+          "winning_document": "hadith_explanation:3",
+          "search_text": "passage:  »"
+        },
+        {
+          "id": "65017",
+          "score": 0.8181390762329102,
+          "title": "Certes, Allah aime qu'on prenne Ses permissions tout comme Il aime qu'on prenne ses résolutions !",
+          "winning_document": "title_categories",
+          "search_text": "passage: Certes, Allah aime qu'on prenne Ses permissions tout comme Il aime qu'on prenne ses résolutions !\n\nLe jugement légal\n\nReligious Assignment and its Conditions\n\nLes objectifs de la législation islamique (Maqâsid Ashari'ah)"
+        },
+        {
+          "id": "66511",
+          "score": 0.8175210952758789,
+          "title": "Les actes ne valent que par les intentions",
+          "winning_document": "title_categories",
+          "search_text": "passage: Les actes ne valent que par les intentions\n\nLes oeuvres du coeur"
+        }
+      ],
+      "before_tracked_ranks": {
+        "4181": 6,
+        "58226": 3
+      },
+      "after": [
+        {
+          "id": "65047",
+          "score": 0.8257670402526855,
+          "title": "N'apprenez pas la science pour vous en pavaner auprès des savants, ni pour vous disputer avec les ignorants",
+          "winning_document": "hints",
+          "search_text": "passage: La menace de l'Enfer à l'égard de quiconque apprend la science pour s'en pavaner, pour polémiquer ou pour se mettre en avant dans les assises, et pour toute affaire du même genre.\r\n\nL'importance de la sincérité de l'intention pour quiconque apprend la science et l'enseigne.\r\n\nL'intention est la base des œuvres et c'est en fonction d'elle que se fait la rétribution."
+        },
+        {
+          "id": "65014",
+          "score": 0.8190047740936279,
+          "title": "Les œuvres sont de six [types] et les gens de quatre : deux [types d'œuvres] qui impliquent l'obligation, deux qui sont égales à elles-mêmes, une bonne action entraînant dix fois plus de récompense et une bonne action entraînant une récompense de sept cents",
+          "winning_document": "hadith_explanation:2",
+          "search_text": "passage:  ce soit à Allah, l'Enfer lui est obligatoire et il y restera éternellement.\r\n\r\nCe sont les deux [types d'œuvres] qui impliquent l'obligation.\r\n\r\nTroisièmement : L'intention de la bonne action. Ainsi, quiconque a l'intention d'accomplir une bonne action, en étant véridique dans son intention au point de la ressentir en son cœur et qu'Allah sache cela de lui, puis qu'ensuite quelque chose s'interpose l'empêchant de l'accomplir, elle lui est quand même écrite en tant que bonne action complète.\r\n\r\nQuatrièmement : L'accomplissement de la mauvaise action. Quiconque accomplit une mauvaise action, on lui écrit alors une seule mauvaise action.\r\n\r\nCe sont les deux [types d'œuvres] qui sont égales à elles-mêmes, sans augmentation.\r\n\r\nCinquièmement : Une bonne action qui est décuplée, c'est une personne qui a l'intention d'accomplir une bonne action et l'accomplit. On écrit à cette personne dix bonnes actions.\r\n\r\nSixièmement : Une bonne action multipliée par sept cents."
+        },
+        {
+          "id": "65017",
+          "score": 0.8181390762329102,
+          "title": "Certes, Allah aime qu'on prenne Ses permissions tout comme Il aime qu'on prenne ses résolutions !",
+          "winning_document": "title_categories",
+          "search_text": "passage: Certes, Allah aime qu'on prenne Ses permissions tout comme Il aime qu'on prenne ses résolutions !\n\nLe jugement légal\n\nReligious Assignment and its Conditions\n\nLes objectifs de la législation islamique (Maqâsid Ashari'ah)"
+        },
+        {
+          "id": "66511",
+          "score": 0.8175210952758789,
+          "title": "Les actes ne valent que par les intentions",
+          "winning_document": "title_categories",
+          "search_text": "passage: Les actes ne valent que par les intentions\n\nLes oeuvres du coeur"
+        },
+        {
+          "id": "66516",
+          "score": 0.8148991465568542,
+          "title": "La religion, c’est la sincérité",
+          "winning_document": "title_categories",
+          "search_text": "passage: La religion, c’est la sincérité\n\nLes devoirs de l'imam"
+        }
+      ],
+      "after_tracked_ranks": {
+        "4181": 1233,
+        "58226": 88
+      }
+    }
+  ]
+}

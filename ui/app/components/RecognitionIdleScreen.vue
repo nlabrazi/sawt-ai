@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import FlaskConical from '@lucide/vue/dist/esm/icons/flask-conical.mjs'
+import { FlaskConical, Upload } from '@lucide/vue'
 import { computed, ref } from 'vue'
 
 import RecognitionActionButton from '~/components/RecognitionActionButton.vue'
@@ -35,24 +35,6 @@ const fileInput = ref<HTMLInputElement | null>(null)
 const title = computed(() => {
   if (props.isFinalizingRecording) return 'Préparation de l’audio'
   return props.isRecording ? 'Je vous écoute' : 'Récitez un passage du Coran'
-})
-
-const subtitle = computed(() => {
-  if (props.isFinalizingRecording) {
-    return 'Votre enregistrement est terminé. L’analyse va commencer.'
-  }
-
-  return props.isRecording
-    ? 'Récitez naturellement, dans un environnement aussi calme que possible.'
-    : 'Sawt AI vous propose la sourate et les versets correspondants.'
-})
-
-const recognitionActionHint = computed(() => {
-  if (props.isFinalizingRecording) return 'Quelques instants…'
-
-  return props.isRecording
-    ? 'Appuyez à nouveau pour arrêter et analyser.'
-    : 'Appuyez pour commencer, puis une seconde fois pour arrêter et analyser.'
 })
 
 const recordingTime = computed(() => `${props.recordingSeconds ?? 0}s`)
@@ -148,27 +130,10 @@ function onFileChange(event: Event) {
     :class="{ 'is-recording': isRecording }"
     aria-labelledby="recognition-title"
   >
-    <header class="brand" aria-label="Sawt AI">
-      <span class="brand-name">Sawt</span>
-      <span class="brand-mark">AI</span>
-    </header>
 
     <div class="hero-shell">
       <div class="hero-copy">
-        <p class="state-label">
-          <span v-if="isRecording" class="recording-dot" aria-hidden="true" />
-          {{ isFinalizingRecording
-            ? 'Enregistrement terminé'
-            : isRecording
-              ? 'Enregistrement en cours'
-              : 'Reconnaissance coranique' }}
-        </p>
-
-        <h1 id="recognition-title" class="main-title">{{ title }}</h1>
-
-        <p id="recognition-guidance" class="main-subtitle">
-          {{ subtitle }}
-        </p>
+        <h1 id="recognition-title" class="main-title" aria-live="polite">{{ title }}</h1>
 
         <div
           v-if="isRecording"
@@ -176,7 +141,8 @@ function onFileChange(event: Event) {
           role="timer"
           :aria-label="`Durée de l’enregistrement : ${recordingTime}`"
         >
-          {{ recordingTime }}
+          <span class="recording-dot" aria-hidden="true" />
+          {{ maxRecordingSeconds ? recordingProgressLabel : recordingTime }}
         </div>
 
         <div v-if="isRecording && maxRecordingSeconds" class="recording-progress">
@@ -193,8 +159,6 @@ function onFileChange(event: Event) {
               :style="{ width: `${recordingProgressPercent}%` }"
             />
           </div>
-
-          <p class="recording-progress-label">{{ recordingProgressLabel }}</p>
         </div>
       </div>
 
@@ -202,16 +166,12 @@ function onFileChange(event: Event) {
         <RecognitionActionButton
           :is-recording="isRecording"
           :loading="isFinalizingRecording"
+          :show-label="!isFinalizingRecording"
           :disabled="isFinalizingRecording"
           loading-label="Préparation de l’audio"
           :audio-level="audioLevel"
-          aria-describedby="recognition-guidance recognition-action-hint"
           @click="onMicroButtonClick"
         />
-
-        <p id="recognition-action-hint" class="recognition-action-hint">
-          {{ recognitionActionHint }}
-        </p>
 
         <div v-if="micError || recordingError" class="status-message is-error" role="alert">
           <p class="status-title">{{ micError ?? recordingError }}</p>
@@ -221,12 +181,9 @@ function onFileChange(event: Event) {
 
       <div v-if="!isRecording && !isFinalizingRecording" class="secondary-actions">
         <button class="file-button" type="button" @click="openFilePicker">
+          <Upload :size="16" aria-hidden="true" />
           Importer un fichier audio
         </button>
-
-        <p class="upload-hint">
-          {{ uploadHint ?? 'wav, mp3, m4a, ogg ou webm · 12 Mo et 90 sec maximum' }}
-        </p>
 
         <div v-if="fileError" class="status-message is-error" role="alert">
           <p class="status-title">{{ fileError }}</p>
@@ -234,7 +191,7 @@ function onFileChange(event: Event) {
         </div>
 
         <details class="options-shell">
-          <summary>Options de reconnaissance</summary>
+          <summary>Options</summary>
 
           <div class="option-content">
             <label
@@ -257,12 +214,14 @@ function onFileChange(event: Event) {
             </label>
 
             <p
+              v-if="imamDetectionAvailable === false"
               class="imam-toggle-hint"
               :class="{ 'is-unavailable': imamDetectionAvailable === false }"
             >
-              {{ imamDetectionAvailable === false
-                ? (imamDetectionMessage ?? 'La reconnaissance de l’imam est temporairement indisponible.')
-                : 'Analyse du réciteur en plus du passage proposé.' }}
+              {{ imamDetectionMessage ?? 'La reconnaissance de l’imam est temporairement indisponible.' }}
+            </p>
+            <p class="upload-hint">
+              {{ uploadHint ?? 'wav, mp3, m4a, ogg ou webm · 12 Mo et 90 sec maximum' }}
             </p>
           </div>
         </details>
@@ -296,24 +255,6 @@ function onFileChange(event: Event) {
   padding: 26px 20px 34px;
 }
 
-.brand {
-  display: inline-flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 5px;
-  color: #f8fafc;
-  font-size: 17px;
-  line-height: 1;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.brand-mark {
-  color: #60a5fa;
-  font-size: 12px;
-  letter-spacing: 0.04em;
-}
-
 .hero-shell {
   width: 100%;
   min-width: 0;
@@ -322,8 +263,8 @@ function onFileChange(event: Event) {
   grid-template-columns: minmax(0, 1fr);
   justify-items: center;
   align-content: center;
-  gap: 14px;
-  padding: 34px 0 24px;
+  gap: 28px;
+  padding: 32px 0;
   text-align: center;
 }
 
@@ -332,20 +273,6 @@ function onFileChange(event: Event) {
   min-width: 0;
   display: grid;
   justify-items: center;
-}
-
-.state-label {
-  margin: 0;
-  min-height: 22px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  color: #93c5fd;
-  font-size: 12px;
-  line-height: 1.4;
-  font-weight: 750;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
 }
 
 .recording-dot {
@@ -358,29 +285,23 @@ function onFileChange(event: Event) {
 
 .main-title {
   width: 100%;
-  margin: 14px 0 0;
-  max-width: 720px;
-  font-size: clamp(38px, 6vw, 60px);
-  line-height: 1.02;
+  margin: 0;
+  max-width: 440px;
+  font-size: clamp(28px, 4vw, 40px);
+  line-height: 1.2;
   font-weight: 800;
   letter-spacing: -0.052em;
   text-wrap: balance;
 }
 
-.main-subtitle {
-  margin: 16px 0 0;
-  max-width: 520px;
-  color: #bac7d8;
-  font-size: clamp(17px, 2vw, 19px);
-  line-height: 1.55;
-  text-wrap: balance;
-}
-
 .recording-time {
-  margin-top: 18px;
+  margin-top: 20px;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
   color: #f8fafc;
   font-variant-numeric: tabular-nums;
-  font-size: 34px;
+  font-size: 22px;
   line-height: 1;
   font-weight: 750;
   letter-spacing: -0.03em;
@@ -409,27 +330,11 @@ function onFileChange(event: Event) {
   transition: width 0.24s linear;
 }
 
-.recording-progress-label {
-  margin: 0;
-  color: #7f91a8;
-  font-size: 12px;
-  font-variant-numeric: tabular-nums;
-}
-
 .hero-action {
   width: min(100%, 420px);
   display: grid;
   justify-items: center;
   gap: 8px;
-}
-
-.recognition-action-hint {
-  margin: -2px 0 0;
-  max-width: 390px;
-  color: #91a2b8;
-  font-size: 14px;
-  line-height: 1.5;
-  text-wrap: balance;
 }
 
 .secondary-actions {
@@ -442,11 +347,15 @@ function onFileChange(event: Event) {
 }
 
 .file-button {
-  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
   padding: 0 16px;
   border: 1px solid rgba(148, 163, 184, 0.18);
   border-radius: 999px;
-  background: rgba(15, 23, 42, 0.38);
+  background: transparent;
   color: #dbeafe;
   font: inherit;
   font-size: 14px;
@@ -472,8 +381,8 @@ function onFileChange(event: Event) {
 
 .upload-hint {
   max-width: 100%;
-  margin: 0;
-  color: #708198;
+  margin: 14px 0 0;
+  color: #a1b0c5;
   font-size: 12px;
   line-height: 1.45;
   overflow-wrap: anywhere;
@@ -482,14 +391,14 @@ function onFileChange(event: Event) {
 .options-shell {
   width: 100%;
   margin-top: 4px;
-  border-top: 1px solid rgba(148, 163, 184, 0.11);
   color: #aebdd0;
 }
 
 .options-shell summary {
   width: fit-content;
   margin: 0 auto;
-  padding: 13px 8px 4px;
+  min-height: 44px;
+  padding: 12px 8px;
   color: #91a2b8;
   font-size: 13px;
   cursor: pointer;
@@ -610,43 +519,24 @@ function onFileChange(event: Event) {
 
 @media (max-width: 640px) {
   .idle-screen {
-    padding: 20px 16px 26px;
+    padding: 24px 16px;
   }
 
   .hero-shell {
-    gap: 10px;
-    padding: 28px 0 18px;
+    gap: 24px;
+    padding: 24px 0;
   }
 
   .main-title {
-    margin-top: 12px;
-    font-size: clamp(34px, 10vw, 46px);
-  }
-
-  .main-subtitle {
-    margin-top: 13px;
-    font-size: 16px;
-  }
-
-  .recording-time {
-    margin-top: 15px;
-    font-size: 30px;
-  }
-
-  .recognition-action-hint {
     max-width: 320px;
-    font-size: 13px;
+    font-size: clamp(28px, 7vw, 34px);
   }
 }
 
-@media (max-height: 760px) and (min-width: 641px) {
+@media (max-height: 600px) {
   .hero-shell {
-    align-content: start;
-    padding-top: 26px;
-  }
-
-  .main-title {
-    font-size: 46px;
+    gap: 14px;
+    padding: 12px 0;
   }
 }
 

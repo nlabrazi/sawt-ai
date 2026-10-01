@@ -3,6 +3,8 @@
 # Endpoint API qui reçoit un fichier audio
 # et déclenche le pipeline Sawt AI.
 
+import asyncio
+import os
 import uuid
 from pathlib import Path
 from tempfile import NamedTemporaryFile
@@ -25,6 +27,25 @@ from app.services.audio_metadata_service import (
 from app.services.inference_pipeline import run_inference_pipeline
 
 router = APIRouter()
+
+DEFAULT_MAX_CONCURRENT_INFERENCES = 2
+_inference_semaphore: asyncio.Semaphore | None = None
+
+
+def get_inference_semaphore() -> asyncio.Semaphore:
+    global _inference_semaphore
+    if _inference_semaphore is None:
+        max_concurrent = int(
+            os.getenv("MAX_CONCURRENT_INFERENCES", str(DEFAULT_MAX_CONCURRENT_INFERENCES))
+        )
+        _inference_semaphore = asyncio.Semaphore(max_concurrent)
+    return _inference_semaphore
+
+
+def reset_inference_semaphore() -> None:
+    global _inference_semaphore
+    _inference_semaphore = None
+
 
 HEADER_SNIFF_BYTES = 4096
 READ_CHUNK_SIZE_BYTES = 1024 * 1024
@@ -140,7 +161,10 @@ async def recognize(
 
     try:
         temp_file, file_size, detected_content_type = await persist_upload_to_temp_file(file)
-        audio_duration_seconds = enforce_audio_duration_limit(temp_file)
+        audio_duration_seconds = await run_in_threadpool(
+            enforce_audio_duration_limit,
+            temp_file,
+        )
         declared_content_type = canonicalize_content_type(file.content_type)
 
         log_api_event(
@@ -171,14 +195,15 @@ async def recognize(
                 },
             )
 
-        return await run_in_threadpool(
-            run_inference_pipeline,
-            str(temp_file),
-            detect_imam,
-            audio_duration_seconds,
-            allow_ambiguous_result,
-            str(request_id),
-        )
+        async with get_inference_semaphore():
+            return await run_in_threadpool(
+                run_inference_pipeline,
+                str(temp_file),
+                detect_imam,
+                audio_duration_seconds,
+                allow_ambiguous_result,
+                str(request_id),
+            )
     finally:
         await file.close()
 

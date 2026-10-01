@@ -185,6 +185,66 @@ Add transcriptions observed from real audio to this file before tuning detection
 thresholds. This benchmark measures exact passage accuracy, precision, recall,
 false positives, and matching latency; it does not measure Whisper accuracy.
 
+Hadith search is available in the **Hadiths** mode of the Nuxt interface (Beta).
+Describe a subject in French, submit the search, and open one of the three
+proposals to read the Arabic text, translation, and available source details.
+The landing screen links to Quran and Hadith search, with a separate FAQ.
+The Sawt AI logo returns home and resets searches. Leaving Hadith mode clears
+the query and results. Pending searches are cancelled on exit; Quran recording
+prevents switching modes until the recording is finished. Texts come from
+HadeethEnc and are never generated.
+
+Build the current E5-base / multi_context index before the first search:
+
+```bash
+docker compose exec api python scripts/build_hadith_index.py
+```
+
+The index and metadata are local artifacts ignored by Git. Restart the API if it
+has already loaded an older index. Results require Internet access to HadeethEnc.
+Short subjects (up to three words after removing a recognized search prefix) use
+keyword retrieval across French titles, texts, and explanations. Every returned
+source must contain all keywords, with simple singular/plural variants. Missing
+keywords return an empty list: `couronne` and `hadith couronne` no longer return
+unrelated neighbours. Accents matter (`couronne` does not match `couronné`).
+Longer phrases and negations retain semantic retrieval. The UI labels the search
+method; semantic neighbours may not answer the query. The provisional retrieval
+benchmark does not establish religious accuracy.
+
+Upgrade an existing index from its original cached source records without
+re-encoding, then restart the API:
+
+```bash
+docker compose exec api python scripts/build_hadith_index.py --upgrade-search-documents
+docker compose restart api
+```
+
+The upgrade verifies the exact source checksum and preserves a metadata backup.
+If the cache is missing or changed, rebuild the index instead. New builds include
+the source text metadata automatically.
+
+Try the same search policy as the API from the project root (Docker required):
+
+```bash
+bash api/scripts/search_hadith.sh "Je cherche le hadith sur la colère"
+```
+
+This prints up to three ranked HadeethEnc titles and links using the built index.
+From the `api` directory, use `bash scripts/search_hadith.sh` instead.
+The launcher prepares its Python dependencies inside Docker on first use.
+Use `--variant benchmark` explicitly for historical experiments and raw scores.
+
+Try the current built index from the terminal:
+
+```bash
+python api/scripts/build_hadith_index.py
+python api/scripts/search_hadith.py "Ne pas se mettre en colère"
+```
+
+See [`api/evaluation/HADITH_SEARCH.md`](api/evaluation/HADITH_SEARCH.md) for the
+official HadeethEnc corpus, reproducible E5 comparisons, token truncation diagnostics,
+and the human review required before validating retrieval quality.
+
 End-to-end backend audio smoke benchmark (generated locally, with no downloaded corpus):
 
 ```bash

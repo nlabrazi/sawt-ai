@@ -1,0 +1,13 @@
+# This file applies to the ./api build context used by Docker Compose.
+.cache/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.env
+.env.*
+!.env.example
+evaluation/reports/
+assets/hadith_index_meta.before-search-documents.json

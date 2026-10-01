@@ -48,10 +48,6 @@ function getState(stepKey: LoadingStep) {
     :aria-busy="loading"
   >
     <header class="top-bar">
-      <div class="brand" aria-label="Sawt AI">
-        <span class="brand-name">Sawt</span>
-        <span class="brand-mark">AI</span>
-      </div>
 
       <button class="cancel-action" type="button" @click="$emit('cancel')">
         Annuler
@@ -59,15 +55,13 @@ function getState(stepKey: LoadingStep) {
     </header>
 
     <div class="center-stack">
-      <p class="eyebrow">Étape {{ activeStepIndex + 1 }} sur {{ steps.length }}</p>
-
       <h1 id="loading-title" class="main-title">Recherche du passage</h1>
 
       <p class="main-subtitle" role="status" aria-live="polite">
         {{ activeLabel }}
       </p>
 
-      <RecognitionActionButton class="loading-action" disabled loading />
+      <RecognitionActionButton class="loading-action" disabled loading :show-label="false" />
 
       <ol class="loading-steps" aria-label="Progression de l’analyse">
         <li
@@ -107,25 +101,8 @@ function getState(stepKey: LoadingStep) {
 .top-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 16px;
-}
-
-.brand {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 5px;
-  color: #f8fafc;
-  font-size: 17px;
-  line-height: 1;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.brand-mark {
-  color: #60a5fa;
-  font-size: 12px;
-  letter-spacing: 0.04em;
 }
 
 .cancel-action {
@@ -165,18 +142,9 @@ function getState(stepKey: LoadingStep) {
   text-align: center;
 }
 
-.eyebrow {
-  margin: 0;
-  color: #93c5fd;
-  font-size: 12px;
-  font-weight: 750;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
 .main-title {
   margin: 14px 0 0;
-  font-size: clamp(38px, 6vw, 58px);
+  font-size: clamp(28px, 4vw, 40px);
   line-height: 1.02;
   font-weight: 800;
   letter-spacing: -0.052em;
@@ -283,7 +251,7 @@ function getState(stepKey: LoadingStep) {
   }
 
   .main-title {
-    font-size: clamp(34px, 10vw, 46px);
+    font-size: clamp(28px, 7vw, 34px);
   }
 
   .main-subtitle {

@@ -18,7 +18,15 @@ from app.core.detection_policy import (
     MIN_PROPOSAL_SIMILARITY,
     MIN_SCORE_MARGIN,
 )
-from app.core.model_loader import QuranVerseCandidate, get_quran_verse_candidates
+from app.core.model_loader import (
+    QuranVerseCandidate,
+    get_quran_candidate_texts,
+    get_quran_candidates_by_range,
+    get_quran_single_verse_candidates_by_sourate,
+    get_quran_text_occurrences,
+    get_quran_verse_candidates,
+    is_catalog_candidates,
+)
 from app.utils.normalize_arabic import normalize_arabic
 
 logger = logging.getLogger(__name__)
@@ -270,11 +278,18 @@ def extract_ranked_matches(
 
 def rank_verse_candidates(
     transcription: str,
-    candidates: tuple[QuranVerseCandidate, ...],
+    candidates: tuple[QuranVerseCandidate, ...] | None = None,
     limit: int = RANKED_CANDIDATE_LIMIT,
 ) -> list[RankedVerseCandidate]:
     """Classe les candidats uniques selon leur meilleur score toutes fenêtres confondues."""
-    candidate_texts = tuple(candidate.normalized_text for candidate in candidates)
+    if candidates is None:
+        candidates = get_quran_verse_candidates()
+
+    if is_catalog_candidates(candidates):
+        candidate_texts = get_quran_candidate_texts()
+    else:
+        candidate_texts = tuple(candidate.normalized_text for candidate in candidates)
+
     best_matches_by_index: dict[int, RankedVerseCandidate] = {}
 
     for window in build_transcription_windows(transcription):
@@ -360,19 +375,23 @@ def extract_passage_verse_evidence(
     exclus : ils sont utiles au classement classique, mais trop faibles pour
     justifier l'extension d'une plage.
     """
-    all_single_verse_candidates = [
-        (candidate_index, candidate)
-        for candidate_index, candidate in enumerate(candidates)
-        if candidate.start_verse == candidate.end_verse
-    ]
-    text_occurrences = Counter(
-        candidate.normalized_text for _, candidate in all_single_verse_candidates
-    )
-    single_verse_candidates = (
-        (candidate_index, candidate)
-        for candidate_index, candidate in all_single_verse_candidates
-        if candidate.sourate_id == sourate_id
-    )
+    if is_catalog_candidates(candidates):
+        single_verse_candidates = get_quran_single_verse_candidates_by_sourate(sourate_id)
+        text_occurrences = get_quran_text_occurrences()
+    else:
+        all_single_verse_candidates = [
+            (candidate_index, candidate)
+            for candidate_index, candidate in enumerate(candidates)
+            if candidate.start_verse == candidate.end_verse
+        ]
+        text_occurrences = Counter(
+            candidate.normalized_text for _, candidate in all_single_verse_candidates
+        )
+        single_verse_candidates = [
+            (candidate_index, candidate)
+            for candidate_index, candidate in all_single_verse_candidates
+            if candidate.sourate_id == sourate_id
+        ]
     evidence = []
 
     for candidate_index, candidate in single_verse_candidates:
@@ -555,15 +574,18 @@ def infer_enclosing_passage_match(
         top_match.candidate.sourate_id,
     )
     supported_chains = _find_supported_passage_chains(evidence, top_match)
-    candidate_by_range = {
-        (
-            candidate.sourate_id,
-            candidate.start_verse,
-            candidate.end_verse,
-        ): (candidate_index, candidate)
-        for candidate_index, candidate in enumerate(candidates)
-        if candidate.sourate_id == top_match.candidate.sourate_id
-    }
+    if is_catalog_candidates(candidates):
+        candidate_by_range = get_quran_candidates_by_range()
+    else:
+        candidate_by_range = {
+            (
+                candidate.sourate_id,
+                candidate.start_verse,
+                candidate.end_verse,
+            ): (candidate_index, candidate)
+            for candidate_index, candidate in enumerate(candidates)
+            if candidate.sourate_id == top_match.candidate.sourate_id
+        }
     proposals = []
 
     for chain in supported_chains:

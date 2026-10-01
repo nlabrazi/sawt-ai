@@ -24,22 +24,42 @@ function isAllowedAudioType(file: File, allowedMimeTypes: string[]) {
   return allowedMimeTypes.some((type) => file.type === type || file.type.startsWith(`${type};`))
 }
 
-function getAudioDuration(file: File): Promise<number> {
+function getAudioDuration(file: File, timeoutMs = 4000): Promise<number> {
   return new Promise((resolve, reject) => {
     const audio = document.createElement('audio')
     const objectUrl = URL.createObjectURL(file)
+    let isSettled = false
+
+    const cleanup = () => {
+      URL.revokeObjectURL(objectUrl)
+      audio.removeAttribute('src')
+      audio.load()
+    }
+
+    const timer = window.setTimeout(() => {
+      if (isSettled) return
+      isSettled = true
+      cleanup()
+      reject(new Error('Délai dépassé pour la lecture du fichier audio.'))
+    }, timeoutMs)
 
     audio.preload = 'metadata'
     audio.src = objectUrl
 
     audio.onloadedmetadata = () => {
+      if (isSettled) return
+      isSettled = true
+      window.clearTimeout(timer)
       const duration = audio.duration
-      URL.revokeObjectURL(objectUrl)
+      cleanup()
       resolve(duration)
     }
 
     audio.onerror = () => {
-      URL.revokeObjectURL(objectUrl)
+      if (isSettled) return
+      isSettled = true
+      window.clearTimeout(timer)
+      cleanup()
       reject(new Error('Impossible de lire la durée du fichier audio.'))
     }
   })
@@ -106,6 +126,7 @@ export function useRecognitionFlow() {
   } = useMicrophoneRecorder(maxAudioDurationSeconds)
 
   const uploadError = ref<string | null>(null)
+  let submissionVersion = 0
   const detectImam = ref(false)
   let startRecordingPromise: Promise<void> | null = null
   let finalizeRecordingPromise: Promise<void> | null = null
@@ -139,6 +160,7 @@ export function useRecognitionFlow() {
   async function submitAudio(file: File, validateDuration = true) {
     if (loading.value) return
 
+    const version = submissionVersion
     uploadError.value = null
 
     if (!isAllowedAudioType(file, acceptedMimeTypes.value)) {
@@ -154,6 +176,7 @@ export function useRecognitionFlow() {
     if (validateDuration && !maxDurationReached.value) {
       try {
         const duration = await getAudioDuration(file)
+        if (version !== submissionVersion) return
 
         if (!Number.isFinite(duration) || duration <= 0) {
           uploadError.value = 'Impossible de lire la durée de ce fichier audio.'
@@ -165,6 +188,7 @@ export function useRecognitionFlow() {
           return
         }
       } catch {
+        if (version !== submissionVersion) return
         uploadError.value = 'Impossible de lire ce fichier audio.'
         return
       }
@@ -176,8 +200,10 @@ export function useRecognitionFlow() {
   function finalizeRecordingAndSubmit() {
     if (finalizeRecordingPromise) return finalizeRecordingPromise
 
+    const version = submissionVersion
     finalizeRecordingPromise = (async () => {
       const recordedFile = await stopRecording()
+      if (version !== submissionVersion) return
 
       if (!recordedFile) {
         uploadError.value = 'Erreur pendant l’enregistrement audio.'
@@ -221,6 +247,7 @@ export function useRecognitionFlow() {
   })
 
   function resetApp() {
+    submissionVersion += 1
     uploadError.value = null
     clearTajwidCache()
     cleanup()

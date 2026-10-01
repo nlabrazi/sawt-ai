@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import RotateCcw from '@lucide/vue/dist/esm/icons/rotate-ccw.mjs'
+import { RotateCcw } from '@lucide/vue'
 import { computed } from 'vue'
 
 import FeedbackForm from '~/components/FeedbackForm.vue'
@@ -83,13 +83,8 @@ const statusPanel = computed(() => {
 
 <template>
   <section class="screen result-screen" aria-labelledby="result-title">
-    <header class="brand" aria-label="Sawt AI">
-      <span class="brand-name">Sawt</span>
-      <span class="brand-mark">AI</span>
-    </header>
 
     <div class="result-intro">
-      <p class="eyebrow">Résultat de l’analyse</p>
       <h1 id="result-title" class="main-title">{{ heading }}</h1>
       <p class="main-subtitle">{{ introduction }}</p>
     </div>
@@ -129,41 +124,14 @@ const statusPanel = computed(() => {
   gap: 24px;
 }
 
-.brand {
-  display: inline-flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 5px;
-  color: #f8fafc;
-  font-size: 17px;
-  line-height: 1;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.brand-mark {
-  color: #60a5fa;
-  font-size: 12px;
-  letter-spacing: 0.04em;
-}
-
 .result-intro {
   margin-top: 22px;
   text-align: center;
 }
 
-.eyebrow {
-  margin: 0;
-  color: #93c5fd;
-  font-size: 12px;
-  font-weight: 750;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
 .main-title {
   margin: 12px 0 0;
-  font-size: clamp(36px, 6vw, 54px);
+  font-size: clamp(28px, 4vw, 40px);
   line-height: 1.04;
   font-weight: 800;
   letter-spacing: -0.05em;
@@ -255,7 +223,7 @@ const statusPanel = computed(() => {
   }
 
   .main-title {
-    font-size: clamp(34px, 10vw, 44px);
+    font-size: clamp(28px, 7vw, 34px);
   }
 
   .content-stack {

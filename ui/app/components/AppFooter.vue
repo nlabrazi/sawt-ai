@@ -11,7 +11,7 @@ const contactHref = contactEmail
   <footer class="app-footer">
     <div class="footer-inner">
       <p class="footer-brand">
-        © 2026 <a href="/" aria-label="Accueil Sawt AI">Sawt AI</a> Tous droits réservés
+        © 2026 <a href="/" aria-label="Accueil Sawt AI">Sawt AI</a>
       </p>
 
       <nav class="footer-links" aria-label="Liens utiles">
@@ -37,14 +37,13 @@ const contactHref = contactEmail
 .app-footer {
   position: relative;
   z-index: 1;
-  padding: 0 16px 18px;
+  padding: 0 max(20px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
 }
 
 .footer-inner {
   max-width: 980px;
   margin: 0 auto;
-  padding: 16px 4px 0;
-  border-top: 1px solid rgba(148, 163, 184, 0.1);
+  padding: 8px 0 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -54,7 +53,7 @@ const contactHref = contactEmail
 .footer-brand {
   margin: 0;
   font-size: 13px;
-  color: #8fb5e5;
+  color: #8c9db4;
 }
 
 .footer-brand a {
@@ -69,9 +68,12 @@ const contactHref = contactEmail
 }
 
 .footer-links a {
-  color: #cbd5e1;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #a1b0c5;
   text-decoration: none;
-  font-size: 14px;
+  font-size: 12px;
   transition: color 0.2s ease, opacity 0.2s ease;
 }
 
@@ -79,15 +81,17 @@ const contactHref = contactEmail
   color: #fff;
 }
 
-@media (max-width: 768px) {
-  .app-footer {
-    padding: 0 14px 14px;
-  }
-
+@media (max-width: 640px) {
   .footer-inner {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 4px 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .footer-links a {
+    transition: none;
   }
 }
 </style>

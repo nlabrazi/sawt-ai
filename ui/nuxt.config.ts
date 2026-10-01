@@ -65,6 +65,7 @@ export default defineNuxtConfig({
       },
       title: `${siteName} — Reconnaissance de versets coraniques`,
       meta: [
+        { name: 'viewport', content: 'width=device-width, initial-scale=1, viewport-fit=cover' },
         { name: 'description', content: siteDescription },
         { name: 'robots', content: 'index, follow, max-image-preview:large, max-snippet:-1' },
         { property: 'og:type', content: 'website' },
