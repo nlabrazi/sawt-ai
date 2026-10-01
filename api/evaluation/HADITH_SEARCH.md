@@ -71,7 +71,7 @@ Pour une nouvelle machine, après avoir reconstruit les matrices de l'A/B initia
 exécuter `scripts/evaluate_hadith_context.py` dans l'environnement Python préparé
 pour créer la matrice corrigée utilisée par le lanceur.
 
-## Construire et essayer le moteur initial
+## Construire et essayer le moteur actuel
 
 Après installation de `api/requirements.txt`, depuis la racine :
 
@@ -94,11 +94,16 @@ téléchargement interrompu ; `--refresh` recharge toutes les fiches lors d'une 
 à jour. Une erreur de récupération empêche de publier un index partiel.
 Les fichiers du cache ne sont jamais utilisés comme contenu de résultat.
 
-L'index contient un vecteur par ID, construit à partir du titre, du texte français,
-de l'explication, des bénéfices et des catégories. E5 utilise `passage:` pour les
-documents et `query:` pour les recherches, même en français. Les textes de plus
-de 512 tokens sont tronqués par le modèle ; c'est une limite à mesurer avant toute
-amélioration de la préparation du texte.
+L’index actuel utilise **E5-base** et la stratégie **`multi_context`** : plusieurs
+passages par hadith, puis le meilleur score par ID pour obtenir des résultats
+uniques. Les groupes titre/catégories, enseignements et texte/explication sont
+découpés sous la limite de 512 tokens en conservant le contexte des fins de texte.
+E5 utilise `passage:` pour les documents et `query:` pour les recherches.
+L’avertissement du tokenizer peut apparaître pendant l’inspection du texte complet
+avant découpage ; il ne signifie pas qu’un passage final dépasse la limite.
+
+`HADITH_EMBEDDING_MODEL` et `HADITH_INDEX_STRATEGY` permettent de choisir une autre
+variante. Le modèle configuré doit correspondre aux métadonnées de l’index.
 
 Les chemins et le modèle sont configurables dans `api/.env.example`. Hors Docker,
 omettre les chemins `/app/...` pour utiliser les chemins relatifs au backend.
@@ -199,8 +204,9 @@ numériquement pour tous les IDs candidats du benchmark avant de servir de réf�
 Le calcul `sentence-transformers` a aussi été comparé à la moyenne masquée suivie
 de normalisation de la documentation E5 : aucun écart sur les vecteurs contrôlés.
 
-Ces expériences n'activent ni endpoint ni UI. Le constructeur d'index initial
-et le modèle par défaut restent inchangés jusqu'au choix explicite de la variante.
+Ces expériences historiques n’activaient ni endpoint ni UI. Depuis, E5-base et
+`multi_context` sont devenus les valeurs par défaut, et `POST /hadith/search` est
+disponible. Les rapports historiques restent conservés pour la reproductibilité.
 
 ## Première mesure locale avec E5-small
 

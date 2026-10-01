@@ -6,11 +6,6 @@ from pathlib import Path
 
 ASSETS_DIR = Path(__file__).resolve().parents[2] / "assets"
 
-# Strategies that produce multiple embeddings per hadith ID.
-# For these, rank() aggregates scores with max-per-ID before sorting.
-MULTI_EMBEDDING_STRATEGIES = frozenset({"multi", "multi_context"})
-
-
 @dataclass(frozen=True)
 class HadithConfig:
     base_url: str
