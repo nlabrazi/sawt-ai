@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
-"""Download the official French API corpus, then build one E5 vector per ID."""
+"""Download the official French API corpus, then build E5 vectors per hadith.
+
+For the default multi_context strategy, each hadith is split into up to three
+thematic passage groups (title+categories, hints, hadith+explanation). Each
+group is embedded independently; the index stores one row per passage. At
+query time HadithIndex.rank() takes the max score per hadith ID.
+
+For the original strategy, a single concatenated embedding is built per hadith
+(legacy format, kept for reproducibility of A/B experiments).
+"""
 
 import argparse
 import hashlib
@@ -15,10 +24,12 @@ sys.path.insert(0, str(API_DIR))
 
 from app.core.hadith_config import HadithConfig
 from app.services.hadeethenc_client import HadeethEncClient, HadeethEncError
+from app.services.hadith_documents import build_documents
 from app.services.hadith_index import load_embedding_model
 
 
 def build_search_text(payload: dict, categories: dict[str, str]) -> str:
+    """Single-embedding document text (original strategy, kept for A/B compat)."""
     # Search-only text: the UI always fetches the untouched official source.
     parts = [payload["title"], payload["hadeeth"], payload.get("explanation") or ""]
     parts.extend(hint for hint in payload.get("hints", []) if isinstance(hint, str))
@@ -63,30 +74,71 @@ def fetch_corpus(client, config, cache_dir, *, refresh=False, workers=4):
     return records, categories
 
 
+def _build_passages(records, categories, strategy, model):
+    """Return a flat list of (hadith_id, passage_text) in index row order."""
+    if strategy == "original":
+        return [
+            (str(r["payload"]["id"]), build_search_text(r["payload"], categories))
+            for r in records
+        ]
+
+    # multi / multi_context: several passages per hadith.
+    # The tokenizer used for splitting must match the model's tokenizer so
+    # that no passage exceeds the 512-token limit.
+    tokenizer = model.tokenizer
+    passages = []
+    for r in records:
+        docs = build_documents(r["payload"], categories, strategy, tokenizer=tokenizer)
+        for doc in docs:
+            passages.append((str(r["payload"]["id"]), doc.text))
+    return passages
+
+
 def save_index(config, records, categories, model, *, batch_size=16):
     import numpy as np
 
-    passages = [build_search_text(record["payload"], categories) for record in records]
-    matrix = np.asarray(model.encode(passages, batch_size=batch_size, normalize_embeddings=True, show_progress_bar=True), dtype=np.float32)
-    if matrix.ndim != 2 or matrix.shape[0] != len(records) or not np.isfinite(matrix).all() or (np.linalg.norm(matrix, axis=1) <= 0).any():
+    passages = _build_passages(records, categories, config.strategy, model)
+    texts = [text for _, text in passages]
+    hadith_ids = [hid for hid, _ in passages]
+
+    print(f"Stratégie: {config.strategy} — {len(passages)} passages pour {len(records)} hadiths", flush=True)
+
+    matrix = np.asarray(
+        model.encode(texts, batch_size=batch_size, normalize_embeddings=True, show_progress_bar=True),
+        dtype=np.float32,
+    )
+    if (
+        matrix.ndim != 2
+        or matrix.shape[0] != len(passages)
+        or not np.isfinite(matrix).all()
+        or (np.linalg.norm(matrix, axis=1) <= 0).any()
+    ):
         raise ValueError("Invalid embeddings; previous index preserved")
+
     config.index_path.parent.mkdir(parents=True, exist_ok=True)
     config.meta_path.parent.mkdir(parents=True, exist_ok=True)
     temporary_index = config.index_path.with_suffix(".npz.tmp")
     with temporary_index.open("wb") as file:
         np.savez_compressed(file, embeddings=matrix)
+
     revision = getattr(model[0].auto_model.config, "_commit_hash", None)
     meta = {
-        "schema_version": 1, "provider": "HadeethEnc", "base_url": config.base_url,
-        "language": config.language, "model": config.model_name, "model_revision": revision,
-        "dimension": matrix.shape[1], "built_at": datetime.now(timezone.utc).isoformat(),
+        "schema_version": 1,
+        "provider": "HadeethEnc",
+        "base_url": config.base_url,
+        "language": config.language,
+        "model": config.model_name,
+        "model_revision": revision,
+        "strategy": config.strategy,
+        "dimension": matrix.shape[1],
+        "built_at": datetime.now(timezone.utc).isoformat(),
         "source_fetched_from": min(r["fetched_at"] for r in records),
         "source_fetched_to": max(r["fetched_at"] for r in records),
         # The documented API exposes no corpus release/version field.
         "corpus_version": None,
         "index_sha256": hashlib.sha256(temporary_index.read_bytes()).hexdigest(),
         "source_sha256": hashlib.sha256(json.dumps(records, sort_keys=True, ensure_ascii=False).encode()).hexdigest(),
-        "items": [{"hadeethenc_id": str(r["payload"]["id"]), "language": config.language} for r in records],
+        "items": [{"hadeethenc_id": hid, "language": config.language} for hid in hadith_ids],
     }
     temporary_meta = config.meta_path.with_suffix(".json.tmp")
     temporary_meta.write_text(json.dumps(meta, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -107,9 +159,21 @@ def main():
     if args.batch_size < 1:
         parser.error("--batch-size must be positive")
     config = HadithConfig.from_env()
-    records, categories = fetch_corpus(HadeethEncClient(config.base_url), config, args.cache_dir / config.language, refresh=args.refresh, workers=args.workers)
+    records, categories = fetch_corpus(
+        HadeethEncClient(config.base_url),
+        config,
+        args.cache_dir / config.language,
+        refresh=args.refresh,
+        workers=args.workers,
+    )
     if not args.fetch_only:
-        save_index(config, records, categories, load_embedding_model(config.model_name), batch_size=args.batch_size)
+        save_index(
+            config,
+            records,
+            categories,
+            load_embedding_model(config.model_name),
+            batch_size=args.batch_size,
+        )
 
 
 if __name__ == "__main__":
