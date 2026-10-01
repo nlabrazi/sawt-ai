@@ -25,7 +25,12 @@ onBeforeUnmount(() => {
 
 <template>
   <Teleport to="body">
-    <dialog ref="dialog" aria-labelledby="hadith-reading-title" @cancel.prevent="emit('close')" @click.self="emit('close')">
+    <dialog
+      ref="dialog"
+      aria-labelledby="hadith-reading-title"
+      @cancel.prevent="emit('close')"
+      @click.self="emit('close')"
+    >
       <div class="reading-sheet">
         <header class="reading-header">
           <span>Lecture du hadith · {{ hadith.provider }}</span>
@@ -196,6 +201,7 @@ button:focus-visible, a:focus-visible {
 @media (max-width: 640px) {
   dialog {
     width: 100%;
+    max-width: 100%;
     max-height: 92svh;
     margin: auto 0 0;
     border-radius: 24px 24px 0 0;

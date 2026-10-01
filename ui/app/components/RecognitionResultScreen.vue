@@ -83,10 +83,6 @@ const statusPanel = computed(() => {
 
 <template>
   <section class="screen result-screen" aria-labelledby="result-title">
-    <header class="brand" aria-label="Sawt AI">
-      <span class="brand-name">Sawt</span>
-      <span class="brand-mark">AI</span>
-    </header>
 
     <div class="result-intro">
       <p class="eyebrow">Résultat de l’analyse</p>
@@ -127,24 +123,6 @@ const statusPanel = computed(() => {
   display: grid;
   align-content: start;
   gap: 24px;
-}
-
-.brand {
-  display: inline-flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 5px;
-  color: #f8fafc;
-  font-size: 17px;
-  line-height: 1;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.brand-mark {
-  color: #60a5fa;
-  font-size: 12px;
-  letter-spacing: 0.04em;
 }
 
 .result-intro {

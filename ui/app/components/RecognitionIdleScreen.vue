@@ -148,10 +148,6 @@ function onFileChange(event: Event) {
     :class="{ 'is-recording': isRecording }"
     aria-labelledby="recognition-title"
   >
-    <header class="brand" aria-label="Sawt AI">
-      <span class="brand-name">Sawt</span>
-      <span class="brand-mark">AI</span>
-    </header>
 
     <div class="hero-shell">
       <div class="hero-copy">
@@ -294,24 +290,6 @@ function onFileChange(event: Event) {
   width: min(100%, 860px);
   margin: 0 auto;
   padding: 26px 20px 34px;
-}
-
-.brand {
-  display: inline-flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 5px;
-  color: #f8fafc;
-  font-size: 17px;
-  line-height: 1;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.brand-mark {
-  color: #60a5fa;
-  font-size: 12px;
-  letter-spacing: 0.04em;
 }
 
 .hero-shell {

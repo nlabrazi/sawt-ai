@@ -13,9 +13,11 @@ describe('HadithDetailsDialog', () => {
       props: { hadith: hadithFixture },
       attachTo: document.body,
     })
-    const dialog = document.querySelector('dialog')!
+    const dialog = document.querySelector('dialog')
+    if (!dialog) throw new Error('Reading dialog was not mounted')
     expect(dialog.open).toBe(true)
-    const arabic = dialog.querySelector('[lang="ar"]')!
+    const arabic = dialog.querySelector('[lang="ar"]')
+    if (!arabic) throw new Error('Arabic text is missing')
     expect(arabic.getAttribute('dir')).toBe('rtl')
     expect(arabic.textContent).toBe(hadithFixture.arabic)
     expect(dialog.textContent).toContain(hadithFixture.translation)

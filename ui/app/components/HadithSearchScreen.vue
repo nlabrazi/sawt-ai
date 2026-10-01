@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { BookOpen, Search } from '@lucide/vue'
-import { defineAsyncComponent, nextTick, onDeactivated, ref, watch } from 'vue'
+import { defineAsyncComponent, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import HadithResultCard from '~/components/HadithResultCard.vue'
-import { useHadithSearch } from '~/composables/useHadithSearch'
+import type { useHadithSearch } from '~/composables/useHadithSearch'
 import type { HadithResult } from '~/types/hadith'
 
 const HadithDetailsDialog = defineAsyncComponent(
   () => import('~/components/HadithDetailsDialog.vue'),
 )
-const { query, response, loading, error, validationError, search, cancel } = useHadithSearch()
+const props = defineProps<{ searchState: ReturnType<typeof useHadithSearch> }>()
+const { query, response, loading, error, validationError, search, cancel } = props.searchState
 const selected = ref<HadithResult | null>(null)
 const input = ref<HTMLInputElement | null>(null)
 const resultsTitle = ref<HTMLElement | null>(null)
@@ -20,7 +21,7 @@ watch(response, async (value) => {
   resultsTitle.value?.focus({ preventScroll: true })
 })
 
-onDeactivated(() => {
+onBeforeUnmount(() => {
   selected.value = null
   cancel()
 })
@@ -34,7 +35,6 @@ function chooseExample(example: string) {
 
 <template>
   <section class="hadith-screen" aria-labelledby="hadith-title">
-    <header class="brand" aria-label="Sawt AI"><span>Sawt</span><span class="brand-mark">AI</span></header>
     <div class="search-intro">
       <span class="eyebrow"><BookOpen :size="16" aria-hidden="true" /> Recherche de hadiths · Bêta</span>
       <h1 id="hadith-title">Retrouvez un hadith</h1>
@@ -83,22 +83,6 @@ function chooseExample(example: string) {
   width: min(100%, 780px);
   margin: 0 auto;
   padding: 26px 20px 42px;
-}
-
-.brand {
-  display: flex;
-  align-items: baseline;
-  justify-content: center;
-  gap: 5px;
-  font-size: 17px;
-  font-weight: 800;
-  letter-spacing: -.02em;
-}
-
-.brand-mark {
-  color: #60a5fa;
-  font-size: 12px;
-  letter-spacing: .04em;
 }
 
 .search-intro {

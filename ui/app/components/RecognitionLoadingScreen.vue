@@ -48,10 +48,6 @@ function getState(stepKey: LoadingStep) {
     :aria-busy="loading"
   >
     <header class="top-bar">
-      <div class="brand" aria-label="Sawt AI">
-        <span class="brand-name">Sawt</span>
-        <span class="brand-mark">AI</span>
-      </div>
 
       <button class="cancel-action" type="button" @click="$emit('cancel')">
         Annuler
@@ -107,25 +103,8 @@ function getState(stepKey: LoadingStep) {
 .top-bar {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: 16px;
-}
-
-.brand {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 5px;
-  color: #f8fafc;
-  font-size: 17px;
-  line-height: 1;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-}
-
-.brand-mark {
-  color: #60a5fa;
-  font-size: 12px;
-  letter-spacing: 0.04em;
 }
 
 .cancel-action {

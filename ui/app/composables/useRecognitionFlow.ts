@@ -126,6 +126,7 @@ export function useRecognitionFlow() {
   } = useMicrophoneRecorder(maxAudioDurationSeconds)
 
   const uploadError = ref<string | null>(null)
+  let submissionVersion = 0
   const detectImam = ref(false)
   let startRecordingPromise: Promise<void> | null = null
   let finalizeRecordingPromise: Promise<void> | null = null
@@ -159,6 +160,7 @@ export function useRecognitionFlow() {
   async function submitAudio(file: File, validateDuration = true) {
     if (loading.value) return
 
+    const version = submissionVersion
     uploadError.value = null
 
     if (!isAllowedAudioType(file, acceptedMimeTypes.value)) {
@@ -174,6 +176,7 @@ export function useRecognitionFlow() {
     if (validateDuration && !maxDurationReached.value) {
       try {
         const duration = await getAudioDuration(file)
+        if (version !== submissionVersion) return
 
         if (!Number.isFinite(duration) || duration <= 0) {
           uploadError.value = 'Impossible de lire la durée de ce fichier audio.'
@@ -185,6 +188,7 @@ export function useRecognitionFlow() {
           return
         }
       } catch {
+        if (version !== submissionVersion) return
         uploadError.value = 'Impossible de lire ce fichier audio.'
         return
       }
@@ -196,8 +200,10 @@ export function useRecognitionFlow() {
   function finalizeRecordingAndSubmit() {
     if (finalizeRecordingPromise) return finalizeRecordingPromise
 
+    const version = submissionVersion
     finalizeRecordingPromise = (async () => {
       const recordedFile = await stopRecording()
+      if (version !== submissionVersion) return
 
       if (!recordedFile) {
         uploadError.value = 'Erreur pendant l’enregistrement audio.'
@@ -241,6 +247,7 @@ export function useRecognitionFlow() {
   })
 
   function resetApp() {
+    submissionVersion += 1
     uploadError.value = null
     clearTajwidCache()
     cleanup()

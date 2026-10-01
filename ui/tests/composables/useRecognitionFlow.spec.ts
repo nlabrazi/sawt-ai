@@ -146,4 +146,28 @@ describe('useRecognitionFlow microphone recording', () => {
 
     expect(flow.uploadError.value).toBe('Impossible de lire ce fichier audio.')
   })
+  it('does not submit audio whose metadata arrives after the flow was reset', async () => {
+    const { flow, recognizeAudio } = await setupRecognitionFlow()
+    const audio = document.createElement('audio')
+    Object.defineProperty(audio, 'duration', { value: 1, configurable: true })
+    const createElement = vi.spyOn(document, 'createElement').mockReturnValueOnce(audio)
+    const submit = flow.submitAudio(new File(['audio'], 'sample.wav', { type: 'audio/wav' }))
+    flow.resetApp()
+    audio.dispatchEvent(new Event('loadedmetadata'))
+    await submit
+    expect(recognizeAudio).not.toHaveBeenCalled()
+    expect(flow.uploadError.value).toBeNull()
+    createElement.mockRestore()
+  })
+
+  it('does not expose a metadata timeout after the flow was reset', async () => {
+    vi.useFakeTimers()
+    const { flow, recognizeAudio } = await setupRecognitionFlow()
+    const submit = flow.submitAudio(new File(['audio'], 'sample.wav', { type: 'audio/wav' }))
+    flow.resetApp()
+    await vi.advanceTimersByTimeAsync(4500)
+    await submit
+    expect(flow.uploadError.value).toBeNull()
+    expect(recognizeAudio).not.toHaveBeenCalled()
+  })
 })

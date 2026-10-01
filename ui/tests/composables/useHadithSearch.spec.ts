@@ -110,7 +110,8 @@ describe('useHadithSearch', () => {
     const pending = deferred<typeof result>()
     vi.mocked($fetch).mockReturnValueOnce(pending.promise)
     const scope = effectScope()
-    const state = scope.run(useHadithSearch)!
+    const state = scope.run(useHadithSearch)
+    if (!state) throw new Error('Search scope was not created')
     state.query.value = 'la colère'
     const request = state.search()
     const signal = vi.mocked($fetch).mock.calls[0]?.[1]?.signal as AbortSignal

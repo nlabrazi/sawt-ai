@@ -1,13 +1,17 @@
 import { flushPromises, mount } from '@vue/test-utils'
 import { $fetch } from 'ofetch'
-import { KeepAlive, defineComponent, h, ref } from 'vue'
+import { defineComponent, h, ref } from 'vue'
 import HadithSearchScreen from '~/components/HadithSearchScreen.vue'
+import { useHadithSearch } from '~/composables/useHadithSearch'
 import { hadithFixture } from '../fixtures/hadith'
 
 vi.mock('ofetch', () => ({ $fetch: vi.fn() }))
 
 function mountScreen() {
-  return mount(HadithSearchScreen, { global: { stubs: { HadithDetailsDialog: true } } })
+  return mount(HadithSearchScreen, {
+    props: { searchState: useHadithSearch() },
+    global: { stubs: { HadithDetailsDialog: true } },
+  })
 }
 
 describe('HadithSearchScreen', () => {
@@ -83,16 +87,17 @@ describe('HadithSearchScreen', () => {
     wrapper.unmount()
   })
 
-  it('cancels requests on deactivation and retains the draft on return', async () => {
+  it('cancels on removal and retains the draft on remount', async () => {
     let resolve!: (value: unknown) => void
     vi.mocked($fetch).mockReturnValueOnce(
       new Promise((yes) => {
         resolve = yes
       }),
     )
+    const searchState = useHadithSearch()
     const visible = ref(true)
     const Host = defineComponent({
-      setup: () => () => h(KeepAlive, () => (visible.value ? h(HadithSearchScreen) : null)),
+      setup: () => () => (visible.value ? h(HadithSearchScreen, { searchState }) : null),
     })
     const wrapper = mount(Host)
     await wrapper.get('input').setValue('la colère')
