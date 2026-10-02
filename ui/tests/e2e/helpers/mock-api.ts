@@ -103,12 +103,27 @@ export async function setupMockApi(
     health?: typeof defaultMockHealth
     hadithResponse?: HadithSearchResponse
     hadithStatus?: number
+    hadithTranscription?: string
+    hadithTranscriptionStatus?: number
     recognizeResponse?: Record<string, unknown>
     recognizeStatus?: number
     recognizeErrorDetail?: string
     tajwidResponse?: typeof defaultMockTajwid
   } = {},
 ) {
+  // UI checks must not wait on external font or analytics services.
+  await page.route(
+    (url) =>
+      ['fonts.googleapis.com', 'fonts.gstatic.com', 'umami.nabster.dev'].includes(url.hostname),
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType:
+          route.request().resourceType() === 'stylesheet' ? 'text/css' : 'application/javascript',
+        body: '',
+      }),
+  )
+
   await page.route(
     (url) => url.pathname === '/health',
     async (route) => {
@@ -125,6 +140,30 @@ export async function setupMockApi(
         headers: corsHeaders,
         contentType: 'application/json',
         body: JSON.stringify(options.health ?? defaultMockHealth),
+      })
+    },
+  )
+
+  await page.route(
+    (url) => url.pathname === '/hadith/transcribe',
+    async (route) => {
+      if (route.request().method() === 'OPTIONS') {
+        await route.fulfill({ status: 204, headers: corsHeaders })
+        return
+      }
+      const status = options.hadithTranscriptionStatus ?? 200
+      await route.fulfill({
+        status,
+        headers: corsHeaders,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          status >= 400
+            ? { detail: 'Aucune demande comprise.' }
+            : {
+                query:
+                  options.hadithTranscription ?? 'Trouve-moi les hadiths qui parlent du mariage',
+              },
+        ),
       })
     },
   )

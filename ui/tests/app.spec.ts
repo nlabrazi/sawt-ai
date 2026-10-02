@@ -61,10 +61,10 @@ describe('App', () => {
     await wrapper.get('form').trigger('submit')
     await flushPromises()
     expect(wrapper.find('.hadith-card').exists()).toBe(true)
-    await wrapper.get('.mode-selector button:first-child').trigger('click')
+    await wrapper.get('.mode-selector button:first-of-type').trigger('click')
     await settleScreen()
     expect(wrapper.text()).toContain('Parcours Coran')
-    await wrapper.get('.mode-selector button:nth-child(2)').trigger('click')
+    await wrapper.get('.mode-selector button:nth-of-type(2)').trigger('click')
     await settleScreen()
     expect((wrapper.get('input').element as HTMLInputElement).value).toBe('')
     expect(wrapper.find('.hadith-card').exists()).toBe(false)
@@ -107,8 +107,8 @@ describe('App', () => {
     await flushPromises()
     for (const selector of [
       '.brand',
-      '.mode-selector button:nth-child(2)',
-      '.mode-selector button:last-child',
+      '.mode-selector button:nth-of-type(2)',
+      '.mode-selector button:last-of-type',
     ]) {
       expect(wrapper.get(selector).attributes('disabled')).toBeDefined()
       await wrapper.get(selector).trigger('click')
@@ -117,8 +117,8 @@ describe('App', () => {
     wrapper.getComponent(QuranStub).vm.$emit('navigation-lock', false)
     await flushPromises()
     expect(wrapper.get('.brand').attributes('disabled')).toBeUndefined()
-    expect(wrapper.get('.mode-selector button:last-child').attributes('disabled')).toBeUndefined()
-    await wrapper.get('.mode-selector button:last-child').trigger('click')
+    expect(wrapper.get('.mode-selector button:last-of-type').attributes('disabled')).toBeUndefined()
+    await wrapper.get('.mode-selector button:last-of-type').trigger('click')
     await settleScreen()
     expect(wrapper.find('#faq-title').exists()).toBe(true)
     wrapper.unmount()

@@ -10,7 +10,7 @@ const questions = [
   {
     question: 'Comment rechercher un hadith ?',
     answer:
-      'Saisissez un sujet, quelques mots ou une phrase en français. Ouvrez un résultat pour lire le texte arabe, sa traduction et son explication.',
+      'Saisissez un sujet ou une phrase en français, ou touchez le micro à côté de la recherche pour dicter votre demande. Touchez le bouton d’arrêt pour rechercher ; l’enregistrement s’arrête aussi après 30 secondes. Vous pouvez corriger la phrase reconnue. Ouvrez un résultat pour lire le texte arabe, sa traduction et son explication.',
   },
   {
     question: 'D’où viennent les hadiths ?',
@@ -25,7 +25,7 @@ const questions = [
   {
     question: 'Pourquoi le micro ne fonctionne-t-il pas ?',
     answer:
-      'Autorisez l’accès au microphone dans votre navigateur et ouvrez Sawt AI en HTTPS. Vous pouvez également utiliser l’import audio.',
+      'Autorisez l’accès au microphone dans votre navigateur et ouvrez Sawt AI en HTTPS. Pour le Coran, vous pouvez aussi importer un audio ; pour les hadiths, saisissez votre recherche.',
   },
 ]
 </script>

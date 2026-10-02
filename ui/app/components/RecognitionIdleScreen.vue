@@ -3,6 +3,7 @@ import { FlaskConical, Upload } from '@lucide/vue'
 import { computed, ref } from 'vue'
 
 import RecognitionActionButton from '~/components/RecognitionActionButton.vue'
+import MotionReveal from '~/components/MotionReveal.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -132,7 +133,7 @@ function onFileChange(event: Event) {
   >
 
     <div class="hero-shell">
-      <div class="hero-copy">
+      <MotionReveal class="hero-copy">
         <h1 id="recognition-title" class="main-title" aria-live="polite">{{ title }}</h1>
 
         <div
@@ -160,9 +161,9 @@ function onFileChange(event: Event) {
             />
           </div>
         </div>
-      </div>
+      </MotionReveal>
 
-      <div class="hero-action">
+      <MotionReveal class="hero-action" :delay="0.08" :distance="12">
         <RecognitionActionButton
           :is-recording="isRecording"
           :loading="isFinalizingRecording"
@@ -177,9 +178,9 @@ function onFileChange(event: Event) {
           <p class="status-title">{{ micError ?? recordingError }}</p>
           <p class="status-hint">{{ micError ? micErrorHint : recordingErrorHint }}</p>
         </div>
-      </div>
+      </MotionReveal>
 
-      <div v-if="!isRecording && !isFinalizingRecording" class="secondary-actions">
+      <MotionReveal v-if="!isRecording && !isFinalizingRecording" class="secondary-actions" :delay="0.16">
         <button class="file-button" type="button" @click="openFilePicker">
           <Upload :size="16" aria-hidden="true" />
           Importer un fichier audio
@@ -225,7 +226,7 @@ function onFileChange(event: Event) {
             </p>
           </div>
         </details>
-      </div>
+      </MotionReveal>
     </div>
 
     <input

@@ -48,6 +48,7 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
   let sourceNode: MediaStreamAudioSourceNode | null = null
   let animationFrameId: number | null = null
   let stopPromise: Promise<File | null> | null = null
+  let recordingVersion = 0
 
   function getSupportedMimeType() {
     const candidates = [
@@ -166,6 +167,7 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
   async function startRecording() {
     if (isFinalizingRecording.value || stopPromise) return
 
+    const activeVersion = ++recordingVersion
     micError.value = null
     resetRecordingState()
 
@@ -188,7 +190,14 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
         return
       }
 
-      mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      if (activeVersion !== recordingVersion) {
+        stream.getTracks().forEach((track) => {
+          track.stop()
+        })
+        return
+      }
+      mediaStream = stream
 
       const mimeType = getSupportedMimeType()
       mediaRecorder = mimeType
@@ -210,6 +219,7 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
       startAudioLevelTracking()
     } catch (error) {
       console.error(error)
+      if (activeVersion !== recordingVersion) return
       micError.value = 'Impossible d’accéder au microphone.'
       cleanup()
     }
@@ -223,20 +233,25 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
     stopAudioLevelTracking()
     isFinalizingRecording.value = true
 
+    const activeVersion = recordingVersion
     const recorderToStop = mediaRecorder
     const chunksToStop = audioChunks
     let resolveStop: (file: File | null) => void = () => undefined
 
     const pendingStop = new Promise<File | null>((resolve) => {
       resolveStop = resolve
-      recorderToStop.onstop = async () => {
+      recorderToStop.onstop = () => {
+        if (activeVersion !== recordingVersion) {
+          resolve(null)
+          return
+        }
         const mimeType = recorderToStop.mimeType || 'audio/webm'
         const blob = new Blob(chunksToStop, { type: mimeType })
         const filenameBase = `recording-${Date.now()}`
         let file: File | null = null
 
         try {
-          file = await createRecordedFile(blob, filenameBase)
+          file = createRecordedFile(blob, filenameBase)
         } catch (error) {
           console.error(error)
         } finally {
@@ -263,9 +278,15 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
   }
 
   function cleanup() {
+    recordingVersion += 1
+    stopPromise = null
     stopTimer()
     stopAudioLevelTracking()
 
+    if (mediaRecorder?.state === 'recording') {
+      mediaRecorder.ondataavailable = null
+      mediaRecorder.stop()
+    }
     mediaRecorder = null
     audioChunks = []
     isFinalizingRecording.value = false

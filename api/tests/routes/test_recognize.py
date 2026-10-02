@@ -5,6 +5,7 @@ from tempfile import SpooledTemporaryFile
 from fastapi import HTTPException
 
 import app.routes.recognize as recognize_route
+import app.core.audio_upload as audio_upload
 
 
 def build_upload_file(filename: str, content: bytes, content_type: str):
@@ -28,11 +29,11 @@ def build_mp3_like_audio(payload: bytes = b"test-audio") -> bytes:
 
 
 def test_resolve_temp_extension_returns_extension_for_detected_content_type():
-    assert recognize_route.resolve_temp_extension("audio/ogg") == ".ogg"
+    assert audio_upload.resolve_temp_extension("audio/ogg") == ".ogg"
 
 
 def test_sniff_audio_content_type_detects_wav_header():
-    assert recognize_route.sniff_audio_content_type(build_wav_like_audio()) == "audio/wav"
+    assert audio_upload.sniff_audio_content_type(build_wav_like_audio()) == "audio/wav"
 
 
 def test_recognize_runs_pipeline_in_threadpool_and_cleans_temp_file(monkeypatch):
@@ -78,7 +79,7 @@ def test_recognize_runs_pipeline_in_threadpool_and_cleans_temp_file(monkeypatch)
 
     monkeypatch.setattr(recognize_route, "run_inference_pipeline", fake_pipeline)
     monkeypatch.setattr(recognize_route, "run_in_threadpool", fake_run_in_threadpool)
-    monkeypatch.setattr(recognize_route, "get_audio_duration_seconds", lambda _path: 12.5)
+    monkeypatch.setattr(audio_upload, "get_audio_duration_seconds", lambda _path: 12.5)
 
     upload = build_upload_file(
         "recitation.webm",
@@ -128,7 +129,7 @@ def test_recognize_rejects_invalid_audio_signature():
 
 
 def test_recognize_rejects_audio_longer_than_the_server_policy(monkeypatch):
-    monkeypatch.setattr(recognize_route, "get_audio_duration_seconds", lambda _path: 91)
+    monkeypatch.setattr(audio_upload, "get_audio_duration_seconds", lambda _path: 91)
 
     oversized_duration_upload = build_upload_file(
         "too-long.wav",
@@ -152,9 +153,9 @@ def test_recognize_rejects_audio_longer_than_the_server_policy(monkeypatch):
 
 
 def test_recognize_rejects_too_large_files_during_streaming(monkeypatch):
-    monkeypatch.setattr(recognize_route, "MAX_FILE_SIZE_BYTES", 10)
-    monkeypatch.setattr(recognize_route, "HEADER_SNIFF_BYTES", 3)
-    monkeypatch.setattr(recognize_route, "READ_CHUNK_SIZE_BYTES", 4)
+    monkeypatch.setattr(audio_upload, "MAX_FILE_SIZE_BYTES", 10)
+    monkeypatch.setattr(audio_upload, "HEADER_SNIFF_BYTES", 3)
+    monkeypatch.setattr(audio_upload, "READ_CHUNK_SIZE_BYTES", 4)
 
     oversized_upload = build_upload_file(
         "too-big.mp3",

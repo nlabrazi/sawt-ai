@@ -1,9 +1,12 @@
 <script setup lang="ts">
 import { RotateCcw } from '@lucide/vue'
+import { Motion } from 'motion-v'
 import { computed } from 'vue'
 
 import FeedbackForm from '~/components/FeedbackForm.vue'
 import ResultCard from '~/components/ResultCard.vue'
+import MotionReveal from '~/components/MotionReveal.vue'
+import { useUiMotion } from '~/composables/useUiMotion'
 import type { RecognizeResponse } from '~/composables/useRecognition'
 
 const props = defineProps<{
@@ -14,6 +17,7 @@ const props = defineProps<{
 defineEmits<{
   reset: []
 }>()
+const { canAnimate, spring } = useUiMotion()
 
 const rejectionCopy = computed(() => {
   switch (props.result?.detection?.rejection_reason) {
@@ -84,10 +88,10 @@ const statusPanel = computed(() => {
 <template>
   <section class="screen result-screen" aria-labelledby="result-title">
 
-    <div class="result-intro">
+    <MotionReveal class="result-intro">
       <h1 id="result-title" class="main-title">{{ heading }}</h1>
       <p class="main-subtitle">{{ introduction }}</p>
-    </div>
+    </MotionReveal>
 
     <div class="content-stack">
       <div v-if="statusPanel" class="status-panel" role="alert">
@@ -95,14 +99,22 @@ const statusPanel = computed(() => {
         <p class="status-text">{{ statusPanel.text }}</p>
       </div>
 
-      <ResultCard v-if="result?.verse" :result="result" />
-      <FeedbackForm v-if="result?.verse" :result="result" />
+      <MotionReveal v-if="result?.verse" :delay="0.1"><ResultCard :result="result" /></MotionReveal>
+      <MotionReveal v-if="result?.verse" :delay="0.2"><FeedbackForm :result="result" /></MotionReveal>
     </div>
 
-    <button class="reset-action" type="button" @click="$emit('reset')">
+    <Motion
+      as="button"
+      class="reset-action"
+      type="button"
+      :while-hover="canAnimate ? { y: -2 } : undefined"
+      :while-press="canAnimate ? { scale: 0.97 } : undefined"
+      :transition="spring"
+      @click="$emit('reset')"
+    >
       <RotateCcw class="reset-icon" :stroke-width="2" aria-hidden="true" />
       Nouvelle récitation
-    </button>
+    </Motion>
   </section>
 </template>
 

@@ -20,7 +20,7 @@ _CONNECTOR = (
 )
 _PREFIX = re.compile(
     r"^" + _COURTESY + r"(?:" + _REQUEST + r")?"
-    r"(?:(?:un|le|les|des)\s+)?hadiths?\s+" + _CONNECTOR,
+    r"(?:(?:le\s+ou\s+les|un\s+ou\s+plusieurs|un|le|les|des)\s+)?hadiths?\s+" + _CONNECTOR,
     re.IGNORECASE,
 )
 

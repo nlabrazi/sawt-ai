@@ -141,7 +141,7 @@ Backend API tests:
 ```bash
 python3 -m venv api/.venv
 api/.venv/bin/pip install -r api/requirements-test.txt
-api/.venv/bin/pytest -c api/pytest.ini
+api/.venv/bin/pytest -c api/pytest.ini api/tests
 ```
 
 Frontend unit tests:
@@ -186,13 +186,64 @@ thresholds. This benchmark measures exact passage accuracy, precision, recall,
 false positives, and matching latency; it does not measure Whisper accuracy.
 
 Hadith search is available in the **Hadiths** mode of the Nuxt interface (Beta).
-Describe a subject in French, submit the search, and open one of the three
-proposals to read the Arabic text, translation, and available source details.
+Type a subject in French or press the microphone beside the search bar and say,
+for example, “Trouve-moi le ou les hadiths qui parlent du mariage”. Press the stop
+button to transcribe and search. The recording also stops automatically after
+30 seconds. The recognized sentence appears in the search bar; you can correct
+it and search again. Open one of up to three proposals to read the Arabic text,
+translation, and available source details.
 The landing screen links to Quran and Hadith search, with a separate FAQ.
 The Sawt AI logo returns home and resets searches. Leaving Hadith mode clears
 the query and results. Pending searches are cancelled on exit; Quran recording
-prevents switching modes until the recording is finished. Texts come from
-HadeethEnc and are never generated.
+prevents switching modes until the recording is finished. Leaving Hadith mode
+stops its microphone, cancels pending transcription/search and discards late
+responses. Texts come from HadeethEnc and are never generated.
+
+Hadith voice search requires microphone permission and HTTPS (or localhost).
+Permission denial, unsupported browsers, unreadable audio and transcription
+errors leave typed search available. No continuous listening or spoken answer
+is involved: results use the existing Hadith cards.
+
+The UI sends the recorded file as multipart field `file` to
+`POST /hadith/transcribe`. The API returns the original French transcription:
+
+```json
+{ "query": "Trouve-moi les hadiths qui parlent du mariage" }
+```
+
+The UI then calls `POST /hadith/search` with that query and `limit: 3`. Recognized
+request prefixes are removed inside the existing search service, preserving the
+subject and negations. Voice input uses the same keyword/semantic policy as
+text input; it does not guarantee three relevant results or search exhaustiveness.
+
+The transcription endpoint reuses the loaded Whisper model with `language="fr"`
+and voice activity detection. Audio upload validation and the concurrency budget
+(`MAX_CONCURRENT_INFERENCES`, default 2) are shared with Quran recognition.
+The file limit is 12 MB. The server accepts up to 31 seconds, allowing one second
+for the browser's asynchronous stop and final codec frame around the UI's
+30-second recording limit. Temporary audio is deleted on success and failure;
+transcribed text is not logged by the transcription service.
+
+| Status | Meaning |
+| --- | --- |
+| `400` | Empty audio file |
+| `413` | File size or duration limit exceeded |
+| `415` | Unsupported signature or undecodable audio |
+| `422` | Missing file, no usable spoken query, or query longer than 300 characters |
+| `503` | Transcription model unavailable or inference failed |
+
+Restart the API after updating the backend code to register the new endpoint:
+
+```bash
+docker compose restart api
+```
+
+API tests mock Whisper; browser voice tests use a real MediaRecorder with a
+synthetic audio stream and mocked transcription/source responses. Before release,
+check a real French microphone recording against the running API, for example
+requests about marriage, a request with a negation, silence, and a correction of
+the recognized sentence. These automated tests verify the workflow and error
+handling, rather than measuring speech recognition or religious relevance.
 
 Build the current E5-base / multi_context index before the first search:
 

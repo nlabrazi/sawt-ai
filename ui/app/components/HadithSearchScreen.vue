@@ -1,15 +1,34 @@
 <script setup lang="ts">
-import { Search } from '@lucide/vue'
+import { Mic, Search, Square } from '@lucide/vue'
 import { defineAsyncComponent, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import HadithResultCard from '~/components/HadithResultCard.vue'
+import MotionReveal from '~/components/MotionReveal.vue'
 import type { useHadithSearch } from '~/composables/useHadithSearch'
+import { useHadithVoiceSearch } from '~/composables/useHadithVoiceSearch'
 import type { HadithResult } from '~/types/hadith'
 
 const HadithDetailsDialog = defineAsyncComponent(
   () => import('~/components/HadithDetailsDialog.vue'),
 )
 const props = defineProps<{ searchState: ReturnType<typeof useHadithSearch> }>()
-const { query, response, loading, error, validationError, search, cancel } = props.searchState
+const { query, response, loading, transcribing, error, validationError, search, cancel } =
+  props.searchState
+const {
+  isRecording,
+  isFinalizingRecording,
+  recordingSeconds,
+  maxRecordingSeconds,
+  starting,
+  busy: voiceBusy,
+  error: voiceError,
+  toggle: toggleVoice,
+  cancel: cancelVoice,
+} = useHadithVoiceSearch(props.searchState)
+
+function submitSearch() {
+  if (!voiceBusy.value && !transcribing.value) void search()
+}
+
 const selected = ref<HadithResult | null>(null)
 const resultsTitle = ref<HTMLElement | null>(null)
 
@@ -21,34 +40,45 @@ watch(response, async (value) => {
 
 onBeforeUnmount(() => {
   selected.value = null
-  cancel()
+  cancelVoice()
 })
 </script>
 
 <template>
   <section class="hadith-screen" :class="{ 'is-idle': !loading && !response && !error }" aria-labelledby="hadith-title">
     <div class="search-shell">
-      <div class="search-intro">
+      <MotionReveal class="search-intro">
         <h1 id="hadith-title">Retrouvez un hadith</h1>
         <p>Un sujet, quelques mots ou un extrait.</p>
-      </div>
-      <form class="search-form" novalidate @submit.prevent="search">
+      </MotionReveal>
+      <form class="search-form" novalidate @submit.prevent="submitSearch">
         <label for="hadith-query" class="sr-only">Que recherchez-vous ?</label>
         <div class="search-controls">
-          <input id="hadith-query" v-model="query" type="search" maxlength="300" placeholder="Rechercher un hadith" enterkeyhint="search" :aria-invalid="!!validationError" :aria-describedby="validationError ? 'hadith-query-error' : undefined" @input="validationError = null" />
-          <button class="search-button" type="submit" :disabled="loading">
+          <input id="hadith-query" v-model="query" type="search" :disabled="voiceBusy || transcribing" maxlength="300" placeholder="Rechercher un hadith" enterkeyhint="search" :aria-invalid="!!validationError" :aria-describedby="validationError ? 'hadith-query-error' : undefined" @input="validationError = null" />
+          <button class="microphone-button" :class="{ 'is-recording': isRecording }" type="button" :disabled="loading || starting || isFinalizingRecording" :aria-pressed="isRecording" :aria-label="isRecording ? 'Arrêter et rechercher' : 'Rechercher par la voix'" @click="toggleVoice">
+            <Square v-if="isRecording" :size="18" aria-hidden="true" /><Mic v-else :size="20" aria-hidden="true" />
+          </button>
+          <button class="search-button" type="submit" :disabled="loading || voiceBusy">
             <Search :size="20" aria-hidden="true" /><span class="sr-only">{{ loading ? 'Recherche…' : 'Rechercher' }}</span>
           </button>
         </div>
+        <div v-if="voiceBusy" class="voice-status" role="status">
+          <span v-if="starting">Autorisez l’accès au microphone…</span>
+          <span v-else-if="isFinalizingRecording">Préparation de l’enregistrement…</span>
+          <span v-else>Écoute en cours · {{ recordingSeconds }} / {{ maxRecordingSeconds }} s</span>
+          <button type="button" @click="cancelVoice">Annuler l’enregistrement</button>
+        </div>
+        <p v-if="voiceError" class="validation-error" role="alert">{{ voiceError }}</p>
         <p v-if="validationError" id="hadith-query-error" class="validation-error" role="alert">{{ validationError }}</p>
       </form>
     </div>
     <div class="search-feedback sr-only" role="status" aria-live="polite" aria-atomic="true">
-      <span v-if="loading">Recherche des hadiths en cours…</span>
+      <span v-if="transcribing">Transcription de votre demande…</span>
+      <span v-else-if="loading">Recherche des hadiths en cours…</span>
       <span v-else-if="response">{{ response.results.length }} proposition{{ response.results.length === 1 ? '' : 's' }} disponible{{ response.results.length === 1 ? '' : 's' }}.</span>
     </div>
     <div v-if="loading" class="loading-panel" :aria-busy="true">
-      <div class="loading-copy"><span class="loading-dot" aria-hidden="true" /><p>Recherche en cours…</p><button type="button" @click="cancel">Annuler</button></div>
+      <div class="loading-copy"><span class="loading-dot" aria-hidden="true" /><p>{{ transcribing ? 'Transcription de votre demande…' : 'Recherche en cours…' }}</p><button type="button" @click="cancel">Annuler</button></div>
       <div v-for="position in 3" :key="position" class="skeleton-card" aria-hidden="true"><span /><span /><span /></div>
     </div>
     <div v-else-if="error" class="status-panel" role="alert">
@@ -62,7 +92,7 @@ onBeforeUnmount(() => {
         <p v-else>Aucun résultat exploitable n’a été retourné. Essayez une autre formulation.</p>
         <a href="https://hadeethenc.com/fr" target="_blank" rel="noopener noreferrer">Consulter la collection HadeethEnc <span class="sr-only">(nouvel onglet)</span></a>
       </div>
-      <HadithResultCard v-for="(hadith, index) in response.results" :key="hadith.id" :hadith="hadith" :position="index + 1" @read="selected = $event" />
+      <MotionReveal v-for="(hadith, index) in response.results" :key="hadith.id" :delay="Math.min(index * 0.07, 0.35)"><HadithResultCard :hadith="hadith" :position="index + 1" @read="selected = $event" /></MotionReveal>
       <details class="result-context">
         <summary>À propos des résultats <span class="beta-badge">Bêta</span></summary>
         <p class="search-method" v-if="response.search_mode === 'keywords'">Recherche par mots-clés<span v-if="response.search_terms.length"> : {{ response.search_terms.map(term => `« ${term} »`).join(', ') }}</span>.<br />Chaque résultat contient ces mots, au singulier ou au pluriel, dans son titre, son texte ou son explication en français.</p>
@@ -168,7 +198,7 @@ button:disabled {
   cursor: default;
 }
 
-.search-button {
+.search-button, .microphone-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -180,6 +210,27 @@ button:disabled {
   border-color: #4982f8;
   color: #fff;
   font-weight: 600;
+}
+
+.microphone-button {
+  background: #1a2e49;
+  border-color: #3c506f;
+}
+
+.microphone-button.is-recording {
+  background: #9f2737;
+  border-color: #f4a2a2;
+}
+
+.voice-status {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+  color: #bed0e7;
+  font-size: 14px;
 }
 
 .search-button:hover:not(:disabled) {

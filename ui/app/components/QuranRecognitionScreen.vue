@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, onBeforeUnmount, ref, watch } from 'vue'
 
+import MotionScreenTransition from '~/components/MotionScreenTransition.vue'
 import RecognitionIdleScreen from '~/components/RecognitionIdleScreen.vue'
 import RecognitionLoadingScreen from '~/components/RecognitionLoadingScreen.vue'
 import { useRecognitionFlow } from '~/composables/useRecognitionFlow'
@@ -60,7 +61,7 @@ watch(screenState, (state) => {
 </script>
 
 <template>
-  <Transition name="screen-transition" mode="out-in">
+  <MotionScreenTransition>
     <RecognitionIdleScreen
       v-if="screenState === 'idle'"
       key="idle"
@@ -95,5 +96,5 @@ watch(screenState, (state) => {
       :result="result"
       @reset="resetApp"
     />
-  </Transition>
+  </MotionScreenTransition>
 </template>

@@ -148,3 +148,120 @@ describe('useHadithSearch', () => {
     expect(state.response.value).toBeNull()
   })
 })
+
+describe('useHadithSearch voice queries', () => {
+  const file = new File(['audio'], 'query.webm', { type: 'audio/webm' })
+  const query = 'Trouve-moi les hadiths qui parlent du mariage'
+  beforeEach(() => vi.mocked($fetch).mockReset())
+
+  it('transcribes multipart audio then searches the visible editable query', async () => {
+    const pendingSearch = deferred<typeof result>()
+    vi.mocked($fetch).mockResolvedValueOnce({ query }).mockReturnValueOnce(pendingSearch.promise)
+    const state = useHadithSearch()
+    const request = state.transcribeAndSearch(file)
+    expect(state.transcribing.value).toBe(true)
+    expect(state.loading.value).toBe(true)
+    const call = vi.mocked($fetch).mock.calls[0]
+    if (!call) throw new Error('Missing transcription request')
+    const [url, options] = call
+    expect(url).toBe('http://localhost:8000/hadith/transcribe')
+    expect((options?.body as FormData).get('file')).toBeInstanceOf(File)
+    expect(options).toMatchObject({ method: 'POST', retry: 0, timeout: 60_000 })
+    await Promise.resolve()
+    expect(state.query.value).toBe(query)
+    expect(state.transcribing.value).toBe(false)
+    expect(state.loading.value).toBe(true)
+    expect($fetch).toHaveBeenLastCalledWith(
+      'http://localhost:8000/hadith/search',
+      expect.objectContaining({ body: { query, limit: 3 } }),
+    )
+    pendingSearch.resolve({ query, results: [] })
+    await request
+    expect(state.response.value?.query).toBe(query)
+    expect(state.loading.value).toBe(false)
+    state.query.value = 'le divorce'
+    vi.mocked($fetch).mockResolvedValueOnce({ query: 'le divorce', results: [] })
+    await state.search()
+    expect(state.response.value?.query).toBe('le divorce')
+  })
+
+  it('ignores a second voice submission while transcribing', async () => {
+    const pending = deferred<{ query: string }>()
+    vi.mocked($fetch).mockReturnValueOnce(pending.promise)
+    const state = useHadithSearch()
+    const request = state.transcribeAndSearch(file)
+    await state.transcribeAndSearch(file)
+    expect($fetch).toHaveBeenCalledTimes(1)
+    state.cancel()
+    pending.resolve({ query })
+    await request
+  })
+
+  it.each([
+    'cancel',
+    'reset',
+  ] as const)('discards a late transcription after %s', async (action) => {
+    const pending = deferred<{ query: string }>()
+    vi.mocked($fetch).mockReturnValueOnce(pending.promise)
+    const state = useHadithSearch()
+    state.query.value = 'ancien brouillon'
+    const request = state.transcribeAndSearch(file)
+    const signal = vi.mocked($fetch).mock.calls[0]?.[1]?.signal as AbortSignal
+    state[action]()
+    expect(signal.aborted).toBe(true)
+    expect(state.transcribing.value).toBe(false)
+    pending.resolve({ query })
+    await request
+    expect(state.query.value).toBe(action === 'reset' ? '' : 'ancien brouillon')
+    expect($fetch).toHaveBeenCalledTimes(1)
+    expect(state.response.value).toBeNull()
+  })
+
+  it('discards transcription superseded by a typed search', async () => {
+    const pending = deferred<{ query: string }>()
+    vi.mocked($fetch).mockReturnValueOnce(pending.promise).mockResolvedValueOnce(result)
+    const state = useHadithSearch()
+    const voice = state.transcribeAndSearch(file)
+    state.query.value = result.query
+    await state.search()
+    pending.resolve({ query })
+    await voice
+    expect(state.query.value).toBe(result.query)
+    expect(state.response.value).toEqual(result)
+    expect($fetch).toHaveBeenCalledTimes(2)
+  })
+
+  it.each([
+    400,
+    413,
+    415,
+    422,
+    503,
+    undefined,
+  ])('keeps the draft and allows typing after voice error %s', async (statusCode) => {
+    vi.mocked($fetch).mockRejectedValueOnce({ statusCode })
+    const state = useHadithSearch()
+    state.query.value = result.query
+    await state.transcribeAndSearch(file)
+    expect(state.transcriptionError.value).toBeTruthy()
+    expect(state.error.value).toBeNull()
+    expect(state.query.value).toBe(result.query)
+    expect(state.loading.value).toBe(false)
+    expect(state.transcribing.value).toBe(false)
+    expect($fetch).toHaveBeenCalledTimes(1)
+    vi.mocked($fetch).mockResolvedValueOnce(result)
+    await state.search()
+    expect(state.transcriptionError.value).toBeNull()
+    expect(state.response.value).toEqual(result)
+  })
+
+  it('retains the transcription when hadith retrieval fails', async () => {
+    vi.mocked($fetch).mockResolvedValueOnce({ query }).mockRejectedValueOnce({ statusCode: 503 })
+    const state = useHadithSearch()
+    await state.transcribeAndSearch(file)
+    expect(state.query.value).toBe(query)
+    expect(state.error.value).toContain('temporairement indisponible')
+    expect(state.transcriptionError.value).toBeNull()
+    expect(state.loading.value).toBe(false)
+  })
+})
