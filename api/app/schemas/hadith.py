@@ -25,3 +25,7 @@ class HadithSearchResponse(BaseModel):
     results: list[HadithResult]
     search_mode: Literal["keywords", "semantic"] = "semantic"
     search_terms: list[str] = Field(default_factory=list)
+
+
+class HadithTranscriptionResponse(BaseModel):
+    query: Annotated[str, StringConstraints(strip_whitespace=True, min_length=3, max_length=300)]
