@@ -20,5 +20,3 @@ def get_inference_semaphore() -> asyncio.Semaphore:
 def reset_inference_semaphore() -> None:
     global _inference_semaphore
     _inference_semaphore = None
-
-

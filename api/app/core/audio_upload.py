@@ -113,5 +113,3 @@ def enforce_audio_duration_limit(
         )
 
     return duration_seconds
-
-
