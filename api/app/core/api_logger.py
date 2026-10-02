@@ -75,6 +75,15 @@ def log_api_error(
 
     if isinstance(error, BaseException):
         payload_extra["errorType"] = error.__class__.__name__
+        causes = []
+        seen = {id(error)}
+        cause = error.__cause__
+        while cause is not None and id(cause) not in seen:
+            seen.add(id(cause))
+            causes.append({"error": _error_to_string(cause), "errorType": cause.__class__.__name__})
+            cause = cause.__cause__
+        if causes:
+            payload_extra["errorCauses"] = causes
 
     log_api_event(
         event=event,

@@ -45,3 +45,33 @@ def test_log_api_error_writes_json_to_stderr(capsys):
         "error": "boom",
         "errorType": "RuntimeError",
     }
+
+
+def test_log_api_error_includes_nested_causes(capsys):
+    root = FileNotFoundError("hadith_index_meta.json missing")
+    index = RuntimeError("Invalid index")
+    index.__cause__ = root
+    error = RuntimeError("Search unavailable")
+    error.__cause__ = index
+
+    log_api_error(error=error, message="Search failed", status_code=503)
+
+    payload = json.loads(capsys.readouterr().err)
+    assert payload["error"] == "Search unavailable"
+    assert payload["errorCauses"] == [
+        {"error": "Invalid index", "errorType": "RuntimeError"},
+        {"error": "hadith_index_meta.json missing", "errorType": "FileNotFoundError"},
+    ]
+
+
+def test_log_api_error_stops_at_a_cyclic_cause(capsys):
+    error = RuntimeError("Search unavailable")
+    cause = ValueError("Invalid index")
+    error.__cause__ = cause
+    cause.__cause__ = error
+
+    log_api_error(error=error, message="Search failed")
+
+    assert json.loads(capsys.readouterr().err)["errorCauses"] == [
+        {"error": "Invalid index", "errorType": "ValueError"},
+    ]

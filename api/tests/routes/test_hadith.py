@@ -76,6 +76,33 @@ def test_search_maps_unavailability_to_503(client, service):
     assert response.json() == {"detail": "Recherche indisponible"}
 
 
+def test_missing_index_logs_technical_cause_but_keeps_public_503_generic(monkeypatch, tmp_path, capsys):
+    import json
+
+    from app.core.hadith_config import HadithConfig
+    from app.main import app
+    from app.services.hadith_search_service import HadithSearchService, UNAVAILABLE_MESSAGE
+
+    config = HadithConfig(
+        base_url="https://example.test", language="fr", model_name="test-model",
+        strategy="multi_context", index_path=tmp_path / "index.npz",
+        meta_path=tmp_path / "meta.json",
+    )
+    service = HadithSearchService(config=config, client=Mock())
+    monkeypatch.setattr(hadith_route, "get_hadith_search_service", lambda: service)
+    # Do not enter the client's context: Quran startup resources are unrelated.
+    response = TestClient(app).post("/hadith/search", json={"query": "colère"})
+
+    assert response.status_code == 503
+    assert response.json() == {"detail": UNAVAILABLE_MESSAGE}
+    log = json.loads(capsys.readouterr().err)
+    assert log["route"] == "/hadith/search"
+    assert log["errorType"] == "HadithSearchError"
+    assert log["errorCauses"][0]["errorType"] == "HadithIndexError"
+    assert log["errorCauses"][-1]["errorType"] == "FileNotFoundError"
+    assert str(config.meta_path) in log["errorCauses"][-1]["error"]
+
+
 def test_search_returns_an_empty_list_without_a_technical_error(client, service):
     service.search.return_value = HadithSearchResponse(query="la colère", results=[])
     response = client.post("/hadith/search", json={"query": "la colère"})
