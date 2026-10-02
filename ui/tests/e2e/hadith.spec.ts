@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
 import { hadithFixture } from '../fixtures/hadith'
 import { corsHeaders, setupMockApi } from './helpers/mock-api'
 
@@ -158,4 +158,121 @@ test('supports reading on mobile without horizontal overflow', async ({ page }) 
   ).toBe(false)
   await page.getByRole('button', { name: 'Fermer la lecture du hadith' }).click()
   await expect(page.getByRole('dialog')).not.toBeVisible()
+})
+
+async function mockMicrophone(page: Page) {
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
+      configurable: true,
+      value: async () => {
+        const audio = new AudioContext()
+        const oscillator = audio.createOscillator()
+        const destination = audio.createMediaStreamDestination()
+        oscillator.connect(destination)
+        oscillator.start()
+        await audio.resume()
+        for (const track of destination.stream.getTracks()) {
+          const stop = track.stop.bind(track)
+          track.stop = () => {
+            stop()
+            oscillator.stop()
+            void audio.close()
+          }
+        }
+        return destination.stream
+      },
+    })
+  })
+  await page.reload()
+}
+
+test('records voice with MediaRecorder, transcribes, searches and allows correction on mobile', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 667 })
+  await mockMicrophone(page)
+  await page.getByRole('button', { name: 'Hadiths', exact: true }).click()
+  const query = 'Trouve-moi les hadiths qui parlent du mariage'
+  await page.getByRole('button', { name: 'Rechercher par la voix' }).click()
+  await expect(page.locator('.voice-status')).toContainText(/\d+ \/ 30 s/)
+  await expect(page.getByLabel('Que recherchez-vous ?')).toBeDisabled()
+  const audioRequest = page.waitForRequest(
+    (request) => request.url().endsWith('/hadith/transcribe') && request.method() === 'POST',
+  )
+  const searchRequest = page.waitForRequest(
+    (request) => request.url().endsWith('/hadith/search') && request.method() === 'POST',
+  )
+  // Wait for an audio chunk from the native browser recorder.
+  await expect(page.locator('.voice-status')).toContainText(/[1-9]\d* \/ 30 s/)
+  await page.getByRole('button', { name: 'Arrêter et rechercher' }).click()
+  const upload = await audioRequest
+  expect(upload.headers()['content-type']).toContain('multipart/form-data')
+  expect(upload.postDataBuffer()?.length).toBeGreaterThan(100)
+  expect((await searchRequest).postDataJSON()).toEqual({ query, limit: 3 })
+  await expect(page.getByLabel('Que recherchez-vous ?')).toHaveValue(query)
+  await expect(page.locator('.hadith-card')).toBeVisible()
+  await expect(page.getByLabel('Que recherchez-vous ?')).toBeEnabled()
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    ),
+  ).toBe(false)
+  await page.getByLabel('Que recherchez-vous ?').fill('le divorce')
+  await page.getByRole('button', { name: 'Rechercher', exact: true }).click()
+  await expect(page.locator('.results-heading')).toContainText('le divorce')
+})
+
+test('cancels voice transcription on navigation and ignores the late response', async ({
+  page,
+}) => {
+  await mockMicrophone(page)
+  await page.getByRole('button', { name: 'Hadiths', exact: true }).click()
+  let release!: () => void
+  const pending = new Promise<void>((resolve) => {
+    release = resolve
+  })
+  await page.route('**/hadith/transcribe', async (route) => {
+    if (route.request().method() === 'OPTIONS') {
+      await route.fulfill({ status: 204, headers: corsHeaders })
+      return
+    }
+    await pending
+    await route.fulfill({
+      status: 200,
+      headers: corsHeaders,
+      contentType: 'application/json',
+      body: JSON.stringify({ query: 'le mariage' }),
+    })
+  })
+  let searches = 0
+  page.on('request', (request) => {
+    if (request.url().endsWith('/hadith/search') && request.method() === 'POST') searches += 1
+  })
+  await page.getByRole('button', { name: 'Rechercher par la voix' }).click()
+  await expect(page.locator('.voice-status')).toContainText(/[1-9]\d* \/ 30 s/)
+  const started = page.waitForRequest(
+    (request) => request.url().endsWith('/hadith/transcribe') && request.method() === 'POST',
+  )
+  await page.getByRole('button', { name: 'Arrêter et rechercher' }).click()
+  await started
+  await expect(page.locator('.loading-copy')).toContainText('Transcription')
+  await page.getByRole('button', { name: 'Coran', exact: true }).click()
+  release()
+  await page.getByRole('button', { name: 'Hadiths', exact: true }).click()
+  await expect(page.getByLabel('Que recherchez-vous ?')).toHaveValue('')
+  await expect(page.locator('.loading-panel')).toHaveCount(0)
+  expect(searches).toBe(0)
+})
+
+test('allows text search after a voice request cannot be understood', async ({ page }) => {
+  await mockMicrophone(page)
+  await setupMockApi(page, { hadithTranscriptionStatus: 422 })
+  await page.getByRole('button', { name: 'Hadiths', exact: true }).click()
+  await page.getByRole('button', { name: 'Rechercher par la voix' }).click()
+  await expect(page.locator('.voice-status')).toContainText(/[1-9]\d* \/ 30 s/)
+  await page.getByRole('button', { name: 'Arrêter et rechercher' }).click()
+  await expect(page.getByRole('alert')).toContainText('phrase courte')
+  await page.getByLabel('Que recherchez-vous ?').fill('le mariage')
+  await page.getByRole('button', { name: 'Rechercher', exact: true }).click()
+  await expect(page.locator('.hadith-card')).toBeVisible()
 })

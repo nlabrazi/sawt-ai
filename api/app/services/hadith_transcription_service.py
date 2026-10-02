@@ -3,6 +3,8 @@
 from app.services.transcription_service import transcribe_audio
 
 MAX_HADITH_AUDIO_DURATION_SECONDS = 30
+# MediaRecorder stops asynchronously and may include a final codec frame.
+HADITH_AUDIO_DURATION_TOLERANCE_SECONDS = 1
 
 
 class HadithVoiceQueryError(Exception):

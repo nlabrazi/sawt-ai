@@ -103,6 +103,8 @@ export async function setupMockApi(
     health?: typeof defaultMockHealth
     hadithResponse?: HadithSearchResponse
     hadithStatus?: number
+    hadithTranscription?: string
+    hadithTranscriptionStatus?: number
     recognizeResponse?: Record<string, unknown>
     recognizeStatus?: number
     recognizeErrorDetail?: string
@@ -138,6 +140,30 @@ export async function setupMockApi(
         headers: corsHeaders,
         contentType: 'application/json',
         body: JSON.stringify(options.health ?? defaultMockHealth),
+      })
+    },
+  )
+
+  await page.route(
+    (url) => url.pathname === '/hadith/transcribe',
+    async (route) => {
+      if (route.request().method() === 'OPTIONS') {
+        await route.fulfill({ status: 204, headers: corsHeaders })
+        return
+      }
+      const status = options.hadithTranscriptionStatus ?? 200
+      await route.fulfill({
+        status,
+        headers: corsHeaders,
+        contentType: 'application/json',
+        body: JSON.stringify(
+          status >= 400
+            ? { detail: 'Aucune demande comprise.' }
+            : {
+                query:
+                  options.hadithTranscription ?? 'Trouve-moi les hadiths qui parlent du mariage',
+              },
+        ),
       })
     },
   )

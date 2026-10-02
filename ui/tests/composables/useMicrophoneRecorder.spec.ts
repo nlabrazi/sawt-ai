@@ -209,4 +209,37 @@ describe('useMicrophoneRecorder', () => {
     expect(recorder.isRecording.value).toBe(false)
     expect(stopTrack).toHaveBeenCalledTimes(1)
   })
+
+  it('releases a late microphone stream after the recording is cancelled', async () => {
+    const { stopTrack, getUserMedia } = setupRecorderEnvironment()
+    let grant!: (stream: MediaStream) => void
+    getUserMedia.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          grant = resolve
+        }),
+    )
+    const recorder = useMicrophoneRecorder(ref(30))
+    const start = recorder.startRecording()
+    recorder.cleanup()
+    grant({ getTracks: () => [{ stop: stopTrack }] } as unknown as MediaStream)
+    await start
+    expect(stopTrack).toHaveBeenCalledTimes(1)
+    expect(recorder.isRecording.value).toBe(false)
+  })
+
+  it('does not clean up a new session when an old stop completes after cancellation', async () => {
+    vi.useFakeTimers()
+    const { stopTrack } = setupRecorderEnvironment()
+    const recorder = useMicrophoneRecorder(ref(30))
+    await recorder.startRecording()
+    const stopped = recorder.stopRecording()
+    recorder.cleanup()
+    await recorder.startRecording()
+    await vi.advanceTimersByTimeAsync(1)
+    expect(await stopped).toBeNull()
+    expect(recorder.isRecording.value).toBe(true)
+    expect(stopTrack).toHaveBeenCalledTimes(1)
+    recorder.cleanup()
+  })
 })

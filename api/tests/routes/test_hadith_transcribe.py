@@ -69,8 +69,8 @@ def test_requires_an_audio_file(client, transcription):
     transcription.assert_not_called()
 
 
-@pytest.mark.parametrize("duration,status", [(30.0, 200), (30.1, 413)])
-def test_limits_voice_requests_to_thirty_seconds(client, transcription, monkeypatch, duration, status):
+@pytest.mark.parametrize("duration,status", [(30.0, 200), (30.1, 200), (31.0, 200), (31.1, 413)])
+def test_allows_one_second_for_async_browser_stop_but_rejects_longer_audio(client, transcription, monkeypatch, duration, status):
     monkeypatch.setattr(audio_upload, "get_audio_duration_seconds", lambda _: duration)
     paths = []
     persist = hadith_route.persist_upload_to_temp_file

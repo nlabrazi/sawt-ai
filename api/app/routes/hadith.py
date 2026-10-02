@@ -11,7 +11,8 @@ from app.core.audio_upload import enforce_audio_duration_limit, persist_upload_t
 from app.core.inference_runtime import get_inference_semaphore
 from app.schemas.hadith import HadithSearchRequest, HadithSearchResponse, HadithTranscriptionResponse
 from app.services.hadith_transcription_service import (
-    MAX_HADITH_AUDIO_DURATION_SECONDS, HadithVoiceQueryError, transcribe_hadith_query,
+    HADITH_AUDIO_DURATION_TOLERANCE_SECONDS, MAX_HADITH_AUDIO_DURATION_SECONDS,
+    HadithVoiceQueryError, transcribe_hadith_query,
 )
 from app.services.hadith_search_service import HadithSearchError, get_hadith_search_service
 
@@ -36,7 +37,8 @@ async def transcribe_hadith(file: UploadFile) -> HadithTranscriptionResponse:
     try:
         temp_file, _, _ = await persist_upload_to_temp_file(file)
         await run_in_threadpool(
-            enforce_audio_duration_limit, temp_file, MAX_HADITH_AUDIO_DURATION_SECONDS,
+            enforce_audio_duration_limit, temp_file,
+            MAX_HADITH_AUDIO_DURATION_SECONDS + HADITH_AUDIO_DURATION_TOLERANCE_SECONDS,
         )
         try:
             async with get_inference_semaphore():
