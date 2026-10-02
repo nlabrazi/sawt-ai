@@ -5,6 +5,10 @@ from app.services.hadith_query import normalize_hadith_query
 
 @pytest.mark.parametrize("query, expected", [
     ("Je cherche le hadith sur la colère", "la colère"),
+    ("Trouve moi le ou les hadith qui parlent du mariage", "du mariage"),
+    ("Trouve-moi les hadiths qui parlent du mariage.", "du mariage."),
+    ("Peux-tu me trouver un ou plusieurs hadiths concernant le mariage ?", "le mariage ?"),
+    ("Trouve-moi le ou les hadiths qui parlent du mariage sans divorce", "du mariage sans divorce"),
     ("Donnez moi hadith qui parle de la colère", "la colère"),
     ("Donnez-moi un hadith qui parle de la colère", "la colère"),
     ("S’il vous plaît, pouvez-vous me donner un hadith sur la colère", "la colère"),
@@ -27,6 +31,8 @@ def test_removes_only_the_request_and_preserves_the_subject(query, expected):
 @pytest.mark.parametrize("query", [
     "Ne pas se mettre en colère",
     "Je ne cherche pas un hadith sur la colère",
+    "Ne trouve pas le ou les hadiths qui parlent du mariage",
+    "Trouve-moi le ou les hadiths qui ne parlent pas du mariage",
     "Je cherche un hadith qui ne parle pas de la colère",
     "Je cherche un hadith qui parle seulement de la colère",
     "Un homme dit : donnez moi un hadith sur la colère",

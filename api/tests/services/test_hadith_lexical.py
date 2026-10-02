@@ -5,6 +5,8 @@ from app.services.hadith_lexical import matches_keywords, prepare_search_query, 
 
 @pytest.mark.parametrize("query, terms", [
     ("couronne", ("couronne",)),
+    ("Trouve moi le ou les hadith qui parlent du mariage", ("mariage",)),
+    ("Trouve-moi les hadiths qui parlent du mariage.", ("mariage",)),
     ("hadith couronne", ("couronne",)),
     ("Les hadiths sur la colère", ("colère",)),
     ("Je cherche le hadith sur la colère", ("colère",)),
@@ -66,3 +68,9 @@ def test_search_evidence_includes_only_fields_the_reader_can_consult():
 def test_invalid_source_evidence_is_rejected(records):
     with pytest.raises(ValueError):
         source_search_documents(records)
+
+
+def test_spoken_request_keeps_the_subject_negation_for_semantic_search():
+    prepared = prepare_search_query("Trouve-moi le ou les hadiths qui parlent du mariage sans divorce")
+    assert prepared.text == "du mariage sans divorce"
+    assert prepared.terms is None
