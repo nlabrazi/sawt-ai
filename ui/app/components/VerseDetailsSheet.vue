@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ArrowLeft, BookOpen, Copy } from '@lucide/vue'
 import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { useMotionEntrance } from '~/composables/useMotionEntrance'
 
 import MiniToast from '~/components/MiniToast.vue'
 import TajwidLegend from '~/components/TajwidLegend.vue'
@@ -23,6 +24,7 @@ const emit = defineEmits<{
 const { loading, fetchTajwid, error } = useTajwid()
 const tajwidResponse = ref<TajwidResponse | null>(null)
 const sheetRef = ref<HTMLElement | null>(null)
+useMotionEntrance(sheetRef, 36)
 const closeButtonRef = ref<HTMLButtonElement | null>(null)
 const { message: toastMessage, visible: toastVisible, show: showToast } = useMiniToast()
 let previouslyFocusedElement: HTMLElement | null = null

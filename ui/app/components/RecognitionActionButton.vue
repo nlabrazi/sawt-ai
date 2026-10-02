@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { LoaderCircle, Mic, Square } from '@lucide/vue'
-import { computed, ref } from 'vue'
+import { Motion } from 'motion-v'
+import { computed } from 'vue'
+import { useUiMotion } from '~/composables/useUiMotion'
 
 const props = withDefaults(
   defineProps<{
@@ -25,13 +27,13 @@ const emit = defineEmits<{
   click: []
 }>()
 
-const isPressed = ref(false)
+const { canAnimate, spring } = useUiMotion()
 
 const safeLevel = computed(() => Math.max(0, Math.min(1, props.audioLevel)))
 
 const visualScale = computed(() => {
   if (!props.isRecording) return 1
-  return 1 + safeLevel.value * 0.06
+  return 1 + safeLevel.value * 0.12
 })
 
 const signalOpacity = computed(() => {
@@ -54,54 +56,84 @@ function handleClick() {
   if (props.disabled || props.loading) return
   emit('click')
 }
-
-function handlePressStart() {
-  if (props.disabled || props.loading) return
-  isPressed.value = true
-}
-
-function handlePressEnd() {
-  isPressed.value = false
-}
 </script>
 
 <template>
-  <button
+  <Motion
+    as="button"
     class="action-button"
     :class="{
       'is-loading': loading,
       'is-recording': isRecording,
-      'is-pressed': isPressed,
     }"
-    :style="{
-      '--visual-scale': String(visualScale),
-      '--signal-opacity': String(signalOpacity),
-    }"
+    :while-hover="canAnimate && !disabled && !loading ? { scale: 1.04 } : undefined"
+    :while-press="canAnimate && !disabled && !loading ? { scale: 0.95 } : undefined"
+    :transition="spring"
     :aria-busy="loading"
     :aria-label="actionLabel"
     :aria-pressed="isRecording"
     :disabled="disabled || loading"
     type="button"
     @click="handleClick"
-    @mousedown="handlePressStart"
-    @mouseup="handlePressEnd"
-    @mouseleave="handlePressEnd"
-    @touchstart="handlePressStart"
-    @touchend="handlePressEnd"
-    @touchcancel="handlePressEnd"
   >
-    <span class="button-visual" aria-hidden="true">
-      <span class="button-signal" />
-      <span class="button-ring" />
+    <Motion
+      as="span"
+      class="button-visual"
+      aria-hidden="true"
+      :initial="false"
+      :animate="{ scale: canAnimate ? visualScale : 1 }"
+      :transition="{ type: 'spring', stiffness: 360, damping: 22 }"
+    >
+      <Motion
+        as="span"
+        class="button-signal"
+        :initial="false"
+        :animate="{ opacity: signalOpacity, scale: canAnimate && loading ? [1, 1.15, 1] : 1 }"
+        :transition="{ opacity: { duration: canAnimate ? 0.2 : 0 }, scale: { type: 'tween', duration: canAnimate ? 2.4 : 0, repeat: canAnimate && loading ? Infinity : 0 } }"
+      />
+      <Motion
+        v-for="ripple in 2"
+        :key="ripple"
+        as="span"
+        class="button-ripple"
+        :initial="false"
+        :animate="{ scale: canAnimate && isRecording ? [1, 1.48] : 1, opacity: canAnimate && isRecording ? [0.5, 0] : 0 }"
+        :transition="{ type: 'tween', duration: canAnimate ? 2 : 0, delay: canAnimate ? (ripple - 1) * 1 : 0, repeat: canAnimate && isRecording ? Infinity : 0, ease: 'easeOut' }"
+      />
+      <Motion
+        as="span"
+        class="button-orbit"
+        :initial="false"
+        :animate="{ rotate: canAnimate ? 360 : 0, opacity: isRecording ? 0.6 : 0.35 }"
+        :transition="{ rotate: { type: 'tween', duration: canAnimate ? (loading ? 8 : 28) : 0, repeat: canAnimate ? Infinity : 0, ease: 'linear' }, opacity: { duration: canAnimate ? 0.2 : 0 } }"
+      >
+        <span />
+      </Motion>
+      <Motion
+        as="span"
+        class="button-ring"
+        :initial="false"
+        :animate="{ scale: canAnimate && !isRecording && !loading && !disabled ? [1, 1.055, 1] : 1 }"
+        :transition="{ type: 'tween', duration: canAnimate ? 3.6 : 0, repeat: canAnimate && !isRecording && !loading && !disabled ? Infinity : 0, ease: 'easeInOut' }"
+      />
       <span class="button-core">
-        <LoaderCircle v-if="loading" class="button-icon loading-icon" :stroke-width="1.9" />
-        <Square v-else-if="isRecording" class="button-icon stop-icon" :stroke-width="2" />
-        <Mic v-else class="button-icon" :stroke-width="1.8" />
+        <Motion
+          :key="loading ? 'loading' : isRecording ? 'recording' : 'idle'"
+          as="span"
+          class="icon-shell"
+          :initial="false"
+          :animate="{ scale: canAnimate ? [0.65, 1] : 1, opacity: canAnimate ? [0, 1] : 1 }"
+          :transition="spring"
+        >
+          <LoaderCircle v-if="loading" class="button-icon loading-icon" :stroke-width="1.9" />
+          <Square v-else-if="isRecording" class="button-icon stop-icon" :stroke-width="2" />
+          <Mic v-else class="button-icon" :stroke-width="1.8" />
+        </Motion>
       </span>
-    </span>
+    </Motion>
 
     <span v-if="showLabel && visibleLabel" class="button-label">{{ visibleLabel }}</span>
-  </button>
+  </Motion>
 </template>
 
 <style scoped>
@@ -137,11 +169,11 @@ function handlePressEnd() {
   height: var(--visual-size);
   display: grid;
   place-items: center;
-  transform: scale(var(--visual-scale, 1));
-  transition: transform 90ms linear;
 }
 
 .button-signal,
+.button-ripple,
+.button-orbit,
 .button-ring,
 .button-core {
   position: absolute;
@@ -150,26 +182,35 @@ function handlePressEnd() {
 
 .button-signal {
   inset: -14px;
-  opacity: var(--signal-opacity, 0.2);
-  background: rgba(59, 130, 246, 0.3);
+
+  background: radial-gradient(circle, rgba(56, 189, 248, .5), rgba(59, 130, 246, .15));
   filter: blur(16px);
-  transition: opacity 120ms linear;
 }
 
-.action-button:not(.is-recording):not(.is-loading):not(:disabled) .button-ring {
-  animation: idlePulse 3.6s ease-in-out infinite;
+.button-ripple {
+  inset: -4px;
+  border: 1px solid rgba(125, 211, 252, .55);
+  pointer-events: none;
 }
 
-@keyframes idlePulse {
-  0%, 100% {
-    transform: scale(1);
-    opacity: 0.65;
-  }
-  50% {
-    transform: scale(1.045);
-    opacity: 1;
-  }
+.button-orbit {
+  inset: -18px;
+  border: 1px dashed rgba(147, 197, 253, .4);
+  pointer-events: none;
 }
+
+.button-orbit > span {
+  position: absolute;
+  top: 23px;
+  left: 25px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #a5f3fc;
+  box-shadow: 0 0 12px rgba(125, 211, 252, .8);
+}
+
+.icon-shell { display: grid; place-items: center; }
 
 .button-ring {
   inset: 0;
@@ -185,7 +226,7 @@ function handlePressEnd() {
   display: grid;
   place-items: center;
   overflow: hidden;
-  background: #2563eb;
+  background: radial-gradient(circle at 30% 15%, #60a5fa, #2563eb 55%, #1e40af);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.24),
     0 18px 48px rgba(37, 99, 235, 0.3);
@@ -216,7 +257,6 @@ function handlePressEnd() {
 
 .action-button:hover:not(:disabled) .button-ring {
   border-color: rgba(191, 219, 254, 0.58);
-  transform: scale(1.025);
 }
 
 .action-button:hover:not(:disabled) .button-core {
@@ -224,14 +264,6 @@ function handlePressEnd() {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.26),
     0 22px 58px rgba(37, 99, 235, 0.36);
-}
-
-.action-button.is-pressed .button-core {
-  transform: scale(0.96);
-}
-
-.is-recording .button-signal {
-  animation: listeningPulse 1.8s ease-out infinite;
 }
 
 .is-recording .button-ring {
@@ -253,10 +285,6 @@ function handlePressEnd() {
   color: #0f172a;
 }
 
-.is-loading .button-signal {
-  animation: loadingPulse 1.7s ease-in-out infinite;
-}
-
 .is-loading .button-core {
   background: rgba(37, 99, 235, 0.9);
 }
@@ -265,32 +293,6 @@ function handlePressEnd() {
   width: 52px;
   height: 52px;
   animation: loadingSpin 1.1s linear infinite;
-}
-
-@keyframes listeningPulse {
-  0% {
-    transform: scale(0.92);
-    opacity: var(--signal-opacity, 0.32);
-  }
-
-  75%,
-  100% {
-    transform: scale(1.2);
-    opacity: 0;
-  }
-}
-
-@keyframes loadingPulse {
-  0%,
-  100% {
-    transform: scale(0.94);
-    opacity: 0.22;
-  }
-
-  50% {
-    transform: scale(1.08);
-    opacity: 0.48;
-  }
 }
 
 @keyframes loadingSpin {

@@ -33,6 +33,7 @@ const structuredData = {
 
 export default defineNuxtConfig({
   compatibilityDate: '2025-07-15',
+  modules: ['motion-v/nuxt'],
   devtools: { enabled: isDevelopment },
   devServer: {
     host: '0.0.0.0',

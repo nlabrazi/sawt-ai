@@ -1,11 +1,13 @@
 <script setup lang="ts">
 import { ArrowUpRight, X } from '@lucide/vue'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { useMotionEntrance } from '~/composables/useMotionEntrance'
 import type { HadithResult } from '~/types/hadith'
 
 defineProps<{ hadith: HadithResult }>()
 const emit = defineEmits<{ close: [] }>()
 const dialog = ref<HTMLDialogElement | null>(null)
+useMotionEntrance(dialog, 24)
 let previousFocus: HTMLElement | null = null
 let previousOverflow = ''
 
@@ -77,10 +79,6 @@ dialog {
   background: #101c2d;
   color: #eef4fc;
   box-shadow: 0 30px 100px #0008;
-}
-
-dialog[open] {
-  animation: reading-enter 180ms ease-out;
 }
 
 dialog::backdrop {
@@ -187,17 +185,6 @@ button:focus-visible, a:focus-visible {
   white-space: nowrap;
 }
 
-@keyframes reading-enter {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @media (max-width: 640px) {
   dialog {
     width: 100%;
@@ -217,9 +204,4 @@ button:focus-visible, a:focus-visible {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  dialog[open] {
-    animation: none;
-  }
-}
 </style>

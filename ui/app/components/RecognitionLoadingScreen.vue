@@ -1,8 +1,12 @@
 <script setup lang="ts">
+import { Check } from '@lucide/vue'
+import { Motion } from 'motion-v'
 import { computed } from 'vue'
 
 import RecognitionActionButton from '~/components/RecognitionActionButton.vue'
+import MotionReveal from '~/components/MotionReveal.vue'
 import type { LoadingStep } from '~/composables/useRecognition'
+import { useUiMotion } from '~/composables/useUiMotion'
 
 const props = defineProps<{
   loading: boolean
@@ -12,6 +16,7 @@ const props = defineProps<{
 defineEmits<{
   cancel: []
 }>()
+const { canAnimate, spring } = useUiMotion()
 
 const steps: Array<{ key: LoadingStep; title: string }> = [
   { key: 'transcribing', title: 'Écoute' },
@@ -55,7 +60,7 @@ function getState(stepKey: LoadingStep) {
     </header>
 
     <div class="center-stack">
-      <h1 id="loading-title" class="main-title">Recherche du passage</h1>
+      <MotionReveal><h1 id="loading-title" class="main-title">Recherche du passage</h1></MotionReveal>
 
       <p class="main-subtitle" role="status" aria-live="polite">
         {{ activeLabel }}
@@ -64,6 +69,14 @@ function getState(stepKey: LoadingStep) {
       <RecognitionActionButton class="loading-action" disabled loading :show-label="false" />
 
       <ol class="loading-steps" aria-label="Progression de l’analyse">
+        <li class="progress-rail" aria-hidden="true">
+          <Motion
+            class="progress-fill"
+            :initial="false"
+            :animate="{ scaleX: activeStepIndex / (steps.length - 1) }"
+            :transition="spring"
+          />
+        </li>
         <li
           v-for="item in steps"
           :key="item.key"
@@ -71,9 +84,24 @@ function getState(stepKey: LoadingStep) {
           :class="`is-${getState(item.key)}`"
           :aria-current="getState(item.key) === 'active' ? 'step' : undefined"
         >
-          <span class="step-indicator" aria-hidden="true">
-            <span class="step-dot" />
-          </span>
+          <Motion
+            as="span"
+            class="step-indicator"
+            aria-hidden="true"
+            :initial="false"
+            :animate="{ scale: canAnimate && getState(item.key) === 'active' ? 1.12 : 1 }"
+            :transition="spring"
+          >
+            <Check v-if="getState(item.key) === 'done'" :size="14" :stroke-width="2.5" />
+            <Motion
+              v-else
+              as="span"
+              class="step-dot"
+              :initial="false"
+              :animate="{ opacity: canAnimate && getState(item.key) === 'active' ? [0.5, 1, 0.5] : 1 }"
+              :transition="{ type: 'tween', duration: canAnimate ? 1.8 : 0, repeat: canAnimate && getState(item.key) === 'active' ? Infinity : 0 }"
+            />
+          </Motion>
           <span class="step-title">{{ item.title }}</span>
         </li>
       </ol>
@@ -166,12 +194,30 @@ function getState(stepKey: LoadingStep) {
 }
 
 .loading-steps {
+  position: relative;
   width: min(100%, 420px);
   margin: 8px 0 0;
   padding: 0;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   list-style: none;
+}
+
+.progress-rail {
+  position: absolute;
+  top: 13px;
+  left: calc(100% / 6);
+  right: calc(100% / 6);
+  height: 2px;
+  background: rgba(148, 163, 184, .16);
+}
+
+.progress-fill {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, #3b82f6, #7dd3fc);
+  transform-origin: left;
+  box-shadow: 0 0 12px rgba(96, 165, 250, .3);
 }
 
 .loading-step {
@@ -184,29 +230,16 @@ function getState(stepKey: LoadingStep) {
   font-weight: 700;
 }
 
-.loading-step:not(:last-child)::after {
-  content: '';
-  position: absolute;
-  top: 5px;
-  left: calc(50% + 8px);
-  width: calc(100% - 16px);
-  height: 1px;
-  background: rgba(148, 163, 184, 0.16);
-}
-
-.loading-step.is-done:not(:last-child)::after {
-  background: rgba(96, 165, 250, 0.7);
-}
-
 .step-indicator {
   position: relative;
   z-index: 1;
-  width: 11px;
-  height: 11px;
+  width: 28px;
+  height: 28px;
   display: grid;
   place-items: center;
   border-radius: 999px;
   background: #101c2d;
+  border: 1px solid #33465e;
 }
 
 .step-dot {
@@ -223,7 +256,17 @@ function getState(stepKey: LoadingStep) {
 .loading-step.is-active .step-dot {
   background: #93c5fd;
   box-shadow: 0 0 0 5px rgba(96, 165, 250, 0.12);
-  animation: activeStepPulse 1.5s ease-in-out infinite;
+}
+
+.loading-step.is-active .step-indicator {
+  border-color: #60a5fa;
+  background: #142d4e;
+}
+
+.loading-step.is-done .step-indicator {
+  border-color: #3b82f6;
+  background: #1d4ed8;
+  color: #fff;
 }
 
 .loading-step.is-done {
@@ -232,17 +275,6 @@ function getState(stepKey: LoadingStep) {
 
 .loading-step.is-done .step-dot {
   background: #60a5fa;
-}
-
-@keyframes activeStepPulse {
-  0%,
-  100% {
-    transform: scale(0.9);
-  }
-
-  50% {
-    transform: scale(1.18);
-  }
 }
 
 @media (max-width: 640px) {
@@ -261,9 +293,4 @@ function getState(stepKey: LoadingStep) {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  .loading-step.is-active .step-dot {
-    animation: none;
-  }
-}
 </style>

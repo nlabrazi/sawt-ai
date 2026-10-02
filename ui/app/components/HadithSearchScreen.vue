@@ -2,6 +2,7 @@
 import { Search } from '@lucide/vue'
 import { defineAsyncComponent, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import HadithResultCard from '~/components/HadithResultCard.vue'
+import MotionReveal from '~/components/MotionReveal.vue'
 import type { useHadithSearch } from '~/composables/useHadithSearch'
 import type { HadithResult } from '~/types/hadith'
 
@@ -28,10 +29,10 @@ onBeforeUnmount(() => {
 <template>
   <section class="hadith-screen" :class="{ 'is-idle': !loading && !response && !error }" aria-labelledby="hadith-title">
     <div class="search-shell">
-      <div class="search-intro">
+      <MotionReveal class="search-intro">
         <h1 id="hadith-title">Retrouvez un hadith</h1>
         <p>Un sujet, quelques mots ou un extrait.</p>
-      </div>
+      </MotionReveal>
       <form class="search-form" novalidate @submit.prevent="search">
         <label for="hadith-query" class="sr-only">Que recherchez-vous ?</label>
         <div class="search-controls">
@@ -62,7 +63,7 @@ onBeforeUnmount(() => {
         <p v-else>Aucun résultat exploitable n’a été retourné. Essayez une autre formulation.</p>
         <a href="https://hadeethenc.com/fr" target="_blank" rel="noopener noreferrer">Consulter la collection HadeethEnc <span class="sr-only">(nouvel onglet)</span></a>
       </div>
-      <HadithResultCard v-for="(hadith, index) in response.results" :key="hadith.id" :hadith="hadith" :position="index + 1" @read="selected = $event" />
+      <MotionReveal v-for="(hadith, index) in response.results" :key="hadith.id" :delay="Math.min(index * 0.07, 0.35)"><HadithResultCard :hadith="hadith" :position="index + 1" @read="selected = $event" /></MotionReveal>
       <details class="result-context">
         <summary>À propos des résultats <span class="beta-badge">Bêta</span></summary>
         <p class="search-method" v-if="response.search_mode === 'keywords'">Recherche par mots-clés<span v-if="response.search_terms.length"> : {{ response.search_terms.map(term => `« ${term} »`).join(', ') }}</span>.<br />Chaque résultat contient ces mots, au singulier ou au pluriel, dans son titre, son texte ou son explication en français.</p>

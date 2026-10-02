@@ -109,6 +109,19 @@ export async function setupMockApi(
     tajwidResponse?: typeof defaultMockTajwid
   } = {},
 ) {
+  // UI checks must not wait on external font or analytics services.
+  await page.route(
+    (url) =>
+      ['fonts.googleapis.com', 'fonts.gstatic.com', 'umami.nabster.dev'].includes(url.hostname),
+    (route) =>
+      route.fulfill({
+        status: 200,
+        contentType:
+          route.request().resourceType() === 'stylesheet' ? 'text/css' : 'application/javascript',
+        body: '',
+      }),
+  )
+
   await page.route(
     (url) => url.pathname === '/health',
     async (route) => {

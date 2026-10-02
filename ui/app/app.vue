@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import { BookOpen, CircleHelp, Mic } from '@lucide/vue'
+import { Motion, MotionConfig } from 'motion-v'
 import { computed, defineAsyncComponent, nextTick, onMounted, ref } from 'vue'
 import AppFooter from '~/components/AppFooter.vue'
 import LandingScreen from '~/components/LandingScreen.vue'
+import MotionScreenTransition from '~/components/MotionScreenTransition.vue'
+import { useUiMotion } from '~/composables/useUiMotion'
 import QuranRecognitionScreen from '~/components/QuranRecognitionScreen.vue'
 import { useHadithSearch } from '~/composables/useHadithSearch'
 
@@ -10,6 +13,7 @@ const HadithSearchScreen = defineAsyncComponent(() => import('~/components/Hadit
 const FaqScreen = defineAsyncComponent(() => import('~/components/FaqScreen.vue'))
 type Screen = 'home' | 'quran' | 'hadith' | 'faq'
 const mode = ref<Screen>('home')
+const { canAnimate, spring } = useUiMotion()
 const navigationItems = [
   { mode: 'quran', label: 'Coran', icon: Mic },
   { mode: 'hadith', label: 'Hadiths', icon: BookOpen },
@@ -41,56 +45,65 @@ async function returnHome() {
 </script>
 
 <template>
-  <main class="page">
-    <div class="page-content">
-      <header class="app-header">
-        <button
-          class="brand"
-          type="button"
-          aria-label="Sawt AI — Accueil et réinitialisation"
-          :disabled="!ready || navigationLocked"
-          :aria-describedby="navigationLocked ? 'mode-lock-hint' : undefined"
-          @click="returnHome"
-        >
-          <span>Sawt</span><span class="brand-mark">AI</span>
-        </button>
-        <nav
-          aria-label="Navigation principale"
-          class="mode-selector"
-          :class="{ 'has-active-mode': activeIndex >= 0 }"
-          :style="{ '--active-index': Math.max(0, activeIndex) }"
-        >
+  <MotionConfig reduced-motion="user">
+    <main class="page">
+      <div class="page-content">
+        <header class="app-header">
           <button
-            v-for="item in navigationItems"
-            :key="item.mode"
+            class="brand"
             type="button"
-            :aria-pressed="mode === item.mode"
-            :disabled="!ready || (navigationLocked && mode !== item.mode)"
-            :aria-describedby="navigationLocked && mode !== item.mode ? 'mode-lock-hint' : undefined"
-            @click="selectMode(item.mode)"
+            aria-label="Sawt AI — Accueil et réinitialisation"
+            :disabled="!ready || navigationLocked"
+            :aria-describedby="navigationLocked ? 'mode-lock-hint' : undefined"
+            @click="returnHome"
           >
-            <component :is="item.icon" :size="17" aria-hidden="true" /> {{ item.label }}
+            <span>Sawt</span><span class="brand-mark">AI</span>
           </button>
-        </nav>
-        <p v-if="navigationLocked" id="mode-lock-hint" class="sr-only" role="status">
-          Terminez l’enregistrement pour changer d’écran.
-        </p>
-      </header>
-      <div ref="content" class="experience" tabindex="-1">
-        <Transition name="screen-transition" mode="out-in">
-          <LandingScreen v-if="mode === 'home'" key="home" :disabled="!ready" @navigate="selectMode" />
-          <QuranRecognitionScreen
-            v-else-if="mode === 'quran'"
-            key="quran"
-            @navigation-lock="navigationLocked = $event"
-          />
-          <HadithSearchScreen v-else-if="mode === 'hadith'" key="hadith" :search-state="hadithSearch" />
-          <FaqScreen v-else key="faq" />
-        </Transition>
+          <nav aria-label="Navigation principale" class="mode-selector">
+            <Motion
+              as="span"
+              v-if="activeIndex >= 0"
+              class="mode-highlight"
+              aria-hidden="true"
+              :initial="false"
+              :animate="{ x: `${activeIndex * 100}%`, opacity: 1 }"
+              :transition="spring"
+            />
+            <Motion
+              as="button"
+              v-for="item in navigationItems"
+              :key="item.mode"
+              type="button"
+              :aria-pressed="mode === item.mode"
+              :disabled="!ready || (navigationLocked && mode !== item.mode)"
+              :aria-describedby="navigationLocked && mode !== item.mode ? 'mode-lock-hint' : undefined"
+              :while-press="canAnimate && !navigationLocked ? { scale: 0.94 } : undefined"
+              :transition="spring"
+              @click="selectMode(item.mode)"
+            >
+              <component :is="item.icon" :size="17" aria-hidden="true" /> {{ item.label }}
+            </Motion>
+          </nav>
+          <p v-if="navigationLocked" id="mode-lock-hint" class="sr-only" role="status">
+            Terminez l’enregistrement pour changer d’écran.
+          </p>
+        </header>
+        <div ref="content" class="experience" tabindex="-1">
+          <MotionScreenTransition>
+            <LandingScreen v-if="mode === 'home'" key="home" :disabled="!ready" @navigate="selectMode" />
+            <QuranRecognitionScreen
+              v-else-if="mode === 'quran'"
+              key="quran"
+              @navigation-lock="navigationLocked = $event"
+            />
+            <HadithSearchScreen v-else-if="mode === 'hadith'" key="hadith" :search-state="hadithSearch" />
+            <FaqScreen v-else key="faq" />
+          </MotionScreenTransition>
+        </div>
+        <AppFooter />
       </div>
-      <AppFooter />
-    </div>
-  </main>
+    </main>
+  </MotionConfig>
 </template>
 
 <style scoped>
@@ -154,52 +167,23 @@ async function returnHome() {
   pointer-events: none;
 }
 
+.page::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  pointer-events: none;
+  background-image: radial-gradient(rgba(147, 197, 253, .22) .7px, transparent .7px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(transparent, #000 30%, transparent 85%);
+  opacity: .3;
+}
+
 .page-content {
   min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-}
-
-:global(.screen-transition-enter-active) {
-  transition:
-    opacity 180ms ease-out,
-    transform 180ms ease-out;
-}
-
-:global(.screen-transition-leave-active) {
-  transition:
-    opacity 120ms ease-in,
-    transform 120ms ease-in;
-}
-
-:global(.screen-transition-enter-from) {
-  opacity: 0;
-  transform: translateY(6px);
-}
-
-:global(.screen-transition-leave-to) {
-  opacity: 0;
-  transform: translateY(-4px);
-}
-
-@media (max-width: 640px) {
-  .page::before {
-    top: -220px;
-    height: 520px;
-    filter: blur(96px);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  :global(.screen-transition-enter-active),
-  :global(.screen-transition-leave-active) {
-    transition: none;
-  }
-  :global(.screen-transition-enter-from),
-  :global(.screen-transition-leave-to) {
-    transform: none;
-  }
 }
 
 .app-header {
@@ -248,11 +232,11 @@ async function returnHome() {
   gap: 0;
   border: 1px solid #2a3d58;
   border-radius: 999px;
-  background: #101d30;
+  background: rgba(16, 29, 48, .8);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, .12);
 }
 
-.mode-selector::before {
-  content: '';
+.mode-highlight {
   box-sizing: border-box;
   position: absolute;
   z-index: -1;
@@ -263,13 +247,8 @@ async function returnHome() {
   border: 1px solid #3f6598;
   border-radius: 999px;
   background: #244c7f;
-  opacity: 0;
-  transform: translateX(calc(var(--active-index) * 100%));
-  transition: transform 220ms ease, opacity 160ms ease;
-}
-
-.mode-selector.has-active-mode::before {
-  opacity: 1;
+  pointer-events: none;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12), 0 2px 12px rgba(37, 99, 235, .15);
 }
 
 .mode-selector button {
@@ -337,7 +316,7 @@ async function returnHome() {
 
 @media (prefers-reduced-motion: reduce) {
   .mode-selector button,
-  .mode-selector::before {
+  .mode-highlight {
     transition: none;
   }
 }
