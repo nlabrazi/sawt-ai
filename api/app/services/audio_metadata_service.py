@@ -9,9 +9,9 @@ class AudioMetadataError(Exception):
 
 
 def _import_runtime_dependencies():
-    import torchaudio
+    import av
 
-    return torchaudio
+    return av
 
 
 def _compute_duration_seconds(sample_rate: int, num_frames: int) -> float | None:
@@ -28,23 +28,28 @@ def _compute_duration_seconds(sample_rate: int, num_frames: int) -> float | None
 
 def get_audio_duration_seconds(audio_path: str | Path) -> float:
     try:
-        torchaudio = _import_runtime_dependencies()
-        normalized_path = str(audio_path)
-        metadata = torchaudio.info(normalized_path)
-        duration_seconds = _compute_duration_seconds(
-            int(getattr(metadata, "sample_rate", 0) or 0),
-            int(getattr(metadata, "num_frames", 0) or 0),
-        )
+        av = _import_runtime_dependencies()
+        # Use the same decoder as Whisper. TorchAudio's available backends
+        # depend on the system FFmpeg version and may reject WebM/M4A.
+        with av.open(str(audio_path)) as container:
+            if not container.streams.audio:
+                raise ValueError("No audio stream")
+            stream = container.streams.audio[0]
+            if stream.duration is not None and stream.time_base is not None:
+                duration_seconds = float(stream.duration * stream.time_base)
+                if math.isfinite(duration_seconds) and duration_seconds > 0:
+                    return duration_seconds
 
-        if duration_seconds is not None:
-            return duration_seconds
-
-        waveform, sample_rate = torchaudio.load(normalized_path)
-        fallback_num_frames = int(getattr(waveform, "shape", [0])[-1] or 0)
-        fallback_duration_seconds = _compute_duration_seconds(sample_rate, fallback_num_frames)
-
-        if fallback_duration_seconds is not None:
-            return fallback_duration_seconds
+            # Browser recordings may omit duration metadata. Count decoded
+            # samples without retaining the entire waveform in memory.
+            duration_seconds = 0.0
+            for frame in container.decode(stream):
+                frame_duration = _compute_duration_seconds(frame.sample_rate, frame.samples)
+                if frame_duration is None:
+                    raise ValueError("Invalid audio frame duration")
+                duration_seconds += frame_duration
+            if math.isfinite(duration_seconds) and duration_seconds > 0:
+                return duration_seconds
     except Exception as exc:
         raise AudioMetadataError("Impossible de lire la durée du fichier audio.") from exc
 

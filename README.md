@@ -223,6 +223,60 @@ The upgrade verifies the exact source checksum and preserves a metadata backup.
 If the cache is missing or changed, rebuild the index instead. New builds include
 the source text metadata automatically.
 
+In production, the API image or persistent volume must contain both
+`hadith_index.npz` and `hadith_index_meta.json` at the paths configured by
+`HADITH_INDEX_PATH` and `HADITH_INDEX_META_PATH`. A fresh Git checkout does not
+include them, and `.cache/` is excluded from Docker images. Build or copy the
+matching pair before deployment; keyword search requires metadata schema 2 with
+`search_documents`. The metadata upgrade requires the original source cache.
+API error logs include `errorCauses` to distinguish missing files, incompatible
+metadata, embedding model failures, and HadeethEnc connection errors behind a 503.
+
+For the VPS layout with `/srv/apps/sawt-ai/repo` as the Git checkout, keep the
+index files in `/srv/apps/sawt-ai/data/hadith`, outside the checkout. In the
+existing `/srv/apps/sawt-ai/docker-compose.yml`, add these entries to the
+`sawt-api` service, preserving its other settings:
+
+```yaml
+    environment:
+      HADITH_INDEX_PATH: /app/data/hadith/hadith_index.npz
+      HADITH_INDEX_META_PATH: /app/data/hadith/hadith_index_meta.json
+    volumes:
+      - type: bind
+        source: ./data/hadith
+        target: /app/data/hadith
+        read_only: true
+        bind:
+          create_host_path: false
+```
+
+This mounts the Hadith directory read-only at `/app/data/hadith`. The two path
+variables in `environment` override the values in `repo/api/.env`.
+
+Create `data/hadith` on the VPS and transfer both validated files directly into
+it before applying this configuration. The mount requires the directory to
+exist; it does not create an empty directory silently. Run `docker compose
+config --quiet` from `/srv/apps/sawt-ai`, then `docker compose up -d --no-build
+sawt-api` to apply the mount to the current image. A simple container restart
+does not apply changed mounts or environment variables. Subsequent deployments
+can keep using `deploy.sh`: replacing containers and pruning images, build
+cache, or stopped containers does not delete this host directory.
+
+After recreating the API, validate the configured artifacts:
+
+```bash
+docker exec -i sawt-api python - <<'PY'
+from app.core.hadith_config import HadithConfig
+from app.services.hadith_index import load_index, load_search_documents
+
+config = HadithConfig.from_env()
+load_index(config)
+print(len(load_search_documents(config)), "validated search documents")
+PY
+```
+
+The transferred index must match the configured model, language, and source URL.
+
 Try the same search policy as the API from the project root (Docker required):
 
 ```bash
