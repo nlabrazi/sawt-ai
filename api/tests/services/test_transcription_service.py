@@ -352,3 +352,41 @@ def test_transcribe_audio_limits_analysis_to_requested_clip(monkeypatch):
     )
 
     assert model.calls[0][1]["clip_timestamps"] == [0, 5]
+
+
+def test_quran_rescue_transcription_enhances_real_audio_and_cleans_up_temp_file(monkeypatch):
+    import tempfile
+    from pathlib import Path
+    import numpy as np
+    from app.services.audio_enhancement_service import write_pcm16_wav
+
+    dummy_signal = np.sin(np.linspace(0, 10, 16000)).astype(np.float32)
+    with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp:
+        input_path = tmp.name
+
+    try:
+        write_pcm16_wav(Path(input_path), dummy_signal)
+        called_paths = []
+
+        def fake_transcribe(audio_path, **options):
+            called_paths.append(audio_path)
+            # The enhanced file should exist while transcribe_audio runs
+            assert Path(audio_path).exists()
+            return transcription_service.TranscriptionResult(
+                [{"text": "الحمد لله"}],
+                make_metadata(),
+            )
+
+        monkeypatch.setattr(transcription_service, "transcribe_audio", fake_transcribe)
+
+        result = transcription_service.transcribe_quran_audio_rescue(input_path)
+
+        assert result == [{"text": "الحمد لله"}]
+        assert len(called_paths) == 1
+        enhanced_path = called_paths[0]
+        assert enhanced_path != input_path
+        # The temporary enhanced file must be cleaned up after execution
+        assert not Path(enhanced_path).exists()
+    finally:
+        Path(input_path).unlink(missing_ok=True)
+
