@@ -21,6 +21,15 @@ function resolveRecordedExtension(mimeType: string) {
   return 'webm'
 }
 
+export const MICROPHONE_AUDIO_CONSTRAINTS: MediaStreamConstraints = {
+  audio: {
+    noiseSuppression: true,
+    echoCancellation: true,
+    autoGainControl: true,
+    channelCount: 1,
+  },
+}
+
 export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | null>) {
   const isRecording = ref(false)
   const micError = ref<string | null>(null)
@@ -190,7 +199,12 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
         return
       }
 
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      let stream: MediaStream
+      try {
+        stream = await navigator.mediaDevices.getUserMedia(MICROPHONE_AUDIO_CONSTRAINTS)
+      } catch {
+        stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      }
       if (activeVersion !== recordingVersion) {
         stream.getTracks().forEach((track) => {
           track.stop()

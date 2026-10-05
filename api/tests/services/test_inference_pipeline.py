@@ -585,3 +585,57 @@ def test_run_inference_pipeline_can_keep_diagnostics_without_decision_log(monkey
     assert decision_logs == []
     assert result["recognition_diagnostics"]["detectionStatus"] == "confident"
     assert result["recognition_diagnostics"]["verseFound"] is True
+
+
+def test_detect_verse_progressively_rescues_noisy_recitation_with_audio_enhancement(monkeypatch):
+    primary_called = False
+    rescue_called = False
+
+    def fake_primary_transcribe(_path):
+        nonlocal primary_called
+        primary_called = True
+        return build_transcription("قل", average_log_probability=-1.3)
+
+    def fake_rescue_transcribe(_path, _meta):
+        nonlocal rescue_called
+        rescue_called = True
+        return build_transcription("قل هو الله احد", average_log_probability=-0.2)
+
+    monkeypatch.setattr(inference_pipeline, "transcribe_audio", fake_primary_transcribe)
+    monkeypatch.setattr(inference_pipeline, "transcribe_rescue_audio", fake_rescue_transcribe)
+
+    def fake_detect(segments, include_ambiguous_verse=False):
+        text = " ".join(s.get("text", "") for s in segments)
+        if "الله" in text:
+            return VerseDetectionOutcome(
+                verse={"sourate_id": 112, "similarity": 0.98},
+                status="confident",
+                score=0.98,
+                score_margin=0.25,
+                matched_word_count=4,
+                rejection_reason=None,
+            )
+        return VerseDetectionOutcome(
+            verse=None,
+            status="insufficient",
+            score=0.4,
+            score_margin=None,
+            matched_word_count=1,
+            rejection_reason="score_too_low",
+        )
+
+    monkeypatch.setattr(inference_pipeline, "detect_verse_with_metadata", fake_detect)
+
+    segments, detection, analyzed_duration, attempts = inference_pipeline.detect_verse_progressively(
+        "/tmp/noisy_recitation.wav",
+        10.0,
+        allow_ambiguous_result=True,
+    )
+
+    assert primary_called is True
+    assert rescue_called is True
+    assert attempts == 2
+    assert detection.status == "confident"
+    assert detection.verse is not None
+    assert detection.verse["sourate_id"] == 112
+

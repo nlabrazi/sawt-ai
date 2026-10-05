@@ -1,6 +1,9 @@
 import { effectScope, ref } from 'vue'
 
-import { useMicrophoneRecorder } from '~/composables/useMicrophoneRecorder'
+import {
+  MICROPHONE_AUDIO_CONSTRAINTS,
+  useMicrophoneRecorder,
+} from '~/composables/useMicrophoneRecorder'
 
 class FakeMediaRecorder {
   static isTypeSupported(type: string) {
@@ -240,6 +243,30 @@ describe('useMicrophoneRecorder', () => {
     expect(await stopped).toBeNull()
     expect(recorder.isRecording.value).toBe(true)
     expect(stopTrack).toHaveBeenCalledTimes(1)
+    recorder.cleanup()
+  })
+
+  it('requests media with speech enhancement and noise suppression constraints', async () => {
+    const { getUserMedia } = setupRecorderEnvironment()
+    const recorder = useMicrophoneRecorder(ref(30))
+
+    await recorder.startRecording()
+
+    expect(getUserMedia).toHaveBeenCalledWith(MICROPHONE_AUDIO_CONSTRAINTS)
+    recorder.cleanup()
+  })
+
+  it('falls back to basic audio constraints when advanced constraints are rejected', async () => {
+    const { getUserMedia } = setupRecorderEnvironment()
+    getUserMedia.mockRejectedValueOnce(new Error('OverconstrainedError'))
+
+    const recorder = useMicrophoneRecorder(ref(30))
+    await recorder.startRecording()
+
+    expect(getUserMedia).toHaveBeenCalledTimes(2)
+    expect(getUserMedia).toHaveBeenNthCalledWith(1, MICROPHONE_AUDIO_CONSTRAINTS)
+    expect(getUserMedia).toHaveBeenNthCalledWith(2, { audio: true })
+    expect(recorder.isRecording.value).toBe(true)
     recorder.cleanup()
   })
 })

@@ -6,10 +6,12 @@ import logging
 import math
 from collections import Counter
 from dataclasses import dataclass, replace
+from pathlib import Path
 from typing import Any, Iterable
 
 from app.core.transcription_policy import is_confidently_non_arabic
 from app.core.model_loader import get_whisper_model
+from app.services.audio_enhancement_service import enhance_audio_file
 
 logger = logging.getLogger(__name__)
 
@@ -512,16 +514,29 @@ def transcribe_quran_audio_rescue(
     audio_path: str,
     screened_metadata: TranscriptionMetadata | None = None,
 ) -> TranscriptionResult:
-    """Retente le décodage avec VAD sans répéter le filtrage de langue."""
-    transcription = transcribe_audio(
-        audio_path,
-        language=QURAN_TRANSCRIPTION_LANGUAGE,
-        vad_filter=True,
-        dither_snr_db=None,
-    )
+    """Retente le décodage avec isolation vocale et VAD."""
+    enhanced_path, was_enhanced = enhance_audio_file(audio_path)
+    target_path = str(enhanced_path)
+
+    try:
+        transcription = transcribe_audio(
+            target_path,
+            language=QURAN_TRANSCRIPTION_LANGUAGE,
+            vad_filter=True,
+            dither_snr_db=None,
+        )
+    finally:
+        if was_enhanced and str(enhanced_path) != str(audio_path):
+            Path(enhanced_path).unlink(missing_ok=True)
 
     if screened_metadata is None:
         return transcription
+
+    speech_duration = (
+        screened_metadata.speech_duration_seconds
+        if screened_metadata.speech_duration_seconds > 0
+        else transcription.metadata.speech_duration_seconds
+    )
 
     rescue_metadata = replace(
         transcription.metadata,
@@ -530,6 +545,6 @@ def transcribe_quran_audio_rescue(
         arabic_probability=screened_metadata.arabic_probability,
         language_probabilities=screened_metadata.language_probabilities,
         duration_seconds=screened_metadata.duration_seconds,
-        speech_duration_seconds=screened_metadata.speech_duration_seconds,
+        speech_duration_seconds=speech_duration,
     )
     return TranscriptionResult(transcription, rescue_metadata)
