@@ -11,7 +11,7 @@
 | Tajwid | `api/assets/quran_tajwid.json`, `app/services/tajwid_service.py` | Snapshot local, puis URL de sauvegarde, puis AlQuran Cloud ; cache mémoire. |
 | Détails d'un passage | `ui/app/components/VerseDetailsSheet.vue`, `ui/app/composables/useTajwid.ts` | Détails et tajwid chargés à la demande. |
 | Stockage modifiable | `app/services/feedback_store.py` | Retours utilisateurs dans Supabase via REST ; aucune couche ORM ou connexion SQL. |
-| Accès interne | Aucun actuellement | Une protection serveur est nécessaire avant d'activer la review. |
+| Accès interne | `app/routes/tafsir_review.py`, `ui/app/components/TafsirReviewScreen.vue` | Mot de passe dédié côté backend ; écran `/internal/tafsir`. |
 
 ## Étape 1 : contrats de données
 
@@ -422,6 +422,119 @@ brouillons et refuse un tafsir validé associé à un autre verset.
 
 Commit proposé : `feat: add tafsir persistence and manual review operations`.
 
+## Étape 6 : interface interne de review
+
+Les routes privées réutilisent `tafsir_store.py` et son contrôle de version.
+L'écran Nuxt est disponible à **`/internal/tafsir`** ; il ne figure pas dans
+la navigation publique. Comme le projet utilise `app.vue` sans pages Nuxt,
+ce composant choisit l'écran interne selon le chemin, sans refondre le
+parcours de reconnaissance. Le filtre de sourates réutilise `useSurahOptions`
+et `GET /surahs`.
+
+### Activer l'accès
+
+1. Installer la migration de l'étape 5 dans Supabase si elle ne l'est pas encore.
+2. Choisir un mot de passe interne **long et aléatoire**, distinct de toute clé
+   Supabase. Par exemple, générer une valeur avec `openssl rand -hex 32`.
+3. Renseigner `TAFSIR_REVIEW_PASSWORD` dans `api/.env`. Cette variable appartient
+   uniquement au backend ; ne pas la placer dans `runtimeConfig.public`, une
+   variable `NUXT_PUBLIC_*`, les fichiers versionnés ou la commande d'une URL.
+4. Recréer le conteneur API pour prendre en compte l'environnement :
+
+   ```bash
+   docker compose up -d --force-recreate api
+   ```
+
+5. Ouvrir `http://localhost:3000/internal/tafsir` et saisir ce mot de passe.
+   En production, servir le frontend et l'API en HTTPS pour protéger son envoi.
+
+Sans mot de passe configuré, **toutes** les routes de review sont désactivées
+avec une réponse `503`. Un mot de passe absent ou incorrect renvoie `401`
+avant tout appel au stockage. Le contrôle de connexion ne dépend pas de
+Supabase : une table absente sera signalée ensuite lors du chargement de la liste.
+La clé serveur Supabase reste exclusivement utilisée par `tafsir_store.py`.
+
+Le mot de passe saisi est envoyé dans `Authorization: Bearer ...`. Le navigateur
+le garde dans la mémoire de l'écran, sans `useState`, cookie, localStorage ni
+sessionStorage. Recharger la page impose une nouvelle connexion ; se déconnecter
+efface les textes chargés et annule une requête en cours. Un `401` après connexion
+efface également l'accès local. Pour révoquer le mot de passe, le remplacer dans
+l'environnement puis recréer/redémarrer le backend.
+
+Les réponses de l'API interne portent `Cache-Control: no-store` et
+`X-Robots-Tag: noindex, nofollow`. Les routes sont exclues du schéma OpenAPI
+public. L'écran porte aussi `noindex, nofollow` et ne charge pas le script
+Umami, qui reste actif dans le parcours public. Ces mesures accompagnent
+l'authentification ; c'est le contrôle serveur qui protège les brouillons.
+
+### Relire, corriger et valider
+
+L'écran liste par défaut les entrées `need_review`, par pages de 50. Les filtres
+portent sur la sourate, la source et le statut. Chaque entrée montre son couple
+sourate/verset, son ouvrage, le français et, dans un volet dépliable, le passage
+original et sa provenance. Le passage original est affiché comme du texte
+échappé, même si la source contient des balises HTML.
+
+- **Enregistrer** conserve la correction et remet l'entrée en `need_review`,
+  y compris lorsqu'elle était déjà validée. Son ancienne date de review disparaît.
+- **Annuler les corrections** restaure le texte chargé sans écrire en base.
+- **Valider** passe une entrée en attente à `verified`, avec `reviewed_at`
+  attribué par PostgreSQL. Le bouton reste désactivé tant que sa correction
+  n'est pas enregistrée. La relecture avec l'édition physique reste manuelle.
+
+Changer les filtres ou la page est bloqué tant qu'une correction n'est pas
+enregistrée ou annulée. La validation d'un ouvrage ne valide pas l'autre.
+Une entrée qui quitte le statut filtré disparaît de la liste, avec un message
+de réussite. Pour la retrouver après validation, filtrer sur **Validé**.
+
+Chaque écriture envoie `expected_updated_at`. Si la version a changé, l'API
+renvoie `409` et l'écran bloque les écritures. **Recharger la liste** remplace
+alors les corrections non enregistrées par la version stockée : relire cette
+version avant de valider. Il n'y a ni écrasement automatique ni validation
+implicite après correction.
+
+| Route privée | Action |
+| --- | --- |
+| `GET /internal/tafsir/access` | Vérifie le mot de passe, réponse `204`. |
+| `GET /internal/tafsir` | Liste ; paramètres `surah_id`, `source`, `status`, `limit`, `offset`. |
+| `PATCH /internal/tafsir/{surah_id}/{ayah}/{source}` | Corps `text_fr`, `expected_updated_at`. |
+| `POST /internal/tafsir/{surah_id}/{ayah}/{source}/verify` | Corps `expected_updated_at`. |
+
+Les entrées invalides ou les champs inattendus sont rejetés avec `422`.
+Le client ne peut pas choisir `status` ou `reviewed_at` dans une correction.
+Une erreur de configuration de stockage renvoie `503`, une indisponibilité
+de stockage `502`, sans renvoyer les détails privés du fournisseur.
+
+### Vérification
+
+Depuis la racine :
+
+```bash
+api/.venv/bin/pytest -c api/pytest.ini api/tests/routes/test_tafsir_review.py api/tests/services/test_tafsir_store.py api/tests/test_main.py
+```
+
+Depuis `ui/` :
+
+```bash
+npm test
+npm run test:e2e -- tests/e2e/tafsir-review.spec.ts tests/e2e/recognition.spec.ts tests/e2e/navigation.spec.ts
+npm run build
+```
+
+Les tests d'API utilisent un stockage simulé et ceux du navigateur une API
+simulée, avec uniquement des textes explicitement fictifs. Ils vérifient les
+accès refusés, la correction et la validation de la bonne version/source,
+le refus d'une review obsolète, l'affichage échappé, la reconnexion après
+rechargement et la conservation du parcours public de reconnaissance.
+Ils ne modifient pas la base Supabase du projet.
+
+Pour un essai réel, charger des snapshots pilotes réutilisables selon l'étape 5,
+puis relire une entrée, enregistrer une correction et la valider. Sans import
+réel, la liste vide est attendue. Cette étape n'ajoute pas encore la route
+publique de lecture ni l'affichage du français dans les résultats.
+
+Commit proposé : `feat: add protected tafsir review interface`.
+
 ## Plan d'intégration
 
 1. **Traduction pilote — réalisée.** Ajouter `api/scripts/import_quran_translation.py`,
@@ -446,11 +559,11 @@ Commit proposé : `feat: add tafsir persistence and manual review operations`.
    l'import réel. Les contraintes, droits et déclencheur préservent la
    provenance, empêchent les réimports d'écraser les textes et annulent une
    validation après correction. Le backend cible la version effectivement relue.
-4. **Interface interne.** Ajouter des routes FastAPI protégées côté serveur
-   pour lister, corriger et valider ; interface Nuxt avec filtres sourate,
-   source et statut. Réutiliser `GET /surahs` pour le filtre. Décider du mécanisme
-   d'authentification interne avant cette étape ; CORS ou une URL discrète ne
-   constituent pas une protection. Aucun secret dans `runtimeConfig.public`.
+4. **Interface interne — réalisée.** Les routes FastAPI et l'écran Nuxt de
+   review réutilisent le stockage et le catalogue existants. Le mot de passe
+   dédié est configuré côté backend ; les filtres sourate/source/statut,
+   corrections et validations sont disponibles. Aucun secret serveur dans
+   `runtimeConfig.public` ; aucun accès aux brouillons sans authentification.
 5. **Lecture publique.** Ajouter une route de lecture par sourate et plage de
    versets, avec schéma de réponse dédié. Retourner la traduction locale et
    uniquement les tafsirs `status = verified`, filtrés dès la requête de stockage.

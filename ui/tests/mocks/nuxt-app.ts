@@ -19,3 +19,9 @@ export function useRuntimeConfig() {
 export function setRuntimeConfig(nextConfig: RuntimeConfig) {
   runtimeConfig = nextConfig
 }
+
+export function useRequestURL() {
+  return new URL('http://localhost:3000/')
+}
+
+export function useHead(_input: unknown) {}

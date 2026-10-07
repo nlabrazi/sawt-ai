@@ -16,6 +16,7 @@ from app.routes.recognize import router as recognize_router
 from app.routes.tajwid import router as tajwid_router
 from app.routes.feedback import router as feedback_router
 from app.routes.hadith import router as hadith_router
+from app.routes.tafsir_review import router as tafsir_review_router
 from app.core.model_loader import load_all_models
 from app.schemas.health import HealthResponse
 from app.services.imam_prediction_service import (
@@ -95,6 +96,18 @@ app.include_router(recognize_router)
 app.include_router(feedback_router)
 app.include_router(tajwid_router)
 app.include_router(hadith_router)
+app.include_router(tafsir_review_router)
+
+
+@app.middleware("http")
+async def prevent_review_caching(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path == "/internal/tafsir" or request.url.path.startswith("/internal/tafsir/"):
+        response.headers["Cache-Control"] = "no-store"
+        response.headers["X-Robots-Tag"] = "noindex, nofollow"
+        vary = response.headers.get("Vary")
+        response.headers["Vary"] = f"{vary}, Authorization" if vary else "Authorization"
+    return response
 
 
 @app.exception_handler(StarletteHTTPException)

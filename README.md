@@ -400,8 +400,10 @@ It is read locally using `QURAN_TRANSLATION_PATH`; public API and UI integration
 are planned separately. See [the import and integration guide](api/docs/quran_content.md).
 French tafsir drafts can be imported locally and stored through the backend.
 Install [the tafsir table](supabase/tafsir_entries.sql) before inserting real
-pilot snapshots. Review operations and verified-only reads are implemented;
-the protected review interface and public routes are the next steps.
+pilot snapshots. The password-protected review interface is available at
+`/internal/tafsir`; set `TAFSIR_REVIEW_PASSWORD` in the backend environment to
+enable access. See [the activation guide](api/docs/quran_content.md#étape-6--interface-interne-de-review).
+Public routes and recognition-result integration are the next steps.
 Use the Supabase Project URL, not the Postgres connection string, for `SUPABASE_URL`.
 Use a server-side key only for `SUPABASE_API_KEY`, not an `anon` or `sb_publishable` key.
 

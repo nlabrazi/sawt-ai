@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { useHead, useRequestURL } from '#app'
 import { BookOpen, CircleHelp, Mic } from '@lucide/vue'
 import { Motion, MotionConfig } from 'motion-v'
 import { computed, defineAsyncComponent, nextTick, onMounted, ref } from 'vue'
@@ -11,6 +12,24 @@ import { useHadithSearch } from '~/composables/useHadithSearch'
 
 const HadithSearchScreen = defineAsyncComponent(() => import('~/components/HadithSearchScreen.vue'))
 const FaqScreen = defineAsyncComponent(() => import('~/components/FaqScreen.vue'))
+const TafsirReviewScreen = defineAsyncComponent(() => import('~/components/TafsirReviewScreen.vue'))
+const internalReview = useRequestURL().pathname.replace(/\/$/, '') === '/internal/tafsir'
+useHead(
+  internalReview
+    ? {
+        title: 'Review des tafsirs — Sawt AI',
+        meta: [{ name: 'robots', content: 'noindex, nofollow' }],
+      }
+    : {
+        script: [
+          {
+            src: 'https://umami.nabster.dev/script.js',
+            defer: true,
+            'data-website-id': '6c8e5246-8c6c-4964-a20d-f8e66169aed6',
+          },
+        ],
+      },
+)
 type Screen = 'home' | 'quran' | 'hadith' | 'faq'
 const mode = ref<Screen>('home')
 const { canAnimate, spring } = useUiMotion()
@@ -45,7 +64,8 @@ async function returnHome() {
 </script>
 
 <template>
-  <MotionConfig reduced-motion="user">
+  <TafsirReviewScreen v-if="internalReview" />
+  <MotionConfig v-else reduced-motion="user">
     <main class="page">
       <div class="page-content">
         <header class="app-header">

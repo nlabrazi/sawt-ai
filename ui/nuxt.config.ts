@@ -117,11 +117,6 @@ export default defineNuxtConfig({
           type: 'application/ld+json',
           innerHTML: JSON.stringify(structuredData),
         },
-        {
-          src: 'https://umami.nabster.dev/script.js',
-          defer: true,
-          'data-website-id': '6c8e5246-8c6c-4964-a20d-f8e66169aed6',
-        },
       ],
     },
   },
