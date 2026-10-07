@@ -1,6 +1,6 @@
 """Internal tafsir records. Public filtering belongs to the read service."""
 
-from typing import Literal
+from typing import Any, Literal
 
 from pydantic import (
     AwareDatetime,
@@ -112,3 +112,10 @@ class TafsirFrenchImportBatch(BaseModel):
                 raise ValueError("Un même passage source ne peut pas avoir deux contenus ou références.")
             passages[key] = passage
         return self
+
+
+class TafsirReviewEntry(TafsirEntry):
+    """Internal stored row, including the original passage and review revision."""
+
+    provenance: dict[str, Any]
+    updated_at: AwareDatetime

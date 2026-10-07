@@ -281,8 +281,8 @@ dans les assets publics Nuxt.
 
 Pour relancer un import, utiliser la sortie horodatée par défaut ou choisir un
 nouveau fichier. Cela crée un autre lot, pas une mise à jour du contenu relu.
-L'insertion en Supabase devra également refuser le remplacement silencieux
-d'un verset déjà présent/validé ; cette écriture n'est pas encore implémentée.
+L'insertion en Supabase, ajoutée à l'étape 5, refuse également le remplacement
+silencieux d'un verset déjà présent/validé.
 
 Le script charge uniquement le catalogue coranique, sans Whisper ni modèles
 de reconnaissance. Il ne change aucune route FastAPI, aucun résultat de
@@ -304,6 +304,124 @@ Le corpus réel et les éditions françaises de review restent à fournir.
 
 Commit proposé : `feat: add local French tafsir pilot import pipeline`.
 
+## Étape 5 : stockage Supabase et validation manuelle
+
+`supabase/tafsir_entries.sql` crée la table et ses protections.
+`app/services/tafsir_store.py` reprend l'accès REST et les fonctions de
+configuration Supabase déjà utilisées par le feedback, sans ORM ni client
+générique supplémentaire. Les services ne sont pas encore reliés à des routes
+FastAPI ou à une interface ; cette étape prépare leur stockage.
+
+### Installer la table
+
+Exécuter `supabase/tafsir_entries.sql` dans le SQL Editor du projet Supabase.
+La migration a été testée sur PostgreSQL 14 isolé, y compris deux applications
+successives. Elle n'a pas été exécutée sur le Supabase du projet par l'agent.
+
+La clé primaire est `(surah_id, ayah, source)`. Chaque ligne conserve les champs
+de `TafsirEntry`, plus :
+
+- `provenance` : passage original complet, bornes, langue, édition, référence de
+  réutilisation et date du snapshot ;
+- `updated_at` : date de la dernière écriture, attribuée par PostgreSQL.
+
+Le backend contrôle les références exactes contre le catalogue local ; la table
+borne les identifiants et restreint les sources et statuts. La provenance et les
+identifiants restent immuables après insertion. Le rôle serveur peut insérer,
+lire, puis modifier seulement `text_fr` et `status`. La fonction déclenchée par
+PostgreSQL assure ces règles :
+
+- toute insertion commence avec `need_review` et sans date de review ;
+- une validation sans changement de texte passe à `verified`, avec une date
+  écrite par la base ;
+- tout changement de texte remet l'entrée en `need_review` et efface sa date de
+  review, même si la requête revendiquait aussi `verified`.
+
+Les rôles `anon` et `authenticated` n'ont aucun droit sur la table. RLS est
+activé sans politique publique. Il faut passer par le backend ; être connecté
+à Supabase Auth ne donne pas, à lui seul, accès aux brouillons ou à leur validation.
+Voir [les règles Supabase sur les droits et RLS](https://supabase.com/docs/guides/database/postgres/row-level-security).
+
+### Charger un snapshot pilote
+
+Utiliser un fichier produit par `import_tafsir_fr.py`, avec `imported_at`,
+`need_review` et `reviewed_at = null`. Le nouveau script le revalide, conserve
+la provenance de chaque entrée puis insère tout le lot en une seule requête
+REST. Un couple sourate/verset/source déjà présent fait échouer **tout le lot**,
+sans mise à jour ni écrasement du texte relu.
+
+Avec Docker Compose, la configuration Supabase de `api/.env` est déjà chargée
+et le répertoire interne du dépôt est monté dans `/app` :
+
+```bash
+docker compose exec api python scripts/store_tafsir_fr.py --input "/app/data/tafsir/ibn_kathir/drafts-<date>.json"
+docker compose exec api python scripts/store_tafsir_fr.py --input "/app/data/tafsir/as_saadi/drafts-<date>.json"
+```
+
+Remplacer `<date>` par le nom du snapshot réel. Hors Docker, exporter
+`SUPABASE_URL` et `SUPABASE_API_KEY` dans l'environnement, puis utiliser :
+
+```bash
+api/.venv/bin/python api/scripts/store_tafsir_fr.py --input "api/data/tafsir/ibn_kathir/drafts-<date>.json"
+```
+
+La table est fixée à `tafsir_entries`. Le service accepte une clé serveur
+`sb_secret_...` ou un JWT `service_role`, et refuse une clé de client.
+Les nouvelles clés opaques sont envoyées dans `apikey` uniquement ; les anciens
+JWT serveur utilisent également `Authorization: Bearer`. Le décodage du rôle
+d'un JWT contrôle son type, pas sa signature : Supabase authentifie la requête.
+Voir [la documentation officielle des clés API](https://supabase.com/docs/guides/getting-started/api-keys).
+Aucune clé ne doit être ajoutée à la configuration publique Nuxt.
+
+### Opérations pour la future interface interne
+
+`TafsirReviewEntry` contient le texte français, sa provenance et `updated_at`.
+Les opérations sont :
+
+| Fonction | Comportement |
+| --- | --- |
+| `list_tafsirs_for_review(...)` | Liste interne paginée, en attente par défaut ; filtres sourate, source et statut. |
+| `update_tafsir_text(...)` | Sauvegarde le texte corrigé et impose une nouvelle review. |
+| `verify_tafsir(...)` | Valide une entrée encore en attente ; la base attribue `reviewed_at`. |
+| `fetch_verified_tafsirs(surah_id, start_ayah, end_ayah)` | Lecture destinée au public : seulement les entrées validées du passage. |
+
+La correction et la validation demandent `expected_updated_at`, la date de
+l'entrée affichée au relecteur. La requête modifie uniquement cette version.
+Si un autre changement est intervenu, elle échoue avec `TafsirStoreConflict` :
+recharger le contenu avant de relire/valider. Cela évite de valider un texte
+différent de celui consulté, sans ajouter de nouveaux statuts au workflow.
+
+La lecture destinée au public filtre `status=verified` dans la requête REST,
+puis vérifie à nouveau le statut et les références des lignes reçues. Elle ne
+retourne ni provenance originale ni date de dernière modification. Elle ne met
+rien en cache : une correction qui annule la validation prend effet dès la
+prochaine lecture. Les futures routes publiques devront appeler cette fonction
+et les opérations internes devront être protégées côté serveur.
+
+### Vérifier cette étape
+
+Tests Python hors réseau (REST simulé) :
+
+```bash
+api/.venv/bin/pytest -c api/pytest.ini api/tests/services/test_tafsir_store.py api/tests/services/test_tafsir_import_service.py api/tests/services/test_tafsir_sources.py api/tests/schemas/test_quran_content.py api/tests/services/test_quran_translation_service.py api/tests/services/test_feedback_store.py
+```
+
+Les contrôles SQL, à exécuter uniquement dans une base de test isolée où la
+migration est déjà installée et les rôles Supabase existent :
+
+```bash
+psql "$TAFSIR_TEST_DATABASE_URL" -X -v ON_ERROR_STOP=1 -f supabase/tests/tafsir_entries.sql
+```
+
+Ce fichier utilise des textes explicitement fictifs dans une transaction
+annulée à la fin. Il vérifie la séparation des sources, les imports en attente,
+la validation, les corrections, les reviews obsolètes, le refus des doublons
+avec annulation du lot, l'immuabilité de la provenance et les droits/RLS.
+Les tests Python vérifient aussi que la lecture destinée au public écarte les
+brouillons et refuse un tafsir validé associé à un autre verset.
+
+Commit proposé : `feat: add tafsir persistence and manual review operations`.
+
 ## Plan d'intégration
 
 1. **Traduction pilote — réalisée.** Ajouter `api/scripts/import_quran_translation.py`,
@@ -322,12 +440,12 @@ Commit proposé : `feat: add local French tafsir pilot import pipeline`.
    le texte source fourni, sans enrichissement ni mélange entre ouvrages.
    Chaque sortie passe par `TafsirImportEntry`. Une réimportation ne doit jamais
    remplacer silencieusement un texte déjà relu.
-3. **Persistance et validation.** Ajouter une table Supabase `tafsir_entries`,
-   une contrainte unique `(surah_id, ayah, source)` et des contraintes de statut
-   et date. Reprendre le mode d'accès REST de `feedback_store.py` dans un service
-   dédié, sans couche générique ni ORM. L'accès anonyme direct à la table doit
-   être interdit. Toute modification d'un texte validé impose une nouvelle
-   review ; seule l'action interne « Valider » écrit `verified` et la date.
+3. **Persistance et validation — réalisées dans le dépôt.** La migration
+   `supabase/tafsir_entries.sql`, le script de stockage et les opérations de
+   review sont ajoutés. Installer la migration dans le projet Supabase avant
+   l'import réel. Les contraintes, droits et déclencheur préservent la
+   provenance, empêchent les réimports d'écraser les textes et annulent une
+   validation après correction. Le backend cible la version effectivement relue.
 4. **Interface interne.** Ajouter des routes FastAPI protégées côté serveur
    pour lister, corriger et valider ; interface Nuxt avec filtres sourate,
    source et statut. Réutiliser `GET /surahs` pour le filtre. Décider du mécanisme
@@ -356,9 +474,10 @@ que les champs `sura`, `aya`, `translation` et `footnotes`. Elle référence la
 traduction française de Rachid Maach sous la clé `french_rashid`.
 La version sera lue depuis les métadonnées du fournisseur, sans valeur inventée.
 
-Les ressources arabes des tafsirs sont référencées à l'étape 3. Leur mécanisme
-d'import et les éditions physiques françaises utilisées pour la review restent
-à préciser avant d'importer le contenu. Aucun contenu religieux fictif n'est
+Les ressources arabes des tafsirs sont référencées à l'étape 3. L'import local
+et la persistance sont prêts ; les corpus réellement réutilisables, l'éventuelle
+connexion Content Sync et les éditions physiques françaises de review restent
+à préciser avant l'import religieux. Aucun contenu religieux fictif n'est
 ajouté aux données du projet.
 
 ## Validation progressive
