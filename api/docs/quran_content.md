@@ -600,7 +600,7 @@ routes du projet.
 La route ne lance ni import, ni génération, ni téléchargement QuranEnc/Quran
 Foundation. Elle charge seulement les contenus déjà préparés. Elle est appelée
 séparément de la reconnaissance audio ; son raccordement à `VerseDetailsSheet`
-est la prochaine étape.
+est décrit à l'étape 8.
 
 ### Tester
 
@@ -630,6 +630,78 @@ indisponibilité de stockage sans perte de traduction et changements de statut
 visibles à la lecture suivante. Ils ne modifient pas le Supabase du projet.
 
 Commit proposé : `feat: expose verified tafsir and French translations through API`.
+
+## Étape 8 : affichage dans les résultats de reconnaissance
+
+`VerseDetailsSheet.vue` réutilise le texte arabe du passage reconnu, disponible
+sans nouvel appel API. Le français est chargé uniquement quand l'utilisateur
+ouvre **Voir le verset** ou **Vérifier le passage**, via `useQuranContent.ts`
+et `GET /quran/content`. Le survol du bouton peut précharger le composant, mais
+ne charge pas les textes. Aucun appel à la route de review ni secret interne
+n'est ajouté au parcours public.
+
+Le texte arabe est présenté pour le passage entier. `QuranAyahContent.vue`
+affiche ensuite le contenu français par numéro de verset : traduction, notes
+dépliables, traducteur, source liée et version. Les notes et tous les textes
+sont échappés par Vue, sans `v-html`. Une traduction absente reste signalée
+comme indisponible, sans remplacement ni génération de texte.
+
+Chaque verset ayant un tafsir validé propose **Ibn Kathir** et **As-Sa‘di**.
+La source sans contenu validé est désactivée ; la première source disponible
+est sélectionnée. Changer de source change seulement le commentaire affiché
+pour ce verset, avec sa référence et sa version. Si aucun commentaire n'est
+validé, toute la section tafsir du verset est absente. Les choix de sources
+utilisent des boutons avec `aria-pressed` ; les notes et liens restent
+accessibles au clavier dans la fenêtre de détails.
+
+Le composable contrôle la plage reçue, les couples sourate/verset de chaque
+texte et les identifiants des deux ouvrages. En complément du filtrage serveur,
+il exclut tout tafsir qui n'est pas `verified` ou qui n'a pas de date de review
+valide. Une réponse `tafsir_status: unavailable` conserve la traduction mais
+supprime tout commentaire, avec un message d'indisponibilité.
+
+Les appels utilisent `cache: no-store`, sans cache mémoire ni retry automatique.
+Fermer les détails, changer de passage ou détruire le composant annule la
+requête et efface le contenu chargé ; une réponse tardive ne peut pas remplacer
+celui d'un nouveau passage. Chaque réouverture relit les données publiques,
+y compris si une correction a retiré une précédente validation. Un écran déjà
+ouvert ne reçoit pas les changements de review en temps réel.
+
+Une erreur de chargement affiche un message générique et **Réessayer le
+chargement du contenu français**. Le texte arabe, le résultat reconnu, la copie
+et le chargement du tajwid restent indépendants de cet appel. Le frontend
+attend au maximum 20 secondes, ce qui couvre le délai de stockage actuel
+de 15 secondes côté API.
+
+### Tester
+
+Depuis `ui/` :
+
+```bash
+npm test
+npm run test:e2e -- tests/e2e/quran-content.spec.ts tests/e2e/verse-details-and-feedback.spec.ts tests/e2e/recognition.spec.ts
+npm run lint
+npm run build
+```
+
+Les tests du composable et de la fiche contrôlent les références, les brouillons
+exclus du rendu, la séparation des ouvrages, l'échappement des notes, le rejet
+d'une réponse obsolète et les erreurs sans perte du résultat. Chromium vérifie
+le parcours reconnaissance → détails → changement de source, la réouverture
+après retrait de validation et l'accès au tajwid malgré une panne du français.
+Leurs textes français sont explicitement fictifs, avec des réponses API
+simulées ; ils n'insèrent rien dans Supabase.
+
+Pour un essai réel, reconnaître Al-Fatiha ou l'un des versets pilotes
+d'Al-Baqara puis ouvrir les détails. La traduction QuranEnc locale doit
+apparaître. L'absence de tafsir est attendue tant qu'aucun contenu réel n'est
+importé puis relu et validé. Pour vérifier le pipeline de review jusqu'au
+frontend, valider manuellement une entrée réelle du pilote, ouvrir les détails,
+puis corriger cette entrée en interne et rouvrir les détails : le commentaire
+doit disparaître jusqu'à sa prochaine validation. Vérifier chaque ouvrage
+séparément. Une indisponibilité Supabase sera signalée sans masquer la traduction.
+
+Commit proposé : `feat: display French translation and verified tafsir in recognition results`.
 
 ## Plan d'intégration
 
@@ -665,14 +737,15 @@ Commit proposé : `feat: expose verified tafsir and French translations through 
    Le filtrage `verified`, les références et les sources sont contrôlés par
    les services existants. Le stockage indisponible ne prive pas la réponse
    de traduction. Le contenu tafsir n'est pas mis en cache.
-6. **Affichage.** Étendre `VerseDetailsSheet.vue` avec un composable de lecture
-   utilisant `$fetch` et `runtimeConfig.public.apiBaseUrl`. Afficher le texte
-   arabe, la traduction et les onglets Ibn Kathir / As-Sa‘di pour chaque verset
-   du passage. Aucun contenu tafsir lorsqu'une entrée validée manque.
+6. **Affichage — réalisé.** `VerseDetailsSheet.vue` montre le passage arabe
+   reconnu ; `useQuranContent.ts` charge le français à l'ouverture des détails.
+   `QuranAyahContent.vue` présente la traduction et les choix Ibn Kathir /
+   As-Sa‘di par verset. Aucun contenu tafsir lorsqu'une entrée validée manque.
+   Une erreur du français ne masque pas le résultat reconnu ni le tajwid.
 
 Ce plan réutilise les schémas Pydantic, le catalogue, les snapshots locaux,
 Supabase REST et le composant de détails déjà présents. La reconnaissance audio
-ne dépendra pas du chargement des traductions ou tafsirs.
+ne dépend pas du chargement des traductions ou tafsirs.
 
 ## Source de traduction retenue pour le pilote
 

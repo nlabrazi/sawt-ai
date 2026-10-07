@@ -405,8 +405,11 @@ pilot snapshots. The password-protected review interface is available at
 `/internal/tafsir`; set `TAFSIR_REVIEW_PASSWORD` in the backend environment to
 enable access. See [the activation guide](api/docs/quran_content.md#étape-6--interface-interne-de-review).
 If tafsir storage is unavailable, the public route still returns the local
-translation with `tafsir_status: unavailable`. Recognition-result UI integration
-is the next step.
+translation with `tafsir_status: unavailable`. Opening recognition-result details
+shows the Arabic passage and loads French content separately, grouped by ayah.
+Only verified tafsirs appear, with separate Ibn Kathir / As-Sa‘di choices.
+Closing and reopening the details rechecks the current review state without a
+tafsir cache. A French-content error leaves recognition and tajwid usable.
 Use the Supabase Project URL, not the Postgres connection string, for `SUPABASE_URL`.
 Use a server-side key only for `SUPABASE_API_KEY`, not an `anon` or `sb_publishable` key.
 
