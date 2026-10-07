@@ -52,6 +52,13 @@ class TafsirImportEntry(TafsirEntry):
     reviewed_at: None = None
 
 
+class VerifiedTafsirEntry(TafsirEntry):
+    """Public response contract: an unreviewed entry cannot be serialized here."""
+
+    status: Literal["verified"]
+    reviewed_at: AwareDatetime
+
+
 class TafsirDraftImportEntry(TafsirImportEntry):
     """A French draft with the complete original passage used to prepare it."""
 

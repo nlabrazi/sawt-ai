@@ -1,4 +1,8 @@
+from typing import Literal
+
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
+
+from app.schemas.tafsir import VerifiedTafsirEntry
 
 
 class SurahMetadata(BaseModel):
@@ -28,3 +32,23 @@ class QuranTranslation(BaseModel):
         if not value.strip():
             raise ValueError("Translation text and source metadata must not be blank.")
         return value
+
+
+class QuranAyahContent(BaseModel):
+    """French content for one requested ayah; missing content stays absent."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    ayah: int = Field(ge=1, le=286, strict=True)
+    translation: QuranTranslation | None
+    tafsirs: list[VerifiedTafsirEntry]
+
+
+class QuranContentResponse(BaseModel):
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    surah_id: int = Field(ge=1, le=114, strict=True)
+    start_verse: int = Field(ge=1, le=286, strict=True)
+    end_verse: int = Field(ge=1, le=286, strict=True)
+    tafsir_status: Literal["available", "unavailable"]
+    ayahs: list[QuranAyahContent]

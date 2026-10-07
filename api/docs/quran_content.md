@@ -10,6 +10,7 @@
 | Résultat côté navigateur | `ui/app/composables/useRecognition.ts` | Appel `$fetch` vers FastAPI et résultat dans une `ref` Vue. |
 | Tajwid | `api/assets/quran_tajwid.json`, `app/services/tajwid_service.py` | Snapshot local, puis URL de sauvegarde, puis AlQuran Cloud ; cache mémoire. |
 | Détails d'un passage | `ui/app/components/VerseDetailsSheet.vue`, `ui/app/composables/useTajwid.ts` | Détails et tajwid chargés à la demande. |
+| Contenu français public | `app/routes/quran_content.py` | `GET /quran/content` : traduction locale et tafsirs validés, regroupés par verset. |
 | Stockage modifiable | `app/services/feedback_store.py` | Retours utilisateurs dans Supabase via REST ; aucune couche ORM ou connexion SQL. |
 | Accès interne | `app/routes/tafsir_review.py`, `ui/app/components/TafsirReviewScreen.vue` | Mot de passe dédié côté backend ; écran `/internal/tafsir`. |
 
@@ -122,7 +123,8 @@ informations du document et de suivre les mises à jour. Les futures réponses
 publiques et leur affichage devront conserver l'attribution et la version.
 Ce jeu partiel sert à valider le pipeline ; ce n'est pas un corpus complet.
 
-La route publique et l'affichage Nuxt font partie des prochaines étapes.
+La lecture publique est décrite à l'étape 7 ; l'affichage Nuxt reste la
+prochaine étape d'intégration.
 Commit proposé : `feat: import french Quran translation dataset`.
 
 ## Étape 3 : identification des sources tafsir
@@ -535,6 +537,100 @@ publique de lecture ni l'affichage du français dans les résultats.
 
 Commit proposé : `feat: add protected tafsir review interface`.
 
+## Étape 7 : lecture publique du contenu français
+
+`GET /quran/content` réutilise la traduction locale et
+`fetch_verified_tafsirs`. Ses paramètres sont identiques à ceux du tajwid :
+`surah_id`, `start_verse`, `end_verse`. La route est publique et en lecture seule.
+Elle ne nécessite pas le mot de passe de review. Les écritures et les brouillons
+restent accessibles uniquement par les routes internes protégées.
+
+### Réponse par verset
+
+`QuranContentResponse` retourne la sourate, les bornes de la plage,
+`tafsir_status` et une liste `ayahs` ordonnée. Chaque élément comporte :
+
+| Champ | Contenu |
+| --- | --- |
+| `ayah` | Numéro du verset demandé. |
+| `translation` | `QuranTranslation` complète : texte, notes, source, traducteur, version et URL ; `null` si ce verset manque dans le pilote. |
+| `tafsirs` | Liste des tafsirs validés de ce verset, avec leur source, référence, version et date de review ; `[]` si aucun n'est disponible. |
+
+La plage contient un élément pour chaque verset valide demandé, même si son
+contenu français est absent du pilote. Une sourate ou une plage inexistante
+est rejetée avant de charger la traduction ou de contacter Supabase : `422`
+pour les paramètres absents ou hors bornes, `400` pour une plage inversée ou
+dépassant le nombre réel de versets de la sourate.
+
+`VerifiedTafsirEntry` reprend les champs publics de `TafsirEntry` et impose
+`status = verified` ainsi qu'une date de review avec fuseau horaire. Le service
+filtre déjà `verified` dans la requête Supabase et contrôle les lignes reçues ;
+le contrat public refuse également une entrée en attente. Les commentaires
+Ibn Kathir et As-Sa‘di gardent leurs identifiants distincts, même sur le même verset.
+La provenance originale, `source_text` et `updated_at` ne sont pas exposés.
+
+### Disponibilité et cache
+
+`tafsir_status` décrit la lecture du stockage, pas la présence d'un commentaire :
+
+- `available` : la lecture a réussi ; la liste peut être vide si aucun tafsir
+  n'est validé pour les versets demandés ;
+- `unavailable` : configuration absente, table inaccessible, panne réseau ou
+  données de stockage incohérentes. Tous les tafsirs sont alors omis ; la
+  traduction locale reste retournée avec une réponse `200`.
+
+Une incohérence de source, de statut, de date de review ou de référence ne
+produit jamais de contenu tafsir public. Le backend journalise un avertissement
+avec le type d'erreur et la plage demandée, sans y ajouter le texte privé ni
+les détails du fournisseur. Le frontend pourra distinguer l'indisponibilité
+du stockage d'une absence normale de tafsir validé.
+
+Le stockage utilise son délai existant de 15 secondes : en cas de panne réseau,
+la réponse peut attendre ce délai avant de retourner la traduction seule.
+Si le snapshot de traduction est illisible ou invalide, la route renvoie `503`
+avec un message générique, sans exposer son chemin local.
+
+Les réponses de contenu portent `Cache-Control: no-store`. Aucun cache tafsir
+n'est ajouté : une validation, puis une correction qui annule cette validation,
+prennent effet à la lecture suivante. Le cache mémoire de la traduction reste
+celui de son service local. Les appels de stockage et de lecture du snapshot
+sont exécutés via `run_in_threadpool`, selon le mécanisme déjà utilisé par les
+routes du projet.
+
+La route ne lance ni import, ni génération, ni téléchargement QuranEnc/Quran
+Foundation. Elle charge seulement les contenus déjà préparés. Elle est appelée
+séparément de la reconnaissance audio ; son raccordement à `VerseDetailsSheet`
+est la prochaine étape.
+
+### Tester
+
+Avec le backend démarré, pour le verset 2:255 :
+
+```bash
+curl -L --fail --silent --show-error 'http://localhost:8000/quran/content?surah_id=2&start_verse=255&end_verse=255'
+```
+
+Pour vérifier une plage partiellement couverte par le pilote, demander
+`start_verse=254&end_verse=255`. Le verset 254 aura `translation: null`.
+Sans tafsir relu/importé, les listes `tafsirs` vides sont attendues. Si le
+stockage n'est pas configuré ou la table n'est pas installée, la traduction
+est tout de même visible et `tafsir_status` vaut `unavailable`.
+
+Depuis la racine, les tests HTTP et les services utilisés :
+
+```bash
+api/.venv/bin/pytest -c api/pytest.ini api/tests/routes/test_quran_content_route.py api/tests/services/test_tafsir_store.py api/tests/services/test_quran_translation_service.py api/tests/schemas/test_quran_content.py api/tests/test_main.py
+```
+
+Ces tests utilisent le vrai catalogue et le snapshot QuranEnc livré, avec
+Supabase REST simulé et des tafsirs explicitement fictifs. Ils inspectent toute
+la réponse HTTP : aucun brouillon ni passage original interne, références
+correctes, deux ouvrages distincts, attribution/notes de traduction préservées,
+indisponibilité de stockage sans perte de traduction et changements de statut
+visibles à la lecture suivante. Ils ne modifient pas le Supabase du projet.
+
+Commit proposé : `feat: expose verified tafsir and French translations through API`.
+
 ## Plan d'intégration
 
 1. **Traduction pilote — réalisée.** Ajouter `api/scripts/import_quran_translation.py`,
@@ -564,12 +660,11 @@ Commit proposé : `feat: add protected tafsir review interface`.
    dédié est configuré côté backend ; les filtres sourate/source/statut,
    corrections et validations sont disponibles. Aucun secret serveur dans
    `runtimeConfig.public` ; aucun accès aux brouillons sans authentification.
-5. **Lecture publique.** Ajouter une route de lecture par sourate et plage de
-   versets, avec schéma de réponse dédié. Retourner la traduction locale et
-   uniquement les tafsirs `status = verified`, filtrés dès la requête de stockage.
-   Préserver la référence de chaque verset et chaque source. Aucun appel à la
-   génération ou à un import lors d'une lecture publique. Ne pas conserver en
-   cache un tafsir redevenu `need_review`.
+5. **Lecture publique — réalisée.** `GET /quran/content` retourne la traduction
+   locale et les tafsirs validés par verset, avec un contrat public dédié.
+   Le filtrage `verified`, les références et les sources sont contrôlés par
+   les services existants. Le stockage indisponible ne prive pas la réponse
+   de traduction. Le contenu tafsir n'est pas mis en cache.
 6. **Affichage.** Étendre `VerseDetailsSheet.vue` avec un composable de lecture
    utilisant `$fetch` et `runtimeConfig.public.apiBaseUrl`. Afficher le texte
    arabe, la traduction et les onglets Ibn Kathir / As-Sa‘di pour chaque verset

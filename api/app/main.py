@@ -17,6 +17,7 @@ from app.routes.tajwid import router as tajwid_router
 from app.routes.feedback import router as feedback_router
 from app.routes.hadith import router as hadith_router
 from app.routes.tafsir_review import router as tafsir_review_router
+from app.routes.quran_content import router as quran_content_router
 from app.core.model_loader import load_all_models
 from app.schemas.health import HealthResponse
 from app.services.imam_prediction_service import (
@@ -97,6 +98,7 @@ app.include_router(feedback_router)
 app.include_router(tajwid_router)
 app.include_router(hadith_router)
 app.include_router(tafsir_review_router)
+app.include_router(quran_content_router)
 
 
 @app.middleware("http")

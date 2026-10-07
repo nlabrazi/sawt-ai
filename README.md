@@ -396,14 +396,17 @@ The tajwid loading order is: local snapshot, backup URL, then external API.
 `TAJWID_BACKUP_URL` works well with a public JSON file stored in Supabase Storage.
 The French translation pilot contains Al-Fatiha, Al-Baqara 1–5 and 255, imported
 from QuranEnc (Rachid Maach) with source responses and version metadata preserved.
-It is read locally using `QURAN_TRANSLATION_PATH`; public API and UI integration
-are planned separately. See [the import and integration guide](api/docs/quran_content.md).
+It is read locally using `QURAN_TRANSLATION_PATH` and exposed through
+`GET /quran/content`, grouped by ayah with verified tafsirs only. See
+[the import and integration guide](api/docs/quran_content.md).
 French tafsir drafts can be imported locally and stored through the backend.
 Install [the tafsir table](supabase/tafsir_entries.sql) before inserting real
 pilot snapshots. The password-protected review interface is available at
 `/internal/tafsir`; set `TAFSIR_REVIEW_PASSWORD` in the backend environment to
 enable access. See [the activation guide](api/docs/quran_content.md#étape-6--interface-interne-de-review).
-Public routes and recognition-result integration are the next steps.
+If tafsir storage is unavailable, the public route still returns the local
+translation with `tafsir_status: unavailable`. Recognition-result UI integration
+is the next step.
 Use the Supabase Project URL, not the Postgres connection string, for `SUPABASE_URL`.
 Use a server-side key only for `SUPABASE_API_KEY`, not an `anon` or `sb_publishable` key.
 
