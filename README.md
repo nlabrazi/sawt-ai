@@ -379,6 +379,7 @@ Example API variables are available in [`api/.env.example`](api/.env.example):
 ALLOWED_ORIGINS=http://localhost:3000,http://127.0.0.1:3000
 WHISPER_MODEL_NAME=turbo
 QURAN_VERSETS_PATH=/app/assets/quran_versets.json
+QURAN_TRANSLATION_PATH=/app/assets/quran_translation_fr.json
 TAJWID_DATA_PATH=/app/assets/quran_tajwid.json
 TAJWID_BACKUP_URL=https://<project-ref>.supabase.co/storage/v1/object/public/assets/quran_tajwid.json
 IMAM_MODEL_PATH=/training/artifacts/models/imam_ecapa_v2/best_model.pt
@@ -393,6 +394,10 @@ Set `NUXT_PUBLIC_SITE_URL` to the public frontend origin (without a trailing sla
 Do not rely on wildcard preview domains when credentials are enabled.
 The tajwid loading order is: local snapshot, backup URL, then external API.
 `TAJWID_BACKUP_URL` works well with a public JSON file stored in Supabase Storage.
+The French translation pilot contains Al-Fatiha, Al-Baqara 1–5 and 255, imported
+from QuranEnc (Rachid Maach) with source responses and version metadata preserved.
+It is read locally using `QURAN_TRANSLATION_PATH`; public API and UI integration
+are planned separately. See [the import and integration guide](api/docs/quran_content.md).
 Use the Supabase Project URL, not the Postgres connection string, for `SUPABASE_URL`.
 Use a server-side key only for `SUPABASE_API_KEY`, not an `anon` or `sb_publishable` key.
 

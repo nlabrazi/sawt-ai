@@ -5,6 +5,8 @@ test.describe('Recognition Flow', () => {
   test('completes full recognition flow with audio upload, result card, and reset', async ({
     page,
   }) => {
+    const errors: string[] = []
+    page.on('pageerror', (error) => errors.push(error.message))
     await setupMockApi(page)
     await page.goto('/')
     await page.getByRole('button', { name: 'Coran', exact: true }).click()
@@ -23,6 +25,8 @@ test.describe('Recognition Flow', () => {
     const resultHeading = page.locator('#result-title')
     await expect(resultHeading).toBeVisible({ timeout: 15_000 })
     await expect(resultHeading).toContainText('Passage proposé')
+    await expect(page.locator('.result-screen')).toHaveCSS('opacity', '1')
+    await expect(page.locator('.result-intro')).toHaveCSS('opacity', '1')
 
     // Result card details
     const surahName = page.locator('.surah-arabic')
@@ -44,6 +48,7 @@ test.describe('Recognition Flow', () => {
 
     await expect(page.locator('#recognition-title')).toBeVisible()
     await expect(page.locator('#recognition-title')).toContainText('Récitez un passage du Coran')
+    expect(errors).toEqual([])
   })
 
   test('displays appropriate guidance when recitation is rejected as insufficient', async ({
@@ -90,6 +95,52 @@ test.describe('Recognition Flow', () => {
     // Reset back to idle screen
     await page.locator('button.reset-action').click()
     await expect(page.locator('#recognition-title')).toContainText('Récitez un passage du Coran')
+  })
+
+  test('displays the result after recording with the native microphone recorder', async ({
+    page,
+  }) => {
+    const errors: string[] = []
+    page.on('pageerror', (error) => errors.push(error.message))
+    await setupMockApi(page)
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator.mediaDevices, 'getUserMedia', {
+        configurable: true,
+        value: async () => {
+          const audio = new AudioContext()
+          const oscillator = audio.createOscillator()
+          const destination = audio.createMediaStreamDestination()
+          oscillator.connect(destination)
+          oscillator.start()
+          await audio.resume()
+          for (const track of destination.stream.getTracks()) {
+            const stop = track.stop.bind(track)
+            track.stop = () => {
+              stop()
+              oscillator.stop()
+              void audio.close()
+            }
+          }
+          return destination.stream
+        },
+      })
+    })
+    await page.goto('/')
+    await page.getByRole('button', { name: 'Coran', exact: true }).click()
+    await page.getByRole('button', { name: 'Commencer la récitation' }).click()
+    await expect(page.locator('.recording-time')).toContainText(/[1-9]\d*s/)
+    const audioRequest = page.waitForRequest(
+      (request) => request.url().endsWith('/recognize') && request.method() === 'POST',
+    )
+    await page.getByRole('button', { name: 'Arrêter et analyser' }).click()
+    expect((await audioRequest).postDataBuffer()?.length).toBeGreaterThan(100)
+
+    await expect(page.locator('#result-title')).toContainText('Passage proposé')
+    await expect(page.locator('.surah-arabic')).toContainText('Al-Fatiha')
+    await expect(page.locator('.result-screen')).toHaveCSS('opacity', '1')
+    await expect(page.locator('.result-intro')).toHaveCSS('opacity', '1')
+    await expect(page.getByRole('button', { name: 'Voir le verset' })).toBeVisible()
+    expect(errors).toEqual([])
   })
 
   test('displays server error detail when recognition API returns error response', async ({

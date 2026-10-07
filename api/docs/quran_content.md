@@ -55,9 +55,79 @@ Un modèle interne contenant `verified` ne prouve pas à lui seul une validation
 humaine. Le contrôle d'accès, la transition et le filtrage public seront assurés
 par les services et routes des étapes suivantes.
 
-## Plan des étapes suivantes
+## Étape 2 : import pilote de la traduction
 
-1. **Traduction pilote.** Ajouter `api/scripts/import_quran_translation.py`,
+Le snapshot `api/assets/quran_translation_fr.json` contient 13 traductions de
+Rachid Maach, fournies par QuranEnc : Al-Fatiha 1:1–7, Al-Baqara 2:1–5 et 2:255.
+La version importée est `1.0.3`, lue depuis les métadonnées du fournisseur.
+
+Son format comporte :
+
+- `meta` : version du format, date UTC d'import, source, traducteur, clé QuranEnc,
+  version de traduction, lien vers les conditions et réponse JSON de métadonnées ;
+- `source_responses` : URL et réponse JSON d'origine pour chacun des 13 versets ;
+- `translations` : entrées `QuranTranslation` prêtes à être lues localement.
+
+Les réponses d'origine conservent également les autres informations retournées
+par QuranEnc, notamment le texte arabe. Le texte français et les notes ne sont
+ni réécrits, ni nettoyés, ni complétés.
+
+Depuis la racine du dépôt, pour actualiser ce pilote :
+
+```bash
+api/.venv/bin/python api/scripts/import_quran_translation.py
+```
+
+Le script télécharge uniquement ces 13 versets et leurs métadonnées. Il contrôle
+que chaque réponse correspond au verset demandé et que les références existent
+dans le catalogue local. Il relit les métadonnées après téléchargement pour
+rejeter un changement de version ou de date de mise à jour pendant l'import.
+Le fichier est remplacé atomiquement après validation complète ; un échec
+réseau ou une réponse invalide conserve le snapshot précédent.
+
+Pour écrire dans un autre emplacement :
+
+```bash
+api/.venv/bin/python api/scripts/import_quran_translation.py --output /tmp/quran_translation_fr.json
+```
+
+`app/services/quran_translation_service.py` fournit
+`fetch_quran_translations(surah_id, start_verse, end_verse)`. Le service valide
+le snapshot entier avant de le mettre en cache. Il refuse les doublons, les
+références invalides et les divergences de provenance avec les métadonnées.
+La lecture utilise le couple `(surah_id, ayah)` et retourne les entrées présentes
+dans l'ordre des versets. Un verset valide absent du pilote ne retourne aucune
+traduction ; une référence invalide déclenche une erreur.
+
+Le chemin est configurable avec `QURAN_TRANSLATION_PATH`. Une valeur vide utilise
+le snapshot fourni dans `api/assets`. La lecture ne fait aucun appel réseau et
+ne charge pas la traduction au démarrage de FastAPI. Après un nouvel import,
+redémarrer le backend pour renouveler son cache ; les tests peuvent utiliser
+`clear_quran_translation_cache()`.
+
+Pour vérifier cette étape sans réseau :
+
+```bash
+api/.venv/bin/pytest -c api/pytest.ini api/tests/schemas/test_quran_content.py api/tests/services/test_quran_translation_service.py
+```
+
+Les tests contrôlent le couple sourate/verset, les plages partielles, la
+conservation des textes et notes du snapshot livré, et la préservation du
+fichier précédent en cas d'échec d'import. Les fixtures d'import sont fictives ;
+le test du snapshot livré compare ses entrées aux réponses QuranEnc archivées.
+
+[Les conditions de QuranEnc](https://quranenc.com/en/home/api) demandent notamment
+de préserver le contenu, d'identifier la source et sa version, de conserver les
+informations du document et de suivre les mises à jour. Les futures réponses
+publiques et leur affichage devront conserver l'attribution et la version.
+Ce jeu partiel sert à valider le pipeline ; ce n'est pas un corpus complet.
+
+La route publique et l'affichage Nuxt font partie des prochaines étapes.
+Commit proposé : `feat: import french Quran translation dataset`.
+
+## Plan d'intégration
+
+1. **Traduction pilote — réalisée.** Ajouter `api/scripts/import_quran_translation.py`,
    `app/services/quran_translation_service.py` et le snapshot local
    `api/assets/quran_translation_fr.json`. Importer Al-Fatiha et un petit
    échantillon d'Al-Baqara, par exemple 2:1–5 et 2:255. Vérifier les couples
@@ -120,9 +190,10 @@ Les tests couvrent la conservation du texte et de la provenance, les sources
 permises, les imports obligatoirement en attente et la cohérence statut/date.
 Les textes des fixtures sont explicitement fictifs.
 
-Les étapes suivantes ajouteront les tests des couples sourate/verset, de la
-séparation effective des sources au stockage, de la transition manuelle et du
-filtrage public. Tester le filtrage avec un stockage contenant à la fois des
+L'étape 2 ajoute les tests des couples sourate/verset pour les traductions.
+Les étapes suivantes ajouteront les tests de la séparation effective des sources
+tafsir au stockage, de la transition manuelle et du filtrage public.
+Tester le filtrage avec un stockage contenant à la fois des
 entrées `need_review` et `verified`, et vérifier toute la réponse HTTP publique.
 Les tests de modèles ne remplacent pas ces tests de service et d'API.
 
