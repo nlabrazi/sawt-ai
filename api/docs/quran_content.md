@@ -9,7 +9,7 @@
 | Reconnaissance | `app/services/inference_pipeline.py`, `app/schemas/recognize.py` | `POST /recognize` retourne une sourate et une plage `start_verse` / `end_verse`. Le résultat n'est pas persisté. |
 | Résultat côté navigateur | `ui/app/composables/useRecognition.ts` | Appel `$fetch` vers FastAPI et résultat dans une `ref` Vue. |
 | Tajwid | `api/assets/quran_tajwid.json`, `app/services/tajwid_service.py` | Snapshot local, puis URL de sauvegarde, puis AlQuran Cloud ; cache mémoire. |
-| Détails d'un passage | `ui/app/components/VerseDetailsSheet.vue`, `ui/app/composables/useTajwid.ts` | Détails et tajwid chargés à la demande. |
+| Détails d'un passage | `ui/app/components/VerseDetailsSheet.vue`, `ui/app/composables/useTajwid.ts`, `ui/app/composables/useQuranContent.ts` | Passage arabe reconnu, tajwid et contenu français chargés à la demande. |
 | Contenu français public | `app/routes/quran_content.py` | `GET /quran/content` : traduction locale et tafsirs validés, regroupés par verset. |
 | Stockage modifiable | `app/services/feedback_store.py` | Retours utilisateurs dans Supabase via REST ; aucune couche ORM ou connexion SQL. |
 | Accès interne | `app/routes/tafsir_review.py`, `ui/app/components/TafsirReviewScreen.vue` | Mot de passe dédié côté backend ; écran `/internal/tafsir`. |
@@ -702,6 +702,113 @@ doit disparaître jusqu'à sa prochaine validation. Vérifier chaque ouvrage
 séparément. Une indisponibilité Supabase sera signalée sans masquer la traduction.
 
 Commit proposé : `feat: display French translation and verified tafsir in recognition results`.
+
+## Étape 9 : relier import, review et publication dans les tests
+
+Deux scénarios complémentaires relient les étapes déjà implémentées, sans
+ajouter de fonctionnalité au parcours utilisateur ni modifier un stockage réel.
+
+### Import et routes HTTP sur le même stockage simulé
+
+`api/tests/integration/test_tafsir_pilot_workflow.py` importe trois références
+pilotes — 1:1, 2:1 et 2:255 — pour chacun des deux ouvrages. Il appelle le vrai
+importeur local, relit ses snapshots, les insère via `insert_tafsir_import`,
+puis utilise les vraies routes FastAPI privées et publiques. Seuls le transport
+REST Supabase et l'exécution en thread sont simulés. Le catalogue et la
+traduction QuranEnc sont les fichiers réels du dépôt ; Whisper n'est pas lancé.
+
+Le scénario vérifie successivement :
+
+1. Les six entrées importées commencent en `need_review` et restent absentes
+   de la réponse publique, tandis que la traduction correspond au bon verset.
+2. Une validation sans authentification est refusée avant de toucher au stockage.
+3. Une correction reste privée et conserve sa provenance originale.
+4. Valider l'ancienne révision échoue avec `409` ; valider la révision corrigée
+   rend uniquement le tafsir Ibn Kathir de 2:255 disponible.
+5. Les autres versets et As-Sa‘di restent en attente. Sa propre validation
+   rend ensuite les deux ouvrages disponibles séparément.
+6. Une nouvelle correction d'Ibn Kathir retire ce commentaire dès la lecture
+   publique suivante, tandis qu'As-Sa‘di reste disponible.
+
+Les champs de provenance privés et le mot de passe de test ne doivent
+pas apparaître dans les réponses publiques. La simulation REST sert à vérifier
+l'enchaînement des services et des routes ; elle ne remplace pas les tests des
+contraintes et du déclencheur PostgreSQL dans `supabase/tests/tafsir_entries.sql`.
+
+### Review et affichage public dans Chromium
+
+Un scénario ajouté à `ui/tests/e2e/tafsir-review.spec.ts` ouvre deux pages :
+l'interface interne de review et un résultat public de reconnaissance de 2:255.
+Leurs réponses API simulées partagent les mêmes entrées, au lieu de préparer
+indépendamment une réponse déjà validée pour l'écran public.
+
+Les corrections et validations effectuées dans l'interface interne gouvernent
+ainsi le contenu retourné à chaque réouverture des détails. Le test vérifie
+l'absence des brouillons, la publication distincte des deux ouvrages, le
+changement de source et le retrait du seul tafsir corrigé. Il contrôle aussi
+que le passage original interne n'apparaît pas dans les détails publics.
+
+Les textes de tafsir sont explicitement fictifs dans les deux scénarios. Aucun
+texte religieux n'est généré et aucun test ne publie de données dans Supabase.
+Ces vérifications ne démontrent pas l'installation de la table distante ni
+la fidélité d'une future traduction : l'essai avec un lot réel et la relecture
+avec les éditions physiques restent nécessaires.
+
+### Tester
+
+Depuis la racine :
+
+```bash
+api/.venv/bin/pytest -c api/pytest.ini api/tests/integration/test_tafsir_pilot_workflow.py
+```
+
+Depuis `ui/` :
+
+```bash
+npm run test:e2e -- tests/e2e/tafsir-review.spec.ts tests/e2e/quran-content.spec.ts
+npm run lint
+```
+
+Commit proposé : `test: cover tafsir pilot review and public publication workflow`.
+
+## Sources et génération restantes
+
+Le projet sait importer un français déjà préparé, conserver son texte source,
+le stocker en `need_review`, le faire relire et afficher uniquement le résultat
+validé. Il ne contient pas encore de moteur de traduction automatique ni de
+corpus réel de tafsir. Le format d'import actuel accepte une langue source
+`ar` ou `fr` ; une source anglaise nécessitera l'ajout explicite de `en` dans
+le contrat Pydantic d'import. La colonne JSON de provenance peut déjà conserver
+cette langue sans changer la structure de la table.
+
+Le workflow cible reste identique quelle que soit la langue originale :
+texte exact d'un ouvrage → traduction française de ce seul texte →
+`need_review` → relecture manuelle → `verified`. Le moteur ne devra ni résumer,
+ni compléter une partie manquante, ni mélanger les ouvrages. La traduction
+française du Coran reste celle de QuranEnc, indépendante de ce processus.
+
+Vérification du [catalogue officiel Quran.com](https://api.quran.com/api/v4/resources/tafsirs?language=en)
+le 7 octobre 2026 :
+
+| Source | Ressource référencée actuellement | Variante anglaise du catalogue |
+| --- | --- | --- |
+| Ibn Kathir | `14`, `ar-tafsir-ibn-kathir`, arabe. | `169`, `en-tafisr-ibn-kathir`, **Ibn Kathir (Abridged)** : édition abrégée distincte à identifier comme telle. |
+| As-Sa‘di | `91`, `ar-tafseer-al-saddi`, arabe. | Aucune entrée anglaise As-Sa‘di dans le catalogue consulté. |
+
+Le `slug` de la ressource anglaise ci-dessus est celui retourné par le catalogue
+consulté. Les exemples documentaires peuvent employer une autre orthographe :
+un futur import doit contrôler la réponse effective du fournisseur.
+Le paramètre `language=en` traduit les libellés des ressources, pas leurs
+textes, comme le précise [la documentation du catalogue](https://api-docs.quran.com/docs/content_apis_versioned/4.0.0/tafsirs/).
+
+Partir des deux originaux arabes déjà identifiés permettrait une traduction
+directe en français. Une approche anglais → français reste possible avec une
+source anglaise As-Sa‘di distincte, identifiée et réutilisable ; l'anglais
+Ibn Kathir du catalogue ne doit pas être présenté comme une édition intégrale.
+La langue, l'édition, la référence, la version et les conditions de réutilisation
+du texte effectivement fourni devront être conservées, puis la génération
+sera raccordée à l'import existant. Les règles de stockage Quran Foundation
+mentionnées à l'étape 3 s'appliquent également aux ressources anglaises.
 
 ## Plan d'intégration
 

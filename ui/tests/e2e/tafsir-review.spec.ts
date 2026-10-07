@@ -1,12 +1,17 @@
 import { expect, type Page, test } from '@playwright/test'
+import { quranContentFixture } from '../fixtures/quran-content'
 import { tafsirFixture } from '../fixtures/tafsir'
-import { corsHeaders, setupMockApi } from './helpers/mock-api'
+import { corsHeaders, createSampleAudioBuffer, setupMockApi } from './helpers/mock-api'
 
 const password = 'fictitious-dedicated-review-password'
 
-async function mockReview(page: Page, conflict = false) {
+async function mockReview(
+  page: Page,
+  conflict = false,
+  rows = [tafsirFixture(), tafsirFixture('as_saadi')],
+) {
   await setupMockApi(page)
-  const rows = [tafsirFixture(), tafsirFixture('as_saadi')]
+  let revision = 0
   const calls: { path: string; method: string; body: Record<string, unknown> | null }[] = []
   await page.route(/\/internal\/tafsir(?:\/|\?|$)/, async (route) => {
     if (route.request().resourceType() === 'document') return route.fallback()
@@ -51,7 +56,9 @@ async function mockReview(page: Page, conflict = false) {
     const body = request.postDataJSON()
     if (body.expected_updated_at !== row.updated_at)
       return reply({ detail: 'Version obsolète.' }, 409)
-    row.updated_at = request.method() === 'PATCH' ? '2026-10-07T10:01:00Z' : '2026-10-07T10:02:00Z'
+    row.updated_at = new Date(Date.parse('2026-10-07T10:00:00Z') + ++revision * 60_000)
+      .toISOString()
+      .replace('.000Z', 'Z')
     if (request.method() === 'PATCH') {
       row.text_fr = body.text_fr
       row.status = 'need_review'
@@ -149,4 +156,141 @@ test('requires a fresh review after a conflicting write', async ({ page }) => {
   await page.getByRole('button', { name: 'Se déconnecter', exact: true }).click()
   await expect(page.getByLabel('Mot de passe interne')).toBeVisible()
   await expect(page.locator('.review-entry')).toHaveCount(0)
+})
+
+test('publishes each source only after its own review and withdraws a corrected tafsir from recognition details', async ({
+  page,
+  context,
+}) => {
+  const rows = [tafsirFixture(), tafsirFixture('as_saadi')]
+  await mockReview(page, false, rows)
+  await page.goto('/internal/tafsir')
+  await login(page)
+  const kathir = page
+    .locator('.review-entry')
+    .filter({ has: page.getByRole('heading', { name: /Ibn Kathir/ }) })
+  const saadi = page
+    .locator('.review-entry')
+    .filter({ has: page.getByRole('heading', { name: /As-Sa‘di/ }) })
+
+  const publicPage = await context.newPage()
+  await setupMockApi(publicPage, {
+    recognizeResponse: {
+      verse: {
+        sourate_id: 2,
+        sourate_name: 'البقرة',
+        transliteration: 'Al-Baqara',
+        start_verse: 255,
+        end_verse: 255,
+        text: 'نص عربي للاختبار',
+        similarity: 0.96,
+      },
+      imam_predictions: [],
+      imam_status: 'unknown',
+      imam_detection_enabled: false,
+    },
+  })
+  const frenchContent = quranContentFixture(2, 255, 255)
+  await publicPage.route(
+    (url) => url.pathname === '/quran/content',
+    async (route) => {
+      // The public mock reads the very same rows edited by the internal screen.
+      const tafsirs = rows
+        .filter((row) => row.status === 'verified')
+        .map(
+          ({
+            surah_id,
+            ayah,
+            source,
+            text_fr,
+            source_reference,
+            version,
+            status,
+            reviewed_at,
+          }) => ({
+            surah_id,
+            ayah,
+            source,
+            text_fr,
+            source_reference,
+            version,
+            status,
+            reviewed_at,
+          }),
+        )
+      await route.fulfill({
+        status: 200,
+        headers: { ...corsHeaders, 'Cache-Control': 'no-store' },
+        contentType: 'application/json',
+        body: JSON.stringify({
+          ...frenchContent,
+          ayahs: frenchContent.ayahs.map((entry) => ({ ...entry, tafsirs })),
+        }),
+      })
+    },
+  )
+  await publicPage.goto('/')
+  await publicPage.getByRole('button', { name: 'Coran', exact: true }).click()
+  await publicPage.locator('input[type="file"]').setInputFiles({
+    name: 'pilot.wav',
+    mimeType: 'audio/wav',
+    buffer: createSampleAudioBuffer(),
+  })
+  await expect(publicPage.locator('#result-title')).toBeVisible()
+  const sheet = publicPage.getByRole('dialog')
+  const openDetails = publicPage.getByRole('button', { name: 'Voir le verset', exact: true })
+  async function readPublicDetails() {
+    if (await sheet.isVisible()) {
+      await sheet.getByRole('button', { name: 'Retour au résultat' }).click()
+    }
+    await openDetails.click()
+    await expect(sheet.locator('[data-ayah="255"] .translation-text')).toHaveText(
+      'Traduction fictive 2:255.',
+    )
+  }
+  await readPublicDetails()
+  await expect(sheet.locator('.tafsir-section')).toHaveCount(0)
+  await expect(sheet).not.toContainText('Brouillon fictif')
+
+  const correction = 'Correction fictive Ibn Kathir, relue pour le test.'
+  await kathir.getByLabel('Texte français').fill(correction)
+  await kathir.getByRole('button', { name: 'Enregistrer', exact: true }).click()
+  await expect(kathir.getByRole('button', { name: 'Valider', exact: true })).toBeEnabled()
+  await readPublicDetails()
+  await expect(sheet.locator('.tafsir-section')).toHaveCount(0)
+  await expect(sheet).not.toContainText(correction)
+
+  await kathir.getByRole('button', { name: 'Valider', exact: true }).click()
+  await expect(kathir).toHaveCount(0)
+  await expect(saadi).toBeVisible()
+  await readPublicDetails()
+  await expect(sheet.locator('.tafsir-text')).toHaveText(correction)
+  await expect(sheet.getByRole('button', { name: 'As-Sa‘di', exact: true })).toBeDisabled()
+  await expect(sheet).not.toContainText(rows[1]?.text_fr ?? '')
+
+  await saadi.getByRole('button', { name: 'Valider', exact: true }).click()
+  await expect(saadi).toHaveCount(0)
+  await readPublicDetails()
+  await sheet.getByRole('button', { name: 'As-Sa‘di', exact: true }).click()
+  await expect(sheet.locator('.tafsir-text')).toHaveText(rows[1]?.text_fr ?? '')
+  await expect(sheet).not.toContainText(correction)
+  await sheet.getByRole('button', { name: 'Ibn Kathir', exact: true }).click()
+  await expect(sheet.locator('.tafsir-text')).toHaveText(correction)
+
+  await page.getByLabel('Statut', { exact: true }).selectOption('verified')
+  await page.getByLabel('Source', { exact: true }).selectOption('ibn_kathir')
+  await page.getByRole('button', { name: 'Filtrer', exact: true }).click()
+  await expect(kathir.getByLabel('Texte français')).toHaveValue(correction)
+  const newDraft = 'Nouvelle correction fictive privée, à relire.'
+  await kathir.getByLabel('Texte français').fill(newDraft)
+  await kathir.getByRole('button', { name: 'Enregistrer', exact: true }).click()
+  await expect(kathir).toHaveCount(0)
+  await readPublicDetails()
+  await expect(sheet.locator('.tafsir-text')).toHaveText(rows[1]?.text_fr ?? '')
+  await expect(sheet.getByRole('button', { name: 'Ibn Kathir', exact: true })).toBeDisabled()
+  await expect(sheet).not.toContainText(correction)
+  await expect(sheet).not.toContainText(newDraft)
+  await expect(sheet.locator('img')).toHaveCount(0)
+  await expect(sheet).not.toContainText('Passage fictif')
+  await publicPage.close()
 })

@@ -410,6 +410,11 @@ shows the Arabic passage and loads French content separately, grouped by ayah.
 Only verified tafsirs appear, with separate Ibn Kathir / As-Sa‘di choices.
 Closing and reopening the details rechecks the current review state without a
 tafsir cache. A French-content error leaves recognition and tajwid usable.
+The pilot workflow is covered by an import-to-public-API integration test and
+a browser scenario linking the internal review screen to public verse details.
+Supabase and the tafsir texts are simulated in these tests. Automatic translation
+of source tafsirs into French is not implemented yet; no real tafsir corpus has
+been bundled. See [the remaining source and generation work](api/docs/quran_content.md#sources-et-génération-restantes).
 Use the Supabase Project URL, not the Postgres connection string, for `SUPABASE_URL`.
 Use a server-side key only for `SUPABASE_API_KEY`, not an `anon` or `sb_publishable` key.
 
