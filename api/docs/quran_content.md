@@ -183,6 +183,127 @@ api/.venv/bin/pytest -c api/pytest.ini api/tests/services/test_tafsir_sources.py
 
 Commit proposé : `feat: add Ibn Kathir and As-Saadi tafsir sources`.
 
+## Étape 4 : import local des brouillons français
+
+Le script `api/scripts/import_tafsir_fr.py` importe un **lot local déjà préparé**.
+Il accepte du français existant ou un brouillon traduit à partir du passage
+original fourni. Il ne télécharge rien et ne génère aucun texte. Aucun accès
+Content Sync ou fournisseur de génération n'est actuellement configuré.
+
+Cette étape prépare l'entrée du pipeline avant la persistance Supabase :
+
+```text
+lot local avec passages originaux et provenance
+    → contrôle des références et du statut
+    → nouveau snapshot interne need_review
+    → persistance et review manuelle (étapes suivantes)
+```
+
+### Format du lot
+
+Le modèle vide `api/examples/tafsir_import.example.json` indique les champs à
+renseigner. Il est volontairement refusé tant que les textes et la provenance
+sont vides ; il ne contient aucun faux tafsir.
+
+Un lot contient une seule source (`ibn_kathir` ou `as_saadi`) et une seule
+édition/version. Ses champs sont :
+
+| Champ | Rôle |
+| --- | --- |
+| `schema_version` | Version du format : `1`. |
+| `source` | Ouvrage du lot. |
+| `source_language` | Langue du passage original : `ar` ou `fr`. |
+| `source_edition` | Identification de l'édition, avec éditeur/traducteur lorsque disponibles. |
+| `version` | Version réelle du contenu utilisé, identique dans les entrées. |
+| `reuse_reference` | Référence aux conditions ou à l'autorisation de réutilisation du corpus local. |
+| `entries` | Entre une et treize entrées, toutes dans le pilote. |
+| `imported_at` | Date UTC écrite par le script ; une date fournie en entrée est remplacée. |
+
+Chaque entrée reprend `TafsirImportEntry`, donc conserve `surah_id`, `ayah`,
+`source`, `text_fr`, `source_reference`, `version`, `status` et `reviewed_at`.
+`TafsirDraftImportEntry` ajoute :
+
+- `source_text` : le passage original complet, sans nettoyage ni réécriture ;
+- `source_surah_id`, `source_start_ayah`, `source_end_ayah` : sa sourate et sa plage.
+
+Le passage doit couvrir le verset du brouillon et exister dans le catalogue
+local. Les couples autorisés sont 1:1–7, 2:1–5 et 2:255. Un même verset ne peut
+figurer deux fois dans le lot. Les champs inconnus et les sources/versions
+mélangées sont refusés.
+
+Lorsque `source_language = fr`, `text_fr` doit être identique à `source_text`.
+Cet import préserve un texte français existant ; les corrections se feront
+pendant la review. Lorsque la source est arabe, le français est fourni dans
+le lot, avec le passage original utilisé pour sa préparation. Ces contrôles
+vérifient les références et la provenance déclarées ; la fidélité de la
+traduction reste à vérifier manuellement.
+
+Si un commentaire original couvre plusieurs versets, répéter son passage
+**complet** et ses bornes pour les entrées concernées. Le script ne découpe
+pas ce commentaire et ne crée pas les entrées manquantes. Deux entrées déclarant
+le même groupe doivent conserver la même référence et le même texte original.
+Une sortie générée en dehors de Sawt-AI suit le même format, sans ajout issu
+de connaissances externes et sans mélange entre ouvrages.
+
+Le statut et la date de review sont contrôlés par `TafsirImportEntry` :
+un statut absent devient `need_review`, un statut `verified` ou une date de
+review non nulle font échouer l'import. Une source française existante reste
+elle aussi obligatoirement en attente de relecture.
+
+### Utilisation
+
+Préparer un fichier par ouvrage dans `api/data/tafsir/inputs/`, à partir du
+modèle, avec un contenu réel et réutilisable. Puis, depuis la racine :
+
+```bash
+api/.venv/bin/python api/scripts/import_tafsir_fr.py --input api/data/tafsir/inputs/ibn_kathir.json
+api/.venv/bin/python api/scripts/import_tafsir_fr.py --input api/data/tafsir/inputs/as_saadi.json
+```
+
+Par défaut, chaque commande crée un fichier horodaté distinct dans
+`api/data/tafsir/<source>/drafts-<date>.json`. Les versets sont ordonnés par
+sourate/verset. Tous les textes, références et métadonnées sont conservés,
+avec `need_review`, `reviewed_at = null` et la date d'import.
+
+Pour choisir un nouveau fichier de sortie :
+
+```bash
+api/.venv/bin/python api/scripts/import_tafsir_fr.py --input api/data/tafsir/inputs/ibn_kathir.json --output /tmp/ibn_kathir-drafts.json
+```
+
+L'écriture publie atomiquement le fichier complet et refuse une destination
+existante, même en cas d'import concurrent. Il n'y a pas d'option d'écrasement.
+Un échec de validation ou d'écriture ne remplace donc jamais un fichier relu.
+Les fichiers créés ont des permissions `0600`. Le répertoire interne est exclu
+de Git et des images Docker ; en développement il peut rester accessible au
+backend via le volume, mais aucune route ne le sert. Ne pas placer ces lots
+dans les assets publics Nuxt.
+
+Pour relancer un import, utiliser la sortie horodatée par défaut ou choisir un
+nouveau fichier. Cela crée un autre lot, pas une mise à jour du contenu relu.
+L'insertion en Supabase devra également refuser le remplacement silencieux
+d'un verset déjà présent/validé ; cette écriture n'est pas encore implémentée.
+
+Le script charge uniquement le catalogue coranique, sans Whisper ni modèles
+de reconnaissance. Il ne change aucune route FastAPI, aucun résultat de
+reconnaissance et aucun affichage public. Il ne dispense pas de respecter les
+conditions de la source : en particulier, il ne transforme pas une réponse
+Quran Foundation ordinaire en corpus local conservable durablement.
+
+### Vérification
+
+```bash
+api/.venv/bin/pytest -c api/pytest.ini api/tests/services/test_tafsir_import_service.py api/tests/services/test_tafsir_sources.py api/tests/schemas/test_quran_content.py api/tests/services/test_quran_translation_service.py
+```
+
+Les tests du pipeline utilisent uniquement des textes explicitement fictifs.
+Ils vérifient les deux sources sur les mêmes références, la conservation des
+passages groupés et de la provenance, les imports obligatoirement en attente,
+le respect du pilote, l'absence d'écrasement et les échecs d'écriture.
+Le corpus réel et les éditions françaises de review restent à fournir.
+
+Commit proposé : `feat: add local French tafsir pilot import pipeline`.
+
 ## Plan d'intégration
 
 1. **Traduction pilote — réalisée.** Ajouter `api/scripts/import_quran_translation.py`,
@@ -191,10 +312,11 @@ Commit proposé : `feat: add Ibn Kathir and As-Saadi tafsir sources`.
    échantillon d'Al-Baqara, par exemple 2:1–5 et 2:255. Vérifier les couples
    sourate/verset contre le catalogue, les doublons et les métadonnées. Garder
    les réponses source et la version obtenue au moment de l'import.
-2. **Sources identifiées ; import tafsir à réaliser.** Les deux ressources arabes
-   Quran Foundation sont référencées. Confirmer les éditions françaises de
-   review et choisir Content Sync ou un corpus local réutilisable pour l'import.
-   Conserver le texte source
+2. **Sources identifiées ; pipeline d'import local réalisé.** Les deux ressources
+   arabes Quran Foundation sont référencées. L'import de lots locaux conserve
+   les passages originaux et impose `need_review`. Fournir un corpus local
+   réutilisable ou connecter Content Sync pour préparer les lots réels, et
+   préciser les éditions françaises de review. Conserver le texte source
    et sa provenance dans des fichiers internes séparés. Commencer par l'import
    de français existant ; une éventuelle génération doit traduire uniquement
    le texte source fourni, sans enrichissement ni mélange entre ouvrages.
