@@ -125,6 +125,64 @@ Ce jeu partiel sert à valider le pipeline ; ce n'est pas un corpus complet.
 La route publique et l'affichage Nuxt font partie des prochaines étapes.
 Commit proposé : `feat: import french Quran translation dataset`.
 
+## Étape 3 : identification des sources tafsir
+
+`app/services/tafsir_sources.py` référence deux ressources originales arabes
+du catalogue Quran Foundation, contrôlées le 7 octobre 2026 :
+
+| Source Sawt-AI | Ressource fournisseur | Slug | Consultation |
+| --- | --- | --- | --- |
+| `ibn_kathir` | `14` | `ar-tafsir-ibn-kathir` | [Ibn Kathir sur Quran.com](https://quran.com/al-fatihah/1/tafsirs/ar-tafsir-ibn-kathir) |
+| `as_saadi` | `91` | `ar-tafseer-al-saddi` | [As-Sa‘di sur Quran.com](https://quran.com/al-fatihah/1/tafsirs/ar-tafseer-al-saddi) |
+
+Les définitions sont immuables et séparées. Le résolveur de métadonnées exige
+une ressource unique, avec l'identifiant entier, le slug et la langue attendus.
+Un ouvrage absent, dupliqué ou remplacé provoque une erreur, sans choix implicite
+d'une autre ressource. Il conserve les métadonnées retournées sans modification.
+Le futur import devra appeler ce résolveur avant de télécharger du contenu.
+
+Le paramètre `language=fr` du [catalogue officiel](https://api-docs.quran.com/docs/content_apis_versioned/4.0.0/tafsirs/)
+traduit les **libellés**, pas le texte des tafsirs. La langue réelle est
+`language_name`. La ressource anglaise `169`, « Ibn Kathir (Abridged) », ne
+remplace pas la ressource arabe `14`. Les notes de la traduction QuranEnc
+ne constituent pas non plus un tafsir Ibn Kathir ou As-Sa‘di.
+
+### Conditions de conservation avant l'import
+
+[Les conditions Quran Foundation](https://api-docs.quran.com/legal/developer-terms/),
+datées du 4 octobre 2026, limitent le stockage des réponses ordinaires à une
+semaine. Pour les ressources disponibles via Content Sync, la copie hors ligne
+doit être obtenue et maintenue par ce mécanisme, avec synchronisation au moins
+tous les sept jours lorsque la connexion est disponible. Un backend interne
+destiné à l'affichage dans l'application est distingué d'une redistribution
+de données. Une redistribution comme dataset ou service de données exige
+une licence distincte.
+
+En conséquence, cette étape ajoute le référencement et ses contrôles uniquement.
+Elle n'archive aucun texte tafsir et ne crée aucun appel réseau au démarrage,
+pendant la reconnaissance ou lors d'une lecture publique. Un import permanent
+à partir des endpoints ordinaires ne convient pas au stockage prévu.
+
+La prochaine étape doit intégrer Content Sync avec les accès fournisseur,
+ou utiliser un corpus local dont la provenance et les droits de réutilisation
+sont établis. Aucun texte religieux de test n'est livré comme donnée réelle.
+Les éditions françaises physiques de review (éditeur, traducteur, année et
+éventuelle version abrégée) restent à renseigner ; la version d'une édition
+source n'est pas déduite de son identifiant API.
+
+Le pilote reste Al-Fatiha 1:1–7 et Al-Baqara 2:1–5, 2:255. Si une source
+regroupe plusieurs versets, conserver le groupe et son texte original :
+ne pas inventer une découpe par verset. Toute future sortie française devra
+passer par `TafsirImportEntry`, avec `need_review` et `reviewed_at = null`.
+
+Vérification hors ligne :
+
+```bash
+api/.venv/bin/pytest -c api/pytest.ini api/tests/services/test_tafsir_sources.py api/tests/schemas/test_quran_content.py api/tests/services/test_quran_translation_service.py
+```
+
+Commit proposé : `feat: add Ibn Kathir and As-Saadi tafsir sources`.
+
 ## Plan d'intégration
 
 1. **Traduction pilote — réalisée.** Ajouter `api/scripts/import_quran_translation.py`,
@@ -133,8 +191,10 @@ Commit proposé : `feat: import french Quran translation dataset`.
    échantillon d'Al-Baqara, par exemple 2:1–5 et 2:255. Vérifier les couples
    sourate/verset contre le catalogue, les doublons et les métadonnées. Garder
    les réponses source et la version obtenue au moment de l'import.
-2. **Sources et import tafsir.** Identifier une édition fiable pour chacun des
-   deux ouvrages et ses conditions de réutilisation. Conserver le texte source
+2. **Sources identifiées ; import tafsir à réaliser.** Les deux ressources arabes
+   Quran Foundation sont référencées. Confirmer les éditions françaises de
+   review et choisir Content Sync ou un corpus local réutilisable pour l'import.
+   Conserver le texte source
    et sa provenance dans des fichiers internes séparés. Commencer par l'import
    de français existant ; une éventuelle génération doit traduire uniquement
    le texte source fourni, sans enrichissement ni mélange entre ouvrages.
@@ -174,9 +234,10 @@ que les champs `sura`, `aya`, `translation` et `footnotes`. Elle référence la
 traduction française de Rachid Maach sous la clé `french_rashid`.
 La version sera lue depuis les métadonnées du fournisseur, sans valeur inventée.
 
-Le choix des éditions sources des tafsirs et des éditions physiques françaises
-utilisées pour la review reste à préciser avant leur import. Aucun contenu
-religieux fictif n'est ajouté aux données du projet.
+Les ressources arabes des tafsirs sont référencées à l'étape 3. Leur mécanisme
+d'import et les éditions physiques françaises utilisées pour la review restent
+à préciser avant d'importer le contenu. Aucun contenu religieux fictif n'est
+ajouté aux données du projet.
 
 ## Validation progressive
 
