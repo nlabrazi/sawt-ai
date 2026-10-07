@@ -115,8 +115,10 @@ def _reference_params(surah_id: int, ayah: int, source: TafsirSource) -> list[tu
 def insert_tafsir_import(payload: Any) -> int:
     batch = validate_tafsir_import_batch(payload)
     if batch.imported_at is None:
-        raise TafsirStoreError("Utiliser un snapshot horodaté produit par import_tafsir_fr.py.")
+        raise TafsirStoreError("Utiliser un snapshot horodaté produit par import_tafsir_fr.py ou generate_tafsir_fr.py.")
     common = batch.model_dump(mode="json", exclude={"entries", "source", "version"})
+    if batch.generation is None:
+        common.pop("generation")
     rows = []
     for entry in batch.entries:
         data = entry.model_dump(mode="json")

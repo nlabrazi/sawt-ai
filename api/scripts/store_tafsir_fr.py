@@ -16,7 +16,7 @@ from app.services.tafsir_store import TafsirStoreError, insert_tafsir_import
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--input", required=True, type=Path, help="Snapshot produit par import_tafsir_fr.py.")
+    parser.add_argument("--input", required=True, type=Path, help="Snapshot produit par import_tafsir_fr.py ou generate_tafsir_fr.py.")
     args = parser.parse_args()
     try:
         payload = json.loads(args.input.read_text(encoding="utf-8"))

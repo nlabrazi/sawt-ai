@@ -189,8 +189,9 @@ Commit proposé : `feat: add Ibn Kathir and As-Saadi tafsir sources`.
 
 Le script `api/scripts/import_tafsir_fr.py` importe un **lot local déjà préparé**.
 Il accepte du français existant ou un brouillon traduit à partir du passage
-original fourni. Il ne télécharge rien et ne génère aucun texte. Aucun accès
-Content Sync ou fournisseur de génération n'est actuellement configuré.
+original fourni. Il ne télécharge rien et ne génère aucun texte. La génération
+DeepL, ajoutée à l'étape 10, est une commande manuelle séparée ; aucun accès
+Content Sync n'est actuellement configuré.
 
 Cette étape prépare l'entrée du pipeline avant la persistance Supabase :
 
@@ -771,12 +772,175 @@ npm run lint
 
 Commit proposé : `test: cover tafsir pilot review and public publication workflow`.
 
+## Étape 10 : génération française du pilote avec DeepL
+
+`api/scripts/generate_tafsir_fr.py` traduit des **passages arabes fournis
+localement** en brouillons français. Il ne télécharge aucun corpus. Il réutilise
+le catalogue coranique, les contrats d'import, l'écriture atomique privée et le
+stockage REST existants. Aucun nouveau service n'est appelé au démarrage, dans
+`POST /recognize` ou dans l'API publique.
+
+```text
+passages originaux d'un seul ouvrage
+    → traduction DeepL de chaque passage entier
+    → snapshot interne need_review
+    → store_tafsir_fr.py → Supabase
+    → relecture/correction manuelle → verified
+    → API publique et détails Nuxt
+```
+
+### Coût et configuration
+
+Pour le pilote, utiliser une offre gratuite DeepL API. Au 7 octobre 2026,
+[DeepL API Developer](https://support.deepl.com/hc/en-us/articles/360021200939-DeepL-API-plans)
+offre **1 million de caractères au total**, sans renouvellement de ce quota.
+L'ancienne offre API Free, fermée aux nouvelles souscriptions, conserve un
+quota de 500 000 caractères par mois pour les comptes existants. Le quota réel
+restant dépend du compte. Aucun abonnement payant n'est nécessaire pour un
+pilote qui tient dans le quota gratuit disponible.
+
+Créer une clé depuis [le portail développeur DeepL](https://www.deepl.com/en/developers),
+puis configurer uniquement l'environnement backend :
+
+```dotenv
+DEEPL_API_KEY=<clé du compte API>
+DEEPL_API_URL=https://api-free.deepl.com
+```
+
+La clé ne doit être placée ni dans Nuxt, ni dans les lots, ni dans Git.
+L'[API gratuite utilise le domaine `api-free.deepl.com`](https://developers.deepl.com/docs/getting-started/quickstart).
+Le script utilise ce domaine par défaut et ne bascule jamais automatiquement
+vers une offre payante. `https://api.deepl.com` reste accepté pour un compte
+payant explicitement configuré ; tout autre domaine est refusé.
+
+Dans Docker, ajouter les variables dans `api/.env`, puis recréer le conteneur :
+
+```bash
+docker compose up -d --force-recreate api
+```
+
+Hors Docker, les variables doivent être exportées dans l'environnement du
+processus ; les scripts ne chargent pas implicitement `api/.env`.
+
+La traduction est faite au lancement manuel de la commande. Supabase conserve
+ensuite le résultat, le passage original et la provenance. Les consultations
+publiques lisent le texte enregistré : elles ne consomment aucun quota DeepL.
+Le stockage et les lectures restent soumis aux limites de l'offre Supabase
+du projet. Pour le corpus complet, mesurer d'abord les caractères réels et la
+qualité du pilote, puis choisir l'offre de traduction adaptée.
+
+### Préparer les passages sources
+
+Copier `api/examples/tafsir_generation.example.json` dans le répertoire interne
+`api/data/tafsir/inputs/`, puis renseigner les originaux et leur provenance.
+Le modèle vide est volontairement invalide et ne contient aucun tafsir fictif.
+Préparer **un fichier distinct par ouvrage**, avec `source = ibn_kathir` ou
+`source = as_saadi`. La langue acceptée pour cette commande est `ar` ; un
+français déjà existant continue de passer par l'import de l'étape 4.
+
+Le lot conserve `schema_version`, `source`, `source_language`, `source_edition`,
+`version` et `reuse_reference`. Sa liste `passages` contient, pour chaque passage :
+
+| Champ | Contenu |
+| --- | --- |
+| `source_surah_id` | Sourate originale. |
+| `source_start_ayah`, `source_end_ayah` | Bornes complètes du commentaire original. |
+| `source_reference` | Référence précise de ce passage dans l'édition utilisée. |
+| `source_text` | Texte original entier, en texte brut UTF-8. |
+| `ayahs` | Versets du pilote auxquels associer ce commentaire entier. |
+
+Les versets demandés doivent appartenir à 1:1–7, 2:1–5 ou 2:255 et être couverts
+par le passage. Un original peut couvrir une plage plus large, par exemple
+2:1–6, tout en ciblant seulement les versets du pilote : **ne pas tronquer son
+texte**. Un verset cible ne peut figurer deux fois et un même passage ne peut
+être répété ; regrouper ses versets dans `ayahs`. Les champs inconnus, les
+sources mélangées et les références absentes du catalogue sont refusés.
+
+Chaque passage est envoyé entier **une seule fois** à DeepL avec la langue
+source `AR`, la langue cible `FR` et la conservation de mise en forme demandée.
+Le moteur reçoit uniquement ce passage, sans contexte religieux ajouté,
+glossaire externe, synthèse ou instructions d'enrichissement. Les détails du
+contrat HTTP suivent [la documentation de traduction DeepL](https://developers.deepl.com/api-reference/translate/request-translation).
+La traduction complète est associée à chacun des versets demandés, avec ses
+bornes originales ; aucune explication particulière à un verset n'est inventée.
+
+Le script valide **tout le lot**, y compris la limite de 128 Kio par requête,
+avant le premier appel. Un passage trop grand est refusé sans découpage ni
+troncature automatique. La fidélité de la traduction automatique reste à
+contrôler manuellement avec les éditions physiques françaises.
+
+### Vérifier, traduire puis stocker
+
+Valider les fichiers et compter les caractères sources, sans clé, appel réseau
+ou création de fichier :
+
+```bash
+api/.venv/bin/python api/scripts/generate_tafsir_fr.py --input api/data/tafsir/inputs/ibn_kathir-source.json --dry-run
+api/.venv/bin/python api/scripts/generate_tafsir_fr.py --input api/data/tafsir/inputs/as_saadi-source.json --dry-run
+```
+
+Le comptage porte sur chaque passage unique ; partager un commentaire entre
+plusieurs versets n'augmente pas ce total. DeepL compte les caractères du texte
+source, y compris les espaces et retours à la ligne, selon ses
+[règles de décompte](https://support.deepl.com/hc/en-us/articles/360020685720-Usage-count-and-billing-in-DeepL-API).
+
+Une fois la clé configurée et les fichiers réels prêts :
+
+```bash
+docker compose exec api python scripts/generate_tafsir_fr.py --input /app/data/tafsir/inputs/ibn_kathir-source.json --output /app/data/tafsir/ibn_kathir/pilot-drafts.json
+docker compose exec api python scripts/generate_tafsir_fr.py --input /app/data/tafsir/inputs/as_saadi-source.json --output /app/data/tafsir/as_saadi/pilot-drafts.json
+```
+
+Chaque sortie respecte `TafsirFrenchImportBatch` : toutes les entrées sont
+`need_review`, sans date de review, avec le texte original intact. Le bloc
+privé `generation` conserve le fournisseur, la version des paramètres de
+requête, le domaine API, la langue cible et la date UTC de génération. DeepL
+choisit son modèle par défaut ; ce bloc n'invente pas d'identifiant de modèle.
+Les imports précédents sans ce bloc restent acceptés et gardent leur format.
+
+Les fichiers complets sont publiés atomiquement avec les permissions `0600`,
+dans le répertoire exclu de Git et des images Docker. Une destination existante
+est refusée **avant** l'appel DeepL. Une réponse invalide ou un échec interrompt
+le lot sans fichier partiel, sans nouvel essai automatique et sans import en
+base. Les passages déjà traités avant un échec peuvent avoir consommé du quota ;
+relancer manuellement la traduction les enverra de nouveau.
+
+La sortie est directement utilisable par le script de stockage de l'étape 5 ;
+il n'est pas nécessaire de repasser par `import_tafsir_fr.py` :
+
+```bash
+docker compose exec api python scripts/store_tafsir_fr.py --input /app/data/tafsir/ibn_kathir/pilot-drafts.json
+docker compose exec api python scripts/store_tafsir_fr.py --input /app/data/tafsir/as_saadi/pilot-drafts.json
+```
+
+Le stockage conserve aussi `generation` dans la provenance privée. L'insertion
+refuse toujours les doublons et ne remplace aucun contenu déjà relu.
+Utiliser ensuite `/internal/tafsir` pour corriger et valider chaque ouvrage.
+**Aucune sortie de génération ne valide automatiquement un tafsir.**
+
+### Vérification de l'étape
+
+```bash
+api/.venv/bin/pytest -c api/pytest.ini api/tests/services/test_tafsir_generation_service.py api/tests/integration/test_tafsir_pilot_workflow.py api/tests/services/test_tafsir_import_service.py api/tests/services/test_tafsir_store.py api/tests/routes/test_tafsir_review.py api/tests/routes/test_quran_content_route.py api/tests/schemas/test_quran_content.py
+```
+
+DeepL et Supabase sont simulés ; les originaux et traductions des tests sont
+explicitement fictifs. Les contrôles couvrent la traduction unique des groupes,
+la séparation des ouvrages, les références, la conservation de la provenance,
+les statuts en attente, leur exclusion des lectures publiques, le comptage sans
+appel, le refus des écrasements et les échecs sans sortie partielle.
+Aucun appel de traduction réel n'a été exécuté pour cette étape. La clé, les
+lots sources réels et les références des éditions françaises restent à préparer.
+
+Commit proposé : `feat: add DeepL French tafsir pilot generation pipeline`.
+
 ## Sources et génération restantes
 
 Le projet sait importer un français déjà préparé, conserver son texte source,
 le stocker en `need_review`, le faire relire et afficher uniquement le résultat
-validé. Il ne contient pas encore de moteur de traduction automatique ni de
-corpus réel de tafsir. Le format d'import actuel accepte une langue source
+validé. La commande manuelle de l'étape 10 ajoute la traduction DeepL des
+originaux arabes ; aucun corpus réel de tafsir n'est encore fourni.
+Le format d'import actuel accepte une langue source
 `ar` ou `fr` ; une source anglaise nécessitera l'ajout explicite de `en` dans
 le contrat Pydantic d'import. La colonne JSON de provenance peut déjà conserver
 cette langue sans changer la structure de la table.
@@ -801,13 +965,14 @@ un futur import doit contrôler la réponse effective du fournisseur.
 Le paramètre `language=en` traduit les libellés des ressources, pas leurs
 textes, comme le précise [la documentation du catalogue](https://api-docs.quran.com/docs/content_apis_versioned/4.0.0/tafsirs/).
 
-Partir des deux originaux arabes déjà identifiés permettrait une traduction
-directe en français. Une approche anglais → français reste possible avec une
+La commande de génération part des deux originaux arabes déjà identifiés pour
+traduire directement en français. Une approche anglais → français reste possible avec une
 source anglaise As-Sa‘di distincte, identifiée et réutilisable ; l'anglais
 Ibn Kathir du catalogue ne doit pas être présenté comme une édition intégrale.
 La langue, l'édition, la référence, la version et les conditions de réutilisation
-du texte effectivement fourni devront être conservées, puis la génération
-sera raccordée à l'import existant. Les règles de stockage Quran Foundation
+du texte effectivement fourni doivent être conservées. La génération est
+raccordée à l'import existant ; il reste à fournir les lots sources réels.
+Les règles de stockage Quran Foundation
 mentionnées à l'étape 3 s'appliquent également aux ressources anglaises.
 
 ## Plan d'intégration
@@ -824,8 +989,8 @@ mentionnées à l'étape 3 s'appliquent également aux ressources anglaises.
    réutilisable ou connecter Content Sync pour préparer les lots réels, et
    préciser les éditions françaises de review. Conserver le texte source
    et sa provenance dans des fichiers internes séparés. Commencer par l'import
-   de français existant ; une éventuelle génération doit traduire uniquement
-   le texte source fourni, sans enrichissement ni mélange entre ouvrages.
+   de français existant ou utiliser la génération DeepL de l'étape 10, qui traduit
+   uniquement le texte source fourni, sans enrichissement ni mélange entre ouvrages.
    Chaque sortie passe par `TafsirImportEntry`. Une réimportation ne doit jamais
    remplacer silencieusement un texte déjà relu.
 3. **Persistance et validation — réalisées dans le dépôt.** La migration

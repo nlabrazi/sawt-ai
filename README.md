@@ -412,9 +412,13 @@ Closing and reopening the details rechecks the current review state without a
 tafsir cache. A French-content error leaves recognition and tajwid usable.
 The pilot workflow is covered by an import-to-public-API integration test and
 a browser scenario linking the internal review screen to public verse details.
-Supabase and the tafsir texts are simulated in these tests. Automatic translation
-of source tafsirs into French is not implemented yet; no real tafsir corpus has
-been bundled. See [the remaining source and generation work](api/docs/quran_content.md#sources-et-génération-restantes).
+Supabase and the tafsir texts are simulated in these tests. A manual
+`generate_tafsir_fr.py` script translates supplied Arabic pilot passages through
+DeepL into private `need_review` snapshots, reusable by the existing Supabase
+import. Configure `DEEPL_API_KEY` only in the backend environment; `--dry-run`
+validates and counts source characters without API calls. No translation is
+triggered by recognition or public display, and no real tafsir corpus is bundled.
+See [the pilot generation guide](api/docs/quran_content.md#étape-10--génération-française-du-pilote-avec-deepl).
 Use the Supabase Project URL, not the Postgres connection string, for `SUPABASE_URL`.
 Use a server-side key only for `SUPABASE_API_KEY`, not an `anon` or `sb_publishable` key.
 

@@ -49,6 +49,8 @@ def validate_tafsir_import_batch(payload: Any) -> TafsirFrenchImportBatch:
 def build_tafsir_import_snapshot(payload: Any) -> dict:
     batch = validate_tafsir_import_batch(payload)
     snapshot = batch.model_dump(mode="json")
+    if batch.generation is None:
+        snapshot.pop("generation")
     snapshot["entries"].sort(key=lambda entry: (entry["surah_id"], entry["ayah"]))
     snapshot["imported_at"] = datetime.now(timezone.utc).isoformat()
     return snapshot

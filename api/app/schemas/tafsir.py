@@ -1,6 +1,6 @@
 """Internal tafsir records. Public filtering belongs to the read service."""
 
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from pydantic import (
     AwareDatetime,
@@ -84,6 +84,70 @@ class TafsirDraftImportEntry(TafsirImportEntry):
         return self
 
 
+class TafsirGenerationMetadata(BaseModel):
+    """Private trace of the manual Arabic-to-French translation run."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    provider: Literal["deepl"]
+    request_version: Literal["deepl-ar-fr-v1"]
+    api_url: Literal["https://api-free.deepl.com", "https://api.deepl.com"]
+    target_language: Literal["fr"]
+    generated_at: AwareDatetime
+
+
+class TafsirSourcePassage(BaseModel):
+    """A complete original passage and the pilot ayahs it will accompany."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    source_surah_id: int = Field(ge=1, le=114, strict=True)
+    source_start_ayah: int = Field(ge=1, le=286, strict=True)
+    source_end_ayah: int = Field(ge=1, le=286, strict=True)
+    source_reference: str = Field(min_length=1)
+    source_text: str = Field(min_length=1)
+    ayahs: tuple[Annotated[int, Field(ge=1, le=286, strict=True)], ...] = Field(
+        min_length=1, max_length=13,
+    )
+
+    @field_validator("source_reference", "source_text")
+    @classmethod
+    def reject_blank_passage(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("Le texte original et sa référence sont requis.")
+        return value
+
+    @model_validator(mode="after")
+    def validate_covered_ayahs(self):
+        if not self.source_start_ayah <= self.source_end_ayah or any(
+            not self.source_start_ayah <= ayah <= self.source_end_ayah
+            for ayah in self.ayahs
+        ):
+            raise ValueError("Le passage original doit couvrir tous les versets demandés.")
+        return self
+
+
+class TafsirGenerationBatch(BaseModel):
+    """One Arabic edition supplied locally, with no generated French yet."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    schema_version: int = Field(default=1, ge=1, le=1, strict=True)
+    source: TafsirSource
+    source_language: Literal["ar"]
+    source_edition: str = Field(min_length=1)
+    version: str = Field(min_length=1)
+    reuse_reference: str = Field(min_length=1)
+    passages: tuple[TafsirSourcePassage, ...] = Field(min_length=1, max_length=13)
+
+    @field_validator("source_edition", "version", "reuse_reference")
+    @classmethod
+    def reject_blank_metadata(cls, value: str) -> str:
+        if not value.strip():
+            raise ValueError("L'édition, la version et la référence de réutilisation sont requises.")
+        return value
+
+
 class TafsirFrenchImportBatch(BaseModel):
     """One edition of one source, limited to the small pilot."""
 
@@ -97,6 +161,7 @@ class TafsirFrenchImportBatch(BaseModel):
     reuse_reference: str = Field(min_length=1)
     entries: tuple[TafsirDraftImportEntry, ...] = Field(min_length=1, max_length=13)
     imported_at: AwareDatetime | None = None
+    generation: TafsirGenerationMetadata | None = None
 
     @field_validator("source_edition", "version", "reuse_reference")
     @classmethod
@@ -107,6 +172,8 @@ class TafsirFrenchImportBatch(BaseModel):
 
     @model_validator(mode="after")
     def validate_entries_provenance(self):
+        if self.generation is not None and self.source_language != "ar":
+            raise ValueError("La génération DeepL attend une source arabe.")
         passages = {}
         for entry in self.entries:
             if entry.source != self.source or entry.version != self.version:
