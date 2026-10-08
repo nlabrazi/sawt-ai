@@ -51,6 +51,9 @@ def build_tafsir_import_snapshot(payload: Any) -> dict:
     snapshot = batch.model_dump(mode="json")
     if batch.generation is None:
         snapshot.pop("generation")
+    for entry in snapshot["entries"]:
+        if entry["generation"] is None:
+            entry.pop("generation")
     snapshot["entries"].sort(key=lambda entry: (entry["surah_id"], entry["ayah"]))
     snapshot["imported_at"] = datetime.now(timezone.utc).isoformat()
     return snapshot

@@ -8,6 +8,7 @@ from urllib.error import HTTPError, URLError
 import pytest
 
 import app.services.tafsir_generation_service as service
+import app.services.tafsir_generation_progress as progress_store
 import app.services.tafsir_import_service as importer
 import app.services.tafsir_store as store
 from scripts import generate_tafsir_fr as generator
@@ -45,7 +46,7 @@ def fake_deepl(monkeypatch, results):
         requests.append(request)
         assert timeout == service.TIMEOUT_SECONDS
         result = next(responses)
-        if isinstance(result, Exception):
+        if isinstance(result, BaseException):
             raise result
         return BytesIO(result if isinstance(result, bytes) else json.dumps(result).encode("utf-8"))
 
@@ -106,7 +107,10 @@ def test_generation_preserves_complete_passages_and_sources_and_stores_only_pend
                 for field in ("source_text", "source_reference", "source_start_ayah", "source_end_ayah"):
                     assert entry[field] == passage[field]
         assert store.insert_tafsir_import(snapshot) == 4
-        assert all(row["provenance"]["generation"] == snapshot["generation"] for row in rows if row["source"] == source)
+        metadata_by_verse = {(entry["surah_id"], entry["ayah"]): entry["generation"] for entry in snapshot["entries"]}
+        assert all(row["provenance"]["generation"] == metadata_by_verse[(row["surah_id"], row["ayah"])]
+                   for row in rows if row["source"] == source)
+        assert all("generation" not in row for row in rows)
 
     assert len(requests) == 4  # Four whole passages, rather than eight ayah translations.
     assert store.fetch_verified_tafsirs(1, 6, 7) == []
@@ -122,7 +126,7 @@ def test_generation_preserves_complete_passages_and_sources_and_stores_only_pend
 
 
 @pytest.mark.parametrize("case", ["out_of_pilot", "wrong_passage", "duplicate_ayah", "duplicate_passage", "mixed_source", "verified"])
-def test_invalid_source_batch_is_rejected_before_any_api_call(monkeypatch, case):
+def test_invalid_source_batch_is_rejected_before_any_api_call(monkeypatch, tmp_path, case):
     requests = fake_deepl(monkeypatch, [])
     payload = source_batch()
     passage = payload["passages"][1]
@@ -140,17 +144,17 @@ def test_invalid_source_batch_is_rejected_before_any_api_call(monkeypatch, case)
         passage["status"] = "verified"
 
     with pytest.raises(service.TafsirGenerationError):
-        service.generate_tafsir_snapshot(payload)
+        service.generate_tafsir_snapshot(payload, checkpoint_path=tmp_path / "progress.json")
     assert requests == []
 
 
-def test_later_oversized_passage_is_rejected_before_translating_the_first(monkeypatch):
+def test_later_oversized_passage_is_rejected_before_translating_the_first(monkeypatch, tmp_path):
     requests = fake_deepl(monkeypatch, [])
     payload = source_batch()
     payload["passages"][1]["source_text"] = "ن" * (service.MAX_REQUEST_BYTES // 2)
 
     with pytest.raises(service.TafsirGenerationError, match="128 Kio"):
-        service.generate_tafsir_snapshot(payload)
+        service.generate_tafsir_snapshot(payload, checkpoint_path=tmp_path / "progress.json")
     assert requests == []
 
 
@@ -172,19 +176,34 @@ def test_invalid_deepl_response_never_creates_a_snapshot(monkeypatch, tmp_path, 
 @pytest.mark.parametrize("failure", [
     HTTPError("https://api-free.deepl.com", 456, "Quota exceeded", {}, BytesIO(b"private provider details")),
     URLError("private network details"),
+    KeyboardInterrupt(),
 ])
-def test_mid_batch_failure_stops_without_retry_or_partial_output(monkeypatch, tmp_path, capsys, failure):
+def test_mid_batch_failure_keeps_progress_and_resumes_automatically(monkeypatch, tmp_path, capsys, failure):
     requests = fake_deepl(monkeypatch, [french_response(), failure])
     input_path, output_path = tmp_path / "input.json", tmp_path / "drafts.json"
     write_input(input_path, source_batch())
     monkeypatch.setattr("sys.argv", ["generate_tafsir_fr.py", "--input", str(input_path), "--output", str(output_path)])
 
-    assert generator.main() == 1
+    assert generator.main() == (130 if isinstance(failure, KeyboardInterrupt) else 1)
     error = capsys.readouterr().err
     assert "Génération interrompue" in error
     assert "private" not in error and "fake_test_key" not in error
     assert len(requests) == 2 and not output_path.exists()
     assert not list(tmp_path.glob(".*.tmp"))
+    checkpoint = next((tmp_path / "private" / "ibn_kathir").glob("progress-*.json"))
+    saved = json.loads(checkpoint.read_text())
+    assert len(saved["entries"]) == 2
+    assert checkpoint.stat().st_mode & 0o777 == 0o600
+    assert all(entry["status"] == "need_review" and entry["reviewed_at"] is None for entry in saved["entries"])
+    assert "fake_test_key" not in checkpoint.read_text()
+    retry_requests = fake_deepl(monkeypatch, [french_response("Texte fictif du passage restant.")])
+
+    assert generator.main() == 0
+    assert len(retry_requests) == 1
+    assert json.loads(retry_requests[0].data)["text"] == [source_batch()["passages"][1]["source_text"]]
+    snapshot = json.loads(output_path.read_text())
+    assert all(entry["text_fr"] == french_response()["translations"][0]["text"]
+               for entry in snapshot["entries"] if entry["surah_id"] == 1)
 
 
 def test_existing_destination_is_preserved_without_consuming_quota(monkeypatch, tmp_path):
@@ -200,7 +219,7 @@ def test_existing_destination_is_preserved_without_consuming_quota(monkeypatch, 
 
 
 @pytest.mark.parametrize("configuration", ["missing_key", "foreign_host"])
-def test_configuration_failure_never_sends_a_secret_or_consumes_quota(monkeypatch, configuration):
+def test_configuration_failure_never_sends_a_secret_or_consumes_quota(monkeypatch, tmp_path, configuration):
     requests = fake_deepl(monkeypatch, [])
     if configuration == "missing_key":
         monkeypatch.delenv("DEEPL_API_KEY")
@@ -208,7 +227,7 @@ def test_configuration_failure_never_sends_a_secret_or_consumes_quota(monkeypatc
         monkeypatch.setenv("DEEPL_API_URL", "https://foreign.example.test")
 
     with pytest.raises(service.TafsirGenerationError, match="DEEPL_API"):
-        service.generate_tafsir_snapshot(source_batch())
+        service.generate_tafsir_snapshot(source_batch(), checkpoint_path=tmp_path / "progress.json")
     assert requests == []
 
 
@@ -238,3 +257,158 @@ def test_unfilled_generation_template_fails_without_calling_deepl(monkeypatch, c
     assert generator.main() == 1
     assert "Lot source invalide" in capsys.readouterr().err
     assert requests == []
+
+
+def test_quota_resume_counts_only_remaining_text_and_preserves_each_passages_generation(monkeypatch, tmp_path, capsys):
+    payload = source_batch()
+    input_path, output_path, checkpoint = (tmp_path / name for name in ("source.json", "drafts.json", "progress.json"))
+    write_input(input_path, payload)
+    requests = fake_deepl(monkeypatch, [
+        french_response("  Premier passage fictif sauvegardé.\n"),
+        HTTPError("https://api-free.deepl.com", 456, "Quota exceeded", {}, BytesIO()),
+    ])
+    with pytest.raises(service.TafsirGenerationError, match="Quota DeepL épuisé"):
+        generator.generate_drafts(input_path, output_path, checkpoint)
+    saved_bytes = checkpoint.read_bytes()
+    saved = json.loads(saved_bytes)
+    assert len(requests) == 2 and len(saved["entries"]) == 2
+    assert not output_path.exists()
+
+    monkeypatch.delenv("DEEPL_API_KEY")
+    monkeypatch.setattr("sys.argv", [
+        "generate_tafsir_fr.py", "--input", str(input_path), "--checkpoint", str(checkpoint), "--dry-run",
+    ])
+    capsys.readouterr()
+    assert generator.main() == 0
+    counts = capsys.readouterr().out
+    assert "1 passages enregistrés, 1 passages restants" in counts
+    assert f"{len(payload['passages'][1]['source_text'])} caractères sources restants" in counts
+    assert len(requests) == 2 and checkpoint.read_bytes() == saved_bytes
+
+    # A manual plan/key change can resume the job without rewriting old provenance.
+    monkeypatch.setenv("DEEPL_API_KEY", "new_fake_test_key")
+    monkeypatch.setenv("DEEPL_API_URL", "https://api.deepl.com")
+    retry_requests = fake_deepl(monkeypatch, [french_response("  Passage restant fictif.\n")])
+    _, snapshot = generator.generate_drafts(input_path, output_path, checkpoint)
+    assert len(retry_requests) == 1
+    assert retry_requests[0].full_url == "https://api.deepl.com/v2/translate"
+    assert retry_requests[0].get_header("Authorization") == "DeepL-Auth-Key new_fake_test_key"
+    for entry in snapshot["entries"]:
+        if entry["surah_id"] == 1:
+            original = next(row for row in saved["entries"] if row["ayah"] == entry["ayah"])
+            assert entry == original
+        else:
+            assert entry["generation"]["api_url"] == "https://api.deepl.com"
+        assert entry["status"] == "need_review" and entry["reviewed_at"] is None
+
+    monkeypatch.delenv("DEEPL_API_KEY")
+    requests = fake_deepl(monkeypatch, [])
+    _, cached_snapshot = generator.generate_drafts(input_path, tmp_path / "another-final.json", checkpoint)
+    assert cached_snapshot["entries"] == snapshot["entries"]
+    assert requests == []
+
+
+@pytest.mark.parametrize("change", ["source", "version", "original", "targets"])
+def test_progress_from_a_changed_source_batch_is_rejected_without_api_calls(monkeypatch, tmp_path, change):
+    payload = source_batch()
+    input_path, checkpoint = tmp_path / "source.json", tmp_path / "progress.json"
+    write_input(input_path, payload)
+    fake_deepl(monkeypatch, [french_response(), french_response()])
+    generator.generate_drafts(input_path, tmp_path / "first.json", checkpoint)
+    previous = checkpoint.read_bytes()
+    if change == "source":
+        payload["source"] = "as_saadi"
+    elif change == "version":
+        payload["version"] = "test-2"
+    elif change == "original":
+        payload["passages"][0]["source_text"] += " Texte fictif modifié."
+    else:
+        payload["passages"][1]["ayahs"] = [1, 2]
+    write_input(input_path, payload)
+    requests = fake_deepl(monkeypatch, [])
+
+    with pytest.raises(service.TafsirGenerationError, match="autre lot source"):
+        generator.generate_drafts(input_path, tmp_path / "next.json", checkpoint)
+    assert requests == [] and checkpoint.read_bytes() == previous
+
+
+@pytest.mark.parametrize("damage", ["truncated_json", "verified", "partial_group", "wrong_reference", "request_version"])
+def test_invalid_progress_is_preserved_and_cannot_be_used_or_retranslated_silently(monkeypatch, tmp_path, damage):
+    input_path, checkpoint = tmp_path / "source.json", tmp_path / "progress.json"
+    write_input(input_path, source_batch())
+    fake_deepl(monkeypatch, [french_response(), french_response()])
+    generator.generate_drafts(input_path, tmp_path / "first.json", checkpoint)
+    progress = json.loads(checkpoint.read_text())
+    if damage == "truncated_json":
+        checkpoint.write_text('{"partial":')
+    else:
+        if damage == "verified":
+            progress["entries"][0].update({"status": "verified", "reviewed_at": "2026-10-08T10:00:00+00:00"})
+        elif damage == "partial_group":
+            progress["entries"].pop(0)
+        elif damage == "wrong_reference":
+            progress["entries"][0]["source_reference"] = "Autre référence fictive."
+        else:
+            progress["request_version"] = "unrelated-request-version"
+        write_input(checkpoint, progress)
+    previous = checkpoint.read_bytes()
+    requests = fake_deepl(monkeypatch, [])
+
+    with pytest.raises(service.TafsirGenerationError):
+        generator.generate_drafts(input_path, tmp_path / "next.json", checkpoint)
+    assert requests == [] and checkpoint.read_bytes() == previous
+
+
+def test_concurrent_job_cannot_consume_quota_for_the_same_checkpoint(monkeypatch, tmp_path):
+    input_path, checkpoint = tmp_path / "source.json", tmp_path / "progress.json"
+    payload = source_batch()
+    write_input(input_path, payload)
+    batch = service.validate_tafsir_generation_batch(payload)
+    requests = fake_deepl(monkeypatch, [])
+
+    with progress_store.locked_generation_progress(checkpoint, batch):
+        with pytest.raises(service.TafsirGenerationError, match="utilise déjà"):
+            generator.generate_drafts(input_path, tmp_path / "final.json", checkpoint)
+    assert requests == []
+
+
+def test_progress_write_failure_preserves_previous_groups_and_stops_further_requests(monkeypatch, tmp_path):
+    input_path, checkpoint, output_path = (tmp_path / name for name in ("source.json", "progress.json", "final.json"))
+    write_input(input_path, source_batch())
+    requests = fake_deepl(monkeypatch, [french_response(), french_response()])
+    original_replace = progress_store.os.replace
+    writes = []
+
+    def fail_third_write(source, destination):
+        writes.append(destination)
+        if len(writes) == 3:
+            raise OSError("Fictitious disk failure")
+        return original_replace(source, destination)
+
+    monkeypatch.setattr(progress_store.os, "replace", fail_third_write)
+    with pytest.raises(service.TafsirGenerationError, match="sauvegarder la progression"):
+        generator.generate_drafts(input_path, output_path, checkpoint)
+    progress = progress_store.load_generation_progress(checkpoint, service.validate_tafsir_generation_batch(source_batch()))
+    assert len(progress.entries) == 2 and len(requests) == 2
+    assert not output_path.exists() and not list(tmp_path.glob(".*.tmp"))
+
+
+def test_final_output_failure_can_be_retried_without_retranslating(monkeypatch, tmp_path):
+    input_path, checkpoint, output_path = (tmp_path / name for name in ("source.json", "progress.json", "final.json"))
+    write_input(input_path, source_batch())
+    requests = fake_deepl(monkeypatch, [french_response(), french_response()])
+    original_write = generator.write_new_snapshot
+
+    def fail_final_write(*args):
+        raise OSError("Fictitious final output failure")
+
+    monkeypatch.setattr(generator, "write_new_snapshot", fail_final_write)
+    with pytest.raises(OSError):
+        generator.generate_drafts(input_path, output_path, checkpoint)
+    assert len(requests) == 2 and not output_path.exists()
+    monkeypatch.setattr(generator, "write_new_snapshot", original_write)
+    monkeypatch.delenv("DEEPL_API_KEY")
+    retry_requests = fake_deepl(monkeypatch, [])
+
+    _, snapshot = generator.generate_drafts(input_path, output_path, checkpoint)
+    assert len(snapshot["entries"]) == 4 and retry_requests == []

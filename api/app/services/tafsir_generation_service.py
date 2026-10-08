@@ -3,19 +3,30 @@
 import json
 import os
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 from pydantic import ValidationError
 
-from app.schemas.tafsir import TafsirGenerationBatch
+from app.schemas.tafsir import (
+    TafsirDraftImportEntry,
+    TafsirGenerationBatch,
+    TafsirGenerationMetadata,
+    TafsirGenerationProgress,
+)
+from app.services.tafsir_generation_progress import (
+    REQUEST_VERSION,
+    TafsirProgressError,
+    locked_generation_progress,
+    save_generation_progress,
+)
 from app.services.quran_catalog_service import get_surah_metadata
 from app.services.tafsir_import_service import PILOT_REFERENCES, build_tafsir_import_snapshot
 
 DEEPL_FREE_URL = "https://api-free.deepl.com"
 DEEPL_PRO_URL = "https://api.deepl.com"
-REQUEST_VERSION = "deepl-ar-fr-v1"
 MAX_REQUEST_BYTES = 128 * 1024
 TIMEOUT_SECONDS = 90
 
@@ -94,6 +105,8 @@ def _translate_passage(source_text: str, api_url: str, key: str) -> str:
             data = response.read()
     except HTTPError as exc:
         # Do not expose the provider's response body, source passages, or key.
+        if exc.code == 456:
+            raise TafsirGenerationError("Quota DeepL épuisé (HTTP 456) ; reprendre après rétablissement du quota.") from exc
         raise TafsirGenerationError(f"Traduction DeepL interrompue (HTTP {exc.code}).") from exc
     except (URLError, OSError) as exc:
         raise TafsirGenerationError("Impossible de joindre DeepL ; aucun nouvel essai automatique.") from exc
@@ -113,24 +126,50 @@ def _translate_passage(source_text: str, api_url: str, key: str) -> str:
         raise TafsirGenerationError("Réponse DeepL invalide ; aucun brouillon publié.") from exc
 
 
-def generate_tafsir_snapshot(payload: Any) -> dict:
-    batch = validate_tafsir_generation_batch(payload)
-    api_url, key = _connection()
-    entries = []
+def _generate_snapshot(
+    batch: TafsirGenerationBatch, progress: TafsirGenerationProgress,
+    checkpoint_path: Path,
+) -> dict:
+    completed = {(entry.surah_id, entry.ayah): entry for entry in progress.entries}
+    pending = [passage for passage in batch.passages
+               if (passage.source_surah_id, passage.ayahs[0]) not in completed]
+    if pending:
+        api_url, key = _connection()
+    if not checkpoint_path.exists():
+        save_generation_progress(checkpoint_path, progress)
+    entries = list(progress.entries)
     for passage in batch.passages:
+        if (passage.source_surah_id, passage.ayahs[0]) in completed:
+            continue
         text_fr = _translate_passage(passage.source_text, api_url, key)
+        metadata = TafsirGenerationMetadata(
+            provider="deepl", request_version=REQUEST_VERSION, api_url=api_url,
+            target_language="fr", generated_at=datetime.now(timezone.utc),
+        )
         original = passage.model_dump(exclude={"ayahs"})
         for ayah in passage.ayahs:
-            entries.append({
+            entries.append(TafsirDraftImportEntry.model_validate({
                 **original, "surah_id": passage.source_surah_id, "ayah": ayah,
                 "source": batch.source, "version": batch.version, "text_fr": text_fr,
-                "status": "need_review", "reviewed_at": None,
-            })
+                "status": "need_review", "reviewed_at": None, "generation": metadata,
+            }))
+        progress = TafsirGenerationProgress(
+            batch_sha256=progress.batch_sha256, request_version=REQUEST_VERSION,
+            entries=tuple(entries),
+        )
+        # Persist the whole group before starting the next chargeable request.
+        save_generation_progress(checkpoint_path, progress)
+    latest_generation = max((entry.generation for entry in entries), key=lambda item: item.generated_at)
     return build_tafsir_import_snapshot({
         **batch.model_dump(exclude={"passages"}), "entries": entries,
-        "generation": {
-            "provider": "deepl", "request_version": REQUEST_VERSION,
-            "api_url": api_url, "target_language": "fr",
-            "generated_at": datetime.now(timezone.utc).isoformat(),
-        },
+        "generation": latest_generation,
     })
+
+
+def generate_tafsir_snapshot(payload: Any, *, checkpoint_path: Path) -> dict:
+    batch = validate_tafsir_generation_batch(payload)
+    try:
+        with locked_generation_progress(checkpoint_path, batch) as progress:
+            return _generate_snapshot(batch, progress, checkpoint_path)
+    except TafsirProgressError as exc:
+        raise TafsirGenerationError(str(exc)) from exc

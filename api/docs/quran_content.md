@@ -871,7 +871,7 @@ contrôler manuellement avec les éditions physiques françaises.
 
 ### Vérifier, traduire puis stocker
 
-Valider les fichiers et compter les caractères sources, sans clé, appel réseau
+Valider les fichiers et compter les caractères sources restants, sans clé, appel réseau
 ou création de fichier :
 
 ```bash
@@ -879,8 +879,9 @@ api/.venv/bin/python api/scripts/generate_tafsir_fr.py --input api/data/tafsir/i
 api/.venv/bin/python api/scripts/generate_tafsir_fr.py --input api/data/tafsir/inputs/as_saadi-source.json --dry-run
 ```
 
-Le comptage porte sur chaque passage unique ; partager un commentaire entre
-plusieurs versets n'augmente pas ce total. DeepL compte les caractères du texte
+Le comptage porte sur chaque passage unique qui n'a pas encore été sauvegardé
+dans le fichier de progression ; partager un commentaire entre plusieurs
+versets n'augmente pas ce total. DeepL compte les caractères du texte
 source, y compris les espaces et retours à la ligne, selon ses
 [règles de décompte](https://support.deepl.com/hc/en-us/articles/360020685720-Usage-count-and-billing-in-DeepL-API).
 
@@ -894,7 +895,10 @@ docker compose exec api python scripts/generate_tafsir_fr.py --input /app/data/t
 Chaque sortie respecte `TafsirFrenchImportBatch` : toutes les entrées sont
 `need_review`, sans date de review, avec le texte original intact. Le bloc
 privé `generation` conserve le fournisseur, la version des paramètres de
-requête, le domaine API, la langue cible et la date UTC de génération. DeepL
+requête, le domaine API, la langue cible et la date UTC de génération. Chaque
+entrée générée conserve aussi la trace de son passage : elle est préservée lors
+d'une reprise, même si la clé ou l'offre DeepL change. La trace au niveau du lot
+correspond au passage traduit le plus récemment. DeepL
 choisit son modèle par défaut ; ce bloc n'invente pas d'identifiant de modèle.
 Les imports précédents sans ce bloc restent acceptés et gardent leur format.
 
@@ -902,8 +906,8 @@ Les fichiers complets sont publiés atomiquement avec les permissions `0600`,
 dans le répertoire exclu de Git et des images Docker. Une destination existante
 est refusée **avant** l'appel DeepL. Une réponse invalide ou un échec interrompt
 le lot sans fichier partiel, sans nouvel essai automatique et sans import en
-base. Les passages déjà traités avant un échec peuvent avoir consommé du quota ;
-relancer manuellement la traduction les enverra de nouveau.
+base. Depuis l'étape 11, les passages sauvegardés avant un échec sont conservés
+et ne sont pas envoyés de nouveau lors de la reprise.
 
 La sortie est directement utilisable par le script de stockage de l'étape 5 ;
 il n'est pas nécessaire de repasser par `import_tafsir_fr.py` :
@@ -933,6 +937,92 @@ Aucun appel de traduction réel n'a été exécuté pour cette étape. La clé, 
 lots sources réels et les références des éditions françaises restent à préparer.
 
 Commit proposé : `feat: add DeepL French tafsir pilot generation pipeline`.
+
+## Étape 11 : reprise après interruption ou quota épuisé
+
+Chaque passage traduit est sauvegardé **avant l'appel DeepL suivant** dans un
+fichier de progression privé. Celui-ci conserve le français, l'original,
+les références des versets et les métadonnées de génération. Les entrées y
+restent `need_review`, avec `reviewed_at = null`.
+
+La commande reprend automatiquement le même lot : elle charge les passages
+enregistrés et traduit seulement ceux qui manquent. Une réponse
+[DeepL HTTP 456](https://developers.deepl.com/docs/best-practices/error-handling)
+arrête les appels et signale le quota épuisé. Une interruption avec `Ctrl+C`
+conserve également les passages déjà sauvegardés. Relancer la commande quand
+le quota est disponible ; le quota gratuit Developer ne se renouvelle pas
+automatiquement, comme indiqué à l'étape 10.
+
+### Fichier de progression
+
+Par défaut : `api/data/tafsir/<source>/progress-<empreinte>.json`. L'empreinte
+identifie le contenu exact du lot : auteur, édition, version, provenance,
+passages, ordre et versets demandés. Le chemin est affiché au lancement.
+Déplacer le fichier source sans changer son contenu ne perd donc pas la reprise.
+Un lot modifié utilise une autre empreinte et un autre fichier de progression.
+
+Pour choisir un repère lisible, utiliser `--checkpoint`. Exemple pour Ibn Kathir :
+
+```bash
+docker compose exec api python scripts/generate_tafsir_fr.py --input /app/data/tafsir/inputs/ibn_kathir-source.json --output /app/data/tafsir/ibn_kathir/pilot-drafts.json --checkpoint /app/data/tafsir/ibn_kathir/pilot-progress.json
+```
+
+**Relancer exactement cette commande** pour reprendre. Choisir un fichier
+distinct pour As-Sa‘di. Si un repère explicite existe mais correspond à un
+autre lot, ou s'il est corrompu/incohérent, la commande s'arrête avant l'appel
+DeepL et conserve ce fichier. Elle ne le supprime pas pour retraduire en silence.
+
+Pour connaître le travail restant avec ce même repère :
+
+```bash
+docker compose exec api python scripts/generate_tafsir_fr.py --input /app/data/tafsir/inputs/ibn_kathir-source.json --checkpoint /app/data/tafsir/ibn_kathir/pilot-progress.json --dry-run
+```
+
+Le résultat indique le nombre de passages enregistrés, le nombre restant et
+les caractères restants. Cette lecture ne demande pas de clé et n'écrit rien.
+Utiliser le même environnement ou utilisateur que pour la génération : les
+fichiers privés ont les permissions `0600`.
+
+### Conservation et sortie finale
+
+Les mises à jour du repère sont atomiques : le fichier précédent reste complet
+si une écriture échoue. Un verrou empêche deux commandes utilisant le même
+repère de traduire simultanément. Son fichier `.lock` reste présent ; le verrou
+est automatiquement libéré à l'arrêt du processus. Ces fichiers sont exclus
+de Git et des images Docker avec le répertoire `data/tafsir`.
+
+Le repère est un fichier interne de travail ; il ne peut pas être importé
+directement comme snapshot Supabase et aucune route ne le sert. Le snapshot
+final n'est produit qu'une fois tous les passages du lot terminés. Il peut
+ensuite être stocké et relu selon le workflow existant. Si l'écriture finale
+échoue, la reprise reconstruit le snapshot avec les traductions sauvegardées,
+sans appel DeepL supplémentaire ni clé nécessaire quand tout est terminé.
+Un snapshot final existant reste protégé contre l'écrasement.
+
+Conserver le repère pour les reprises. Après changement de clé ou passage
+manuel de l'offre gratuite à une offre payante, les passages sauvegardés
+restent utilisables et gardent leurs dates/domaines API d'origine. La trace
+de chaque passage est conservée dans la provenance privée Supabase ; aucune
+clé API n'est enregistrée dans les fichiers de progression ou les snapshots.
+
+La reprise garantit la réutilisation des passages **effectivement sauvegardés**.
+Si une coupure intervient pendant une requête ou avant la sauvegarde de sa
+réponse, ce seul passage peut être renvoyé et avoir consommé du quota. La commande
+ne peut pas récupérer une réponse DeepL qu'elle n'a pas reçue/enregistrée.
+
+Vérification hors réseau :
+
+```bash
+api/.venv/bin/pytest -c api/pytest.ini api/tests/services/test_tafsir_generation_service.py api/tests/services/test_tafsir_import_service.py api/tests/services/test_tafsir_store.py api/tests/integration/test_tafsir_pilot_workflow.py api/tests/routes/test_quran_content_route.py api/tests/routes/test_tafsir_review.py
+```
+
+Les tests simulent quota épuisé, erreur réseau et interruption, puis vérifient
+la reprise au passage restant, le comptage sans appel, la conservation des
+textes/dates et des auteurs, le refus des repères d'un autre lot ou corrompus,
+le verrou et les échecs d'écriture. Les brouillons restent exclus du public.
+Aucune traduction réelle n'a été lancée pour cette étape.
+
+Commit proposé : `feat: resume tafsir translation from saved progress`.
 
 ## Sources et génération restantes
 

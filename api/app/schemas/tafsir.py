@@ -59,6 +59,18 @@ class VerifiedTafsirEntry(TafsirEntry):
     reviewed_at: AwareDatetime
 
 
+class TafsirGenerationMetadata(BaseModel):
+    """Private trace of the manual Arabic-to-French translation run."""
+
+    model_config = ConfigDict(extra="forbid", frozen=True)
+
+    provider: Literal["deepl"]
+    request_version: Literal["deepl-ar-fr-v1"]
+    api_url: Literal["https://api-free.deepl.com", "https://api.deepl.com"]
+    target_language: Literal["fr"]
+    generated_at: AwareDatetime
+
+
 class TafsirDraftImportEntry(TafsirImportEntry):
     """A French draft with the complete original passage used to prepare it."""
 
@@ -66,6 +78,7 @@ class TafsirDraftImportEntry(TafsirImportEntry):
     source_surah_id: int = Field(ge=1, le=114, strict=True)
     source_start_ayah: int = Field(ge=1, le=286, strict=True)
     source_end_ayah: int = Field(ge=1, le=286, strict=True)
+    generation: TafsirGenerationMetadata | None = None
 
     @field_validator("source_text")
     @classmethod
@@ -84,16 +97,15 @@ class TafsirDraftImportEntry(TafsirImportEntry):
         return self
 
 
-class TafsirGenerationMetadata(BaseModel):
-    """Private trace of the manual Arabic-to-French translation run."""
+class TafsirGenerationProgress(BaseModel):
+    """Completed drafts for one exact source batch; never a public snapshot."""
 
     model_config = ConfigDict(extra="forbid", frozen=True)
 
-    provider: Literal["deepl"]
+    schema_version: int = Field(default=1, ge=1, le=1, strict=True)
+    batch_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
     request_version: Literal["deepl-ar-fr-v1"]
-    api_url: Literal["https://api-free.deepl.com", "https://api.deepl.com"]
-    target_language: Literal["fr"]
-    generated_at: AwareDatetime
+    entries: tuple[TafsirDraftImportEntry, ...] = Field(default=(), max_length=13)
 
 
 class TafsirSourcePassage(BaseModel):
@@ -176,6 +188,8 @@ class TafsirFrenchImportBatch(BaseModel):
             raise ValueError("La génération DeepL attend une source arabe.")
         passages = {}
         for entry in self.entries:
+            if entry.generation is not None and self.source_language != "ar":
+                raise ValueError("La génération DeepL attend une source arabe.")
             if entry.source != self.source or entry.version != self.version:
                 raise ValueError("Un lot doit contenir une seule source et une seule version.")
             if self.source_language == "fr" and entry.text_fr != entry.source_text:

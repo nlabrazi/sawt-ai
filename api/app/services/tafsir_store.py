@@ -122,9 +122,12 @@ def insert_tafsir_import(payload: Any) -> int:
     rows = []
     for entry in batch.entries:
         data = entry.model_dump(mode="json")
+        generation = data.pop("generation")
         provenance = {**common, **{field: data.pop(field) for field in (
             "source_text", "source_surah_id", "source_start_ayah", "source_end_ayah",
         )}}
+        if generation is not None:
+            provenance["generation"] = generation
         rows.append({**data, "provenance": provenance})
     # One bulk POST is transactional. No upsert or merge can overwrite a review.
     _request("POST", [], rows)

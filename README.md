@@ -415,8 +415,10 @@ a browser scenario linking the internal review screen to public verse details.
 Supabase and the tafsir texts are simulated in these tests. A manual
 `generate_tafsir_fr.py` script translates supplied Arabic pilot passages through
 DeepL into private `need_review` snapshots, reusable by the existing Supabase
-import. Configure `DEEPL_API_KEY` only in the backend environment; `--dry-run`
-validates and counts source characters without API calls. No translation is
+import. Each completed passage is saved in a private progress file, so rerunning
+the same batch resumes after quota exhaustion or interruption. Configure
+`DEEPL_API_KEY` only in the backend environment; `--dry-run` validates and counts
+the remaining source characters without API calls. No translation is
 triggered by recognition or public display, and no real tafsir corpus is bundled.
 See [the pilot generation guide](api/docs/quran_content.md#étape-10--génération-française-du-pilote-avec-deepl).
 Use the Supabase Project URL, not the Postgres connection string, for `SUPABASE_URL`.
