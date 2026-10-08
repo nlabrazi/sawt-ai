@@ -46,8 +46,11 @@ test.describe('Home / Idle Screen', () => {
     const footer = page.locator('footer.app-footer')
     await expect(footer).toBeVisible()
     await expect(footer).toContainText('Sawt AI')
-    await expect(footer.getByRole('link', { name: 'GitHub' })).toBeVisible()
-    await expect(footer.getByRole('link', { name: 'Portfolio' })).toBeVisible()
+    await expect(footer).toContainText('Tous droits réservés.')
+    await expect(footer.getByRole('link', { name: 'Mentions légales' })).toBeVisible()
+    await expect(
+      footer.getByRole('link', { name: 'Conditions générales d’utilisation' }),
+    ).toBeVisible()
     await expect(footer.getByRole('link', { name: 'Contact' })).toBeVisible()
   })
 

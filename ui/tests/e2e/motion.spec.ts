@@ -9,7 +9,9 @@ test('stops decorative motion when the device preference changes', async ({ page
   })
   await setupMockApi(page)
   await page.goto('/')
-  await expect(page.getByRole('button', { name: 'Explorer le Coran', exact: true })).toBeEnabled()
+  await expect(
+    page.getByRole('button', { name: 'Identifier un verset', exact: true }),
+  ).toBeEnabled()
   const orbit = page.locator('.signal-orbit')
   const initial = await orbit.evaluate((node) => getComputedStyle(node).transform)
   await expect
@@ -23,7 +25,7 @@ test('stops decorative motion when the device preference changes', async ({ page
       page.evaluate(() => document.getAnimations().filter((a) => a.playState === 'running').length),
     )
     .toBe(0)
-  await page.getByRole('button', { name: 'Explorer le Coran', exact: true }).click()
+  await page.getByRole('button', { name: 'Identifier un verset', exact: true }).click()
   await expect(page.locator('#recognition-title')).toBeVisible()
   await expect(page.locator('.button-orbit')).toHaveCSS('transform', 'none')
   expect(errors).toEqual([])
@@ -34,7 +36,9 @@ for (const width of [320, 375, 1440]) {
     await page.setViewportSize({ width, height: 900 })
     await setupMockApi(page)
     await page.goto('/')
-    await expect(page.getByRole('button', { name: 'Explorer le Coran', exact: true })).toBeEnabled()
+    await expect(
+      page.getByRole('button', { name: 'Identifier un verset', exact: true }),
+    ).toBeEnabled()
     await expect(page.locator('#landing-title')).toBeVisible()
     expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false)
   })

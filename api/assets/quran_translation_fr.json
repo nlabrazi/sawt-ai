@@ -1,0 +1,367 @@
+{
+  "meta": {
+    "schema_version": 1,
+    "imported_at": "2026-10-07T08:29:17.850728+00:00",
+    "source": "quranenc",
+    "translator": "Rachid Maach",
+    "translation_key": "french_rashid",
+    "version": "1.0.3",
+    "terms_url": "https://quranenc.com/en/home/api",
+    "metadata_response": {
+      "url": "https://quranenc.com/api/v1/translations/list/fr?localization=fr",
+      "payload": {
+        "translations": [
+          {
+            "key": "french_rashid",
+            "direction": "ltr",
+            "language_iso_code": "fr",
+            "version": "1.0.3",
+            "last_update": 1782043143,
+            "title": "La traduction en français - Rachid Maach",
+            "description": "Traduit par Rachid Maach.",
+            "file": "french_rashid",
+            "database_url": "https://quranenc.com/downloads/sqlite/french_rashid.zip",
+            "database_uncompressed_url": "https://quranenc.com/downloads/sqlite/french_rashid.sqlite",
+            "pdf_url": "https://quranenc.com/downloads/pdf/french_rashid.pdf",
+            "pdf_size": 17991055,
+            "pdf_cover": "https://quranenc.com/downloads/pdf_covers/french_rashid.png",
+            "pdf_pure_url": "https://quranenc.com/downloads/pdf/french_rashid.pure.pdf",
+            "pdf_pure_size": 9323774,
+            "pdf_pure_cover": "https://quranenc.com/downloads/pdf_covers/french_rashid.pure.png",
+            "pdf_mobile_url": "https://quranenc.com/downloads/pdf/french_rashid.mobile.pdf",
+            "pdf_mobile_size": 8288227,
+            "pdf_mobile_cover": "https://quranenc.com/downloads/pdf_covers/french_rashid.mobile.png",
+            "epub_url": "https://quranenc.com/downloads/epub/french_rashid.epub",
+            "epub_size": 1779216
+          },
+          {
+            "key": "french_montada",
+            "direction": "ltr",
+            "language_iso_code": "fr",
+            "version": "1.0.0",
+            "last_update": 1750745766,
+            "title": "La traduction en français - Centre International Nûr",
+            "description": "La traduction a été réalisée par Dr. Nabîl Ridwân, publiée par le Centre International Nûr.",
+            "file": "french_montada",
+            "database_url": "https://quranenc.com/downloads/sqlite/french_montada.zip",
+            "database_uncompressed_url": "https://quranenc.com/downloads/sqlite/french_montada.sqlite",
+            "pdf_url": null,
+            "pdf_size": null,
+            "pdf_cover": null,
+            "pdf_pure_url": null,
+            "pdf_pure_size": null,
+            "pdf_pure_cover": null,
+            "pdf_mobile_url": null,
+            "pdf_mobile_size": null,
+            "pdf_mobile_cover": null,
+            "epub_url": null,
+            "epub_size": null
+          }
+        ]
+      }
+    }
+  },
+  "source_responses": [
+    {
+      "url": "https://quranenc.com/api/v1/translation/aya/french_rashid/1/1",
+      "payload": {
+        "result": {
+          "id": "1",
+          "sura": "1",
+          "aya": "1",
+          "arabic_text": "بِسۡمِ ٱللَّهِ ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ",
+          "translation": "Au nom d’Allah, le Tout Miséricordieux, le Très Miséricordieux[1].",
+          "footnotes": "[1] Nombreux sont les exégètes qui expliquent la différence entre le nom divin « Ar-Rahmân » (traduit ici par « le Tout Miséricordieux ») et le nom « Ar-Rahîm » (traduit par « le Très Miséricordieux »), tous deux tirés de l’attribut divin « Ar-Rahmah » (la miséricorde), de cette manière : Allah est Tout Miséricordieux dans Son Essence, Très Miséricordieux envers Ses créatures."
+        }
+      }
+    },
+    {
+      "url": "https://quranenc.com/api/v1/translation/aya/french_rashid/1/2",
+      "payload": {
+        "result": {
+          "id": "2",
+          "sura": "1",
+          "aya": "2",
+          "arabic_text": "ٱلۡحَمۡدُ لِلَّهِ رَبِّ ٱلۡعَٰلَمِينَ",
+          "translation": "Louange à Allah, Seigneur de la Création[2],",
+          "footnotes": "[2] Littéralement : des mondes, c’est-à-dire, expliquent les exégètes, le Seigneur de tout ce qui existe en dehors du Créateur, d’où notre traduction."
+        }
+      }
+    },
+    {
+      "url": "https://quranenc.com/api/v1/translation/aya/french_rashid/1/3",
+      "payload": {
+        "result": {
+          "id": "3",
+          "sura": "1",
+          "aya": "3",
+          "arabic_text": "ٱلرَّحۡمَٰنِ ٱلرَّحِيمِ",
+          "translation": "le Tout Miséricordieux, le Très Miséricordieux,",
+          "footnotes": ""
+        }
+      }
+    },
+    {
+      "url": "https://quranenc.com/api/v1/translation/aya/french_rashid/1/4",
+      "payload": {
+        "result": {
+          "id": "4",
+          "sura": "1",
+          "aya": "4",
+          "arabic_text": "مَٰلِكِ يَوۡمِ ٱلدِّينِ",
+          "translation": "Maître souverain du Jour de la rétribution.",
+          "footnotes": ""
+        }
+      }
+    },
+    {
+      "url": "https://quranenc.com/api/v1/translation/aya/french_rashid/1/5",
+      "payload": {
+        "result": {
+          "id": "5",
+          "sura": "1",
+          "aya": "5",
+          "arabic_text": "إِيَّاكَ نَعۡبُدُ وَإِيَّاكَ نَسۡتَعِينُ",
+          "translation": "C’est Toi seul que nous adorons et de Toi seul que nous implorons aide.",
+          "footnotes": ""
+        }
+      }
+    },
+    {
+      "url": "https://quranenc.com/api/v1/translation/aya/french_rashid/1/6",
+      "payload": {
+        "result": {
+          "id": "6",
+          "sura": "1",
+          "aya": "6",
+          "arabic_text": "ٱهۡدِنَا ٱلصِّرَٰطَ ٱلۡمُسۡتَقِيمَ",
+          "translation": "Guide-nous dans le droit chemin,",
+          "footnotes": ""
+        }
+      }
+    },
+    {
+      "url": "https://quranenc.com/api/v1/translation/aya/french_rashid/1/7",
+      "payload": {
+        "result": {
+          "id": "7",
+          "sura": "1",
+          "aya": "7",
+          "arabic_text": "صِرَٰطَ ٱلَّذِينَ أَنۡعَمۡتَ عَلَيۡهِمۡ غَيۡرِ ٱلۡمَغۡضُوبِ عَلَيۡهِمۡ وَلَا ٱلضَّآلِّينَ",
+          "translation": "chemin de ceux que Tu as comblés de Tes grâces, non celui des réprouvés[3], ni celui des égarés[4].",
+          "footnotes": "[3] Littéralement : ceux qui ont attiré sur eux la colère d’Allah. Et ce, pour avoir sciemment tourné le dos à la vérité.\n[4] Ceux qui, par ignorance, se sont détournés du droit chemin."
+        }
+      }
+    },
+    {
+      "url": "https://quranenc.com/api/v1/translation/aya/french_rashid/2/1",
+      "payload": {
+        "result": {
+          "id": "8",
+          "sura": "2",
+          "aya": "1",
+          "arabic_text": "الٓمٓ",
+          "translation": "Alif-Lâm-Mîm.[1]",
+          "footnotes": "[1] Voici le commentaire d’Ibn Kathîr, le plus fameux exégète musulman, au sujet de ces lettres isolées appartenant à l’alphabet arabe et apparaissant au début de vingt-neuf des cent quatorze sourates du Coran : « Certains expliquent que ces lettres sont mentionnées au début de certains chapitres pour démontrer le caractère miraculeux du texte coranique que les hommes sont incapables d’imiter alors qu’il est composé de ces lettres dont ils font pourtant un usage quotidien. »"
+        }
+      }
+    },
+    {
+      "url": "https://quranenc.com/api/v1/translation/aya/french_rashid/2/2",
+      "payload": {
+        "result": {
+          "id": "9",
+          "sura": "2",
+          "aya": "2",
+          "arabic_text": "ذَٰلِكَ ٱلۡكِتَٰبُ لَا رَيۡبَۛ فِيهِۛ هُدٗى لِّلۡمُتَّقِينَ",
+          "translation": "Voici le Livre qui n’admet aucun doute[2] et qui est un guide pour ceux qui craignent le Seigneur[3],",
+          "footnotes": "[2] Quant à son origine divine, précisent certains commentateurs.\n[3] La notion de « Taqwâ » sera, selon le contexte, rendue comme ici par l’expression « craindre le Seigneur », et plus rarement par la formule « se préserver du châtiment » comme au verset 21 de cette même sourate, ou l’expression : « se préserver du péché », comme au verset 183. Seule en effet la crainte d’Allah et de Son châtiment pousse le croyant à se préserver du péché."
+        }
+      }
+    },
+    {
+      "url": "https://quranenc.com/api/v1/translation/aya/french_rashid/2/3",
+      "payload": {
+        "result": {
+          "id": "10",
+          "sura": "2",
+          "aya": "3",
+          "arabic_text": "ٱلَّذِينَ يُؤۡمِنُونَ بِٱلۡغَيۡبِ وَيُقِيمُونَ ٱلصَّلَوٰةَ وَمِمَّا رَزَقۡنَٰهُمۡ يُنفِقُونَ",
+          "translation": "qui croient aux mystères[4], accomplissent la prière[5] et offrent par charité[6] une partie de ce que Nous leur avons accordé,",
+          "footnotes": "[4] Qui croient notamment en Allah, en Ses anges, au Jour dernier, au Paradis et à l’Enfer, pourtant inaccessibles au regard. Les « mystères » de l’islam ne sont donc pas ceux du christianisme (Trinité, Incarnation ou Rédemption) qui, pour leur part, sont inaccessibles à la raison.\n[5] La « Salât », prière rituelle formée notamment de la lecture du Coran en position debout, d’inclinaisons et de prosternations, que les musulmans sont tenus d’effectuer cinq fois par jour.\n[6] Ou : par obéissance à Allah."
+        }
+      }
+    },
+    {
+      "url": "https://quranenc.com/api/v1/translation/aya/french_rashid/2/4",
+      "payload": {
+        "result": {
+          "id": "11",
+          "sura": "2",
+          "aya": "4",
+          "arabic_text": "وَٱلَّذِينَ يُؤۡمِنُونَ بِمَآ أُنزِلَ إِلَيۡكَ وَمَآ أُنزِلَ مِن قَبۡلِكَ وَبِٱلۡأٓخِرَةِ هُمۡ يُوقِنُونَ",
+          "translation": "qui croient au Livre[7] qui t’a été révélé[8] et aux Ecritures[9] révélées avant toi, et qui ont une foi inébranlable en l’au-delà.",
+          "footnotes": "[7] Employé seul et avec une majuscule, le terme « Livre » désignera généralement dans cette traduction le livre par excellence, le Coran.\n[8] Littéralement : qui a été descendu sur toi. Nous traduirons, en général, cette idée de « descente de la Révélation » par le verbe « révéler » et ses dérivés, plutôt que par le verbe « descendre » et ses dérivés. Il est évident, d’ailleurs, que toute révélation est une « descente » puisqu’elle émane d’Allah qui est au Ciel.\n[9] C’est le terme qui sera employé dans cette traduction pour désigner les Livres révélés aux juifs et aux chrétiens, l’Ancien et le Nouveau Testament, que ce terme désigne l’ensemble de ces livres ou une partie seulement."
+        }
+      }
+    },
+    {
+      "url": "https://quranenc.com/api/v1/translation/aya/french_rashid/2/5",
+      "payload": {
+        "result": {
+          "id": "12",
+          "sura": "2",
+          "aya": "5",
+          "arabic_text": "أُوْلَٰٓئِكَ عَلَىٰ هُدٗى مِّن رَّبِّهِمۡۖ وَأُوْلَٰٓئِكَ هُمُ ٱلۡمُفۡلِحُونَ",
+          "translation": "Voilà ceux qui sont guidés par leur Seigneur, voilà les bienheureux.",
+          "footnotes": ""
+        }
+      }
+    },
+    {
+      "url": "https://quranenc.com/api/v1/translation/aya/french_rashid/2/255",
+      "payload": {
+        "result": {
+          "id": "262",
+          "sura": "2",
+          "aya": "255",
+          "arabic_text": "ٱللَّهُ لَآ إِلَٰهَ إِلَّا هُوَ ٱلۡحَيُّ ٱلۡقَيُّومُۚ لَا تَأۡخُذُهُۥ سِنَةٞ وَلَا نَوۡمٞۚ لَّهُۥ مَا فِي ٱلسَّمَٰوَٰتِ وَمَا فِي ٱلۡأَرۡضِۗ مَن ذَا ٱلَّذِي يَشۡفَعُ عِندَهُۥٓ إِلَّا بِإِذۡنِهِۦۚ يَعۡلَمُ مَا بَيۡنَ أَيۡدِيهِمۡ وَمَا خَلۡفَهُمۡۖ وَلَا يُحِيطُونَ بِشَيۡءٖ مِّنۡ عِلۡمِهِۦٓ إِلَّا بِمَا شَآءَۚ وَسِعَ كُرۡسِيُّهُ ٱلسَّمَٰوَٰتِ وَٱلۡأَرۡضَۖ وَلَا يَـُٔودُهُۥ حِفۡظُهُمَاۚ وَهُوَ ٱلۡعَلِيُّ ٱلۡعَظِيمُ",
+          "translation": "Allah ! Il n’est de divinité digne d’être adorée que Lui, le Dieu Vivant et Eternel[156]. Il n’est gagné ni par le sommeil, ni même par la somnolence. Tout ce qui se trouve dans les cieux et sur la terre Lui appartient. Qui donc pourrait intercéder auprès de Lui sans Sa permission ? Il connaît leur avenir comme leur passé[157], tandis que les hommes n’embrassent de Sa science et de Ses mystères que ce qu’Il veut bien leur dévoiler. Son Koursi[158] embrasse les cieux et la terre dont Il assure la pérennité sans aucune difficulté. Il est le Très Haut, le Très Glorieux.",
+          "footnotes": "[156]Qui règne en Maître absolu sur la Création et dont dépendent toutes les créatures qui ont besoin de Lui pour vivre et subsister, tandis que Lui-même peut se passer d’elles.\n[157] Littéralement : Il sait ce qui se trouve devant eux comme ce qui se trouve derrière eux.\n[158] Son Repose-Pied, selon nombre d’exégètes, Son Trône, selon d’autres."
+        }
+      }
+    }
+  ],
+  "translations": [
+    {
+      "surah_id": 1,
+      "ayah": 1,
+      "text": "Au nom d’Allah, le Tout Miséricordieux, le Très Miséricordieux[1].",
+      "source": "quranenc",
+      "translator": "Rachid Maach",
+      "version": "1.0.3",
+      "source_url": "https://quranenc.com/api/v1/translation/aya/french_rashid/1/1",
+      "footnotes": "[1] Nombreux sont les exégètes qui expliquent la différence entre le nom divin « Ar-Rahmân » (traduit ici par « le Tout Miséricordieux ») et le nom « Ar-Rahîm » (traduit par « le Très Miséricordieux »), tous deux tirés de l’attribut divin « Ar-Rahmah » (la miséricorde), de cette manière : Allah est Tout Miséricordieux dans Son Essence, Très Miséricordieux envers Ses créatures."
+    },
+    {
+      "surah_id": 1,
+      "ayah": 2,
+      "text": "Louange à Allah, Seigneur de la Création[2],",
+      "source": "quranenc",
+      "translator": "Rachid Maach",
+      "version": "1.0.3",
+      "source_url": "https://quranenc.com/api/v1/translation/aya/french_rashid/1/2",
+      "footnotes": "[2] Littéralement : des mondes, c’est-à-dire, expliquent les exégètes, le Seigneur de tout ce qui existe en dehors du Créateur, d’où notre traduction."
+    },
+    {
+      "surah_id": 1,
+      "ayah": 3,
+      "text": "le Tout Miséricordieux, le Très Miséricordieux,",
+      "source": "quranenc",
+      "translator": "Rachid Maach",
+      "version": "1.0.3",
+      "source_url": "https://quranenc.com/api/v1/translation/aya/french_rashid/1/3",
+      "footnotes": ""
+    },
+    {
+      "surah_id": 1,
+      "ayah": 4,
+      "text": "Maître souverain du Jour de la rétribution.",
+      "source": "quranenc",
+      "translator": "Rachid Maach",
+      "version": "1.0.3",
+      "source_url": "https://quranenc.com/api/v1/translation/aya/french_rashid/1/4",
+      "footnotes": ""
+    },
+    {
+      "surah_id": 1,
+      "ayah": 5,
+      "text": "C’est Toi seul que nous adorons et de Toi seul que nous implorons aide.",
+      "source": "quranenc",
+      "translator": "Rachid Maach",
+      "version": "1.0.3",
+      "source_url": "https://quranenc.com/api/v1/translation/aya/french_rashid/1/5",
+      "footnotes": ""
+    },
+    {
+      "surah_id": 1,
+      "ayah": 6,
+      "text": "Guide-nous dans le droit chemin,",
+      "source": "quranenc",
+      "translator": "Rachid Maach",
+      "version": "1.0.3",
+      "source_url": "https://quranenc.com/api/v1/translation/aya/french_rashid/1/6",
+      "footnotes": ""
+    },
+    {
+      "surah_id": 1,
+      "ayah": 7,
+      "text": "chemin de ceux que Tu as comblés de Tes grâces, non celui des réprouvés[3], ni celui des égarés[4].",
+      "source": "quranenc",
+      "translator": "Rachid Maach",
+      "version": "1.0.3",
+      "source_url": "https://quranenc.com/api/v1/translation/aya/french_rashid/1/7",
+      "footnotes": "[3] Littéralement : ceux qui ont attiré sur eux la colère d’Allah. Et ce, pour avoir sciemment tourné le dos à la vérité.\n[4] Ceux qui, par ignorance, se sont détournés du droit chemin."
+    },
+    {
+      "surah_id": 2,
+      "ayah": 1,
+      "text": "Alif-Lâm-Mîm.[1]",
+      "source": "quranenc",
+      "translator": "Rachid Maach",
+      "version": "1.0.3",
+      "source_url": "https://quranenc.com/api/v1/translation/aya/french_rashid/2/1",
+      "footnotes": "[1] Voici le commentaire d’Ibn Kathîr, le plus fameux exégète musulman, au sujet de ces lettres isolées appartenant à l’alphabet arabe et apparaissant au début de vingt-neuf des cent quatorze sourates du Coran : « Certains expliquent que ces lettres sont mentionnées au début de certains chapitres pour démontrer le caractère miraculeux du texte coranique que les hommes sont incapables d’imiter alors qu’il est composé de ces lettres dont ils font pourtant un usage quotidien. »"
+    },
+    {
+      "surah_id": 2,
+      "ayah": 2,
+      "text": "Voici le Livre qui n’admet aucun doute[2] et qui est un guide pour ceux qui craignent le Seigneur[3],",
+      "source": "quranenc",
+      "translator": "Rachid Maach",
+      "version": "1.0.3",
+      "source_url": "https://quranenc.com/api/v1/translation/aya/french_rashid/2/2",
+      "footnotes": "[2] Quant à son origine divine, précisent certains commentateurs.\n[3] La notion de « Taqwâ » sera, selon le contexte, rendue comme ici par l’expression « craindre le Seigneur », et plus rarement par la formule « se préserver du châtiment » comme au verset 21 de cette même sourate, ou l’expression : « se préserver du péché », comme au verset 183. Seule en effet la crainte d’Allah et de Son châtiment pousse le croyant à se préserver du péché."
+    },
+    {
+      "surah_id": 2,
+      "ayah": 3,
+      "text": "qui croient aux mystères[4], accomplissent la prière[5] et offrent par charité[6] une partie de ce que Nous leur avons accordé,",
+      "source": "quranenc",
+      "translator": "Rachid Maach",
+      "version": "1.0.3",
+      "source_url": "https://quranenc.com/api/v1/translation/aya/french_rashid/2/3",
+      "footnotes": "[4] Qui croient notamment en Allah, en Ses anges, au Jour dernier, au Paradis et à l’Enfer, pourtant inaccessibles au regard. Les « mystères » de l’islam ne sont donc pas ceux du christianisme (Trinité, Incarnation ou Rédemption) qui, pour leur part, sont inaccessibles à la raison.\n[5] La « Salât », prière rituelle formée notamment de la lecture du Coran en position debout, d’inclinaisons et de prosternations, que les musulmans sont tenus d’effectuer cinq fois par jour.\n[6] Ou : par obéissance à Allah."
+    },
+    {
+      "surah_id": 2,
+      "ayah": 4,
+      "text": "qui croient au Livre[7] qui t’a été révélé[8] et aux Ecritures[9] révélées avant toi, et qui ont une foi inébranlable en l’au-delà.",
+      "source": "quranenc",
+      "translator": "Rachid Maach",
+      "version": "1.0.3",
+      "source_url": "https://quranenc.com/api/v1/translation/aya/french_rashid/2/4",
+      "footnotes": "[7] Employé seul et avec une majuscule, le terme « Livre » désignera généralement dans cette traduction le livre par excellence, le Coran.\n[8] Littéralement : qui a été descendu sur toi. Nous traduirons, en général, cette idée de « descente de la Révélation » par le verbe « révéler » et ses dérivés, plutôt que par le verbe « descendre » et ses dérivés. Il est évident, d’ailleurs, que toute révélation est une « descente » puisqu’elle émane d’Allah qui est au Ciel.\n[9] C’est le terme qui sera employé dans cette traduction pour désigner les Livres révélés aux juifs et aux chrétiens, l’Ancien et le Nouveau Testament, que ce terme désigne l’ensemble de ces livres ou une partie seulement."
+    },
+    {
+      "surah_id": 2,
+      "ayah": 5,
+      "text": "Voilà ceux qui sont guidés par leur Seigneur, voilà les bienheureux.",
+      "source": "quranenc",
+      "translator": "Rachid Maach",
+      "version": "1.0.3",
+      "source_url": "https://quranenc.com/api/v1/translation/aya/french_rashid/2/5",
+      "footnotes": ""
+    },
+    {
+      "surah_id": 2,
+      "ayah": 255,
+      "text": "Allah ! Il n’est de divinité digne d’être adorée que Lui, le Dieu Vivant et Eternel[156]. Il n’est gagné ni par le sommeil, ni même par la somnolence. Tout ce qui se trouve dans les cieux et sur la terre Lui appartient. Qui donc pourrait intercéder auprès de Lui sans Sa permission ? Il connaît leur avenir comme leur passé[157], tandis que les hommes n’embrassent de Sa science et de Ses mystères que ce qu’Il veut bien leur dévoiler. Son Koursi[158] embrasse les cieux et la terre dont Il assure la pérennité sans aucune difficulté. Il est le Très Haut, le Très Glorieux.",
+      "source": "quranenc",
+      "translator": "Rachid Maach",
+      "version": "1.0.3",
+      "source_url": "https://quranenc.com/api/v1/translation/aya/french_rashid/2/255",
+      "footnotes": "[156]Qui règne en Maître absolu sur la Création et dont dépendent toutes les créatures qui ont besoin de Lui pour vivre et subsister, tandis que Lui-même peut se passer d’elles.\n[157] Littéralement : Il sait ce qui se trouve devant eux comme ce qui se trouve derrière eux.\n[158] Son Repose-Pied, selon nombre d’exégètes, Son Trône, selon d’autres."
+    }
+  ]
+}

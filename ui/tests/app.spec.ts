@@ -3,6 +3,7 @@ import { $fetch } from 'ofetch'
 import { defineComponent, nextTick } from 'vue'
 import App from '~/app.vue'
 import { hadithFixture } from './fixtures/hadith'
+import { setRequestURL } from './mocks/nuxt-app'
 
 vi.mock('ofetch', () => ({ $fetch: vi.fn() }))
 const QuranStub = defineComponent({
@@ -23,11 +24,33 @@ async function settleScreen() {
 }
 
 describe('App', () => {
-  beforeEach(() => vi.mocked($fetch).mockReset())
+  beforeEach(() => {
+    vi.mocked($fetch).mockReset()
+    setRequestURL('http://localhost:3000/')
+  })
+  afterEach(() => setRequestURL('http://localhost:3000/'))
+
+  it.each([
+    ['/terms-of-service', 'Conditions générales d’utilisation'],
+    ['/terms-of-service/', 'Conditions générales d’utilisation'],
+    ['/legal-notice', 'Mentions légales'],
+    ['/legal-notice/', 'Mentions légales'],
+    ['/contact', 'Contact'],
+    ['/contact/', 'Contact'],
+  ])('opens %s directly without mounting recognition or calling the API', async (path, heading) => {
+    setRequestURL(`http://localhost:3000${path}`)
+    const wrapper = await mountApp()
+    await settleScreen()
+    expect(wrapper.get('h1').text()).toBe(heading)
+    expect(wrapper.findComponent(QuranStub).exists()).toBe(false)
+    expect(wrapper.find('#landing-title').exists()).toBe(false)
+    expect($fetch).not.toHaveBeenCalled()
+    wrapper.unmount()
+  })
 
   it('starts on the landing screen with three navigation buttons and a shared footer', async () => {
     const wrapper = await mountApp()
-    expect(wrapper.get('#landing-title').text()).toContain('Retrouvez les mots')
+    expect(wrapper.get('#landing-title').text()).toContain('Identifier un verset.')
     expect(wrapper.findComponent({ name: 'QuranRecognitionScreen' }).exists()).toBe(false)
     expect(wrapper.findAll('.mode-selector button').map((button) => button.text())).toEqual([
       'Coran',

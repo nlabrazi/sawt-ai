@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { ArrowLeft, BookOpen, Copy } from '@lucide/vue'
-import { computed, nextTick, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useMotionEntrance } from '~/composables/useMotionEntrance'
 
 import MiniToast from '~/components/MiniToast.vue'
+import QuranAyahContent from '~/components/QuranAyahContent.vue'
 import TajwidLegend from '~/components/TajwidLegend.vue'
 import TajwidText from '~/components/TajwidText.vue'
 import { useMiniToast } from '~/composables/useMiniToast'
+import { useQuranContent } from '~/composables/useQuranContent'
 import type { RecognizeResponse } from '~/composables/useRecognition'
 import { type TajwidResponse, useTajwid } from '~/composables/useTajwid'
 import { parseTajwidToTokens } from '~/utils/parseTajwid'
@@ -22,6 +24,13 @@ const emit = defineEmits<{
 }>()
 
 const { loading, fetchTajwid, error } = useTajwid()
+const {
+  content: quranContent,
+  loading: contentLoading,
+  error: contentError,
+  fetchContent,
+  clearContent,
+} = useQuranContent()
 const tajwidResponse = ref<TajwidResponse | null>(null)
 const sheetRef = ref<HTMLElement | null>(null)
 useMotionEntrance(sheetRef, 36)
@@ -35,6 +44,7 @@ const focusableSelector = [
   'input:not([disabled])',
   'select:not([disabled])',
   'textarea:not([disabled])',
+  'summary',
   '[tabindex]:not([tabindex="-1"])',
 ].join(',')
 
@@ -64,19 +74,36 @@ const tajwidAyahs = computed(() =>
 const tajwidTokens = computed(() => tajwidAyahs.value.flatMap((ayah) => ayah.tokens))
 
 watch(
+  () => [
+    props.open,
+    props.result.verse?.sourate_id,
+    props.result.verse?.start_verse,
+    props.result.verse?.end_verse,
+  ],
+  () => {
+    tajwidResponse.value = null
+    if (props.open && props.result.verse) {
+      void loadFrenchContent()
+    } else {
+      clearContent()
+    }
+  },
+  { immediate: true },
+)
+
+function loadFrenchContent() {
+  const verse = props.result.verse
+  if (verse) return fetchContent(verse.sourate_id, verse.start_verse, verse.end_verse)
+}
+
+watch(
   () => props.open,
-  async (isOpen) => {
+  (isOpen) => {
     document.body.style.overflow = isOpen ? 'hidden' : ''
 
     if (isOpen) {
       previouslyFocusedElement =
         document.activeElement instanceof HTMLElement ? document.activeElement : null
-      await nextTick()
-
-      if (props.open) {
-        closeButtonRef.value?.focus()
-      }
-
       return
     }
 
@@ -84,6 +111,14 @@ watch(
     tajwidResponse.value = null
   },
   { immediate: true },
+)
+
+watch(
+  [() => props.open, closeButtonRef],
+  ([isOpen, button]) => {
+    if (isOpen) button?.focus()
+  },
+  { flush: 'post' },
 )
 
 onBeforeUnmount(() => {
@@ -207,6 +242,35 @@ async function copyVerse() {
         </div>
 
         <div class="sheet-scroll">
+          <section v-if="result.verse" class="content-card">
+            <p class="content-label">Texte arabe</p>
+            <p class="arabic-verse-text" lang="ar" dir="rtl">{{ result.verse.text }}</p>
+          </section>
+
+          <section v-if="result.verse" class="content-card" :aria-busy="contentLoading">
+            <p v-if="contentLoading" class="content-status" role="status">Chargement du contenu français…</p>
+            <div v-if="quranContent" class="french-ayahs">
+              <QuranAyahContent
+                v-for="ayah in quranContent.ayahs"
+                :key="`${quranContent.surah_id}:${ayah.ayah}`"
+                :content="ayah"
+              />
+            </div>
+            <p v-if="contentError" class="content-status error-text" role="status">{{ contentError }}</p>
+            <p v-if="quranContent?.tafsir_status === 'unavailable'" class="content-status" role="status">
+              Les tafsirs sont temporairement indisponibles.
+            </p>
+            <button
+              v-if="contentError || quranContent?.tafsir_status === 'unavailable'"
+              type="button"
+              class="sheet-btn content-retry"
+              :disabled="contentLoading"
+              @click="loadFrenchContent"
+            >
+              Réessayer le chargement du contenu français
+            </button>
+          </section>
+
           <section v-if="result.transcription_text" class="content-card">
             <p class="content-label">Transcription brute</p>
             <p class="transcription-text">
@@ -431,6 +495,30 @@ async function copyVerse() {
   direction: rtl;
   text-align: right;
   color: #3f4f62;
+}
+
+.arabic-verse-text {
+  margin: 16px 0 0;
+  font-family: 'Amiri Quran', 'Amiri', serif;
+  font-size: 28px;
+  line-height: 2;
+  text-align: right;
+}
+
+.french-ayahs {
+  display: grid;
+  gap: 22px;
+}
+
+.content-status {
+  margin: 0;
+  line-height: 1.6;
+  color: #526274;
+}
+
+.french-ayahs + .content-status,
+.content-retry {
+  margin-top: 18px;
 }
 
 .action-card {

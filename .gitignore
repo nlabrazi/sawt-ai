@@ -29,6 +29,7 @@ ui/.playwright/
 .fleet
 .idea
 api/data/*.jsonl
+api/data/tafsir/
 .venv
 training/*
 

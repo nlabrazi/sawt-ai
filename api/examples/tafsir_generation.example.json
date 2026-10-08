@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "source": "ibn_kathir",
+  "source_language": "ar",
+  "source_edition": "",
+  "version": "",
+  "reuse_reference": "",
+  "passages": [
+    {
+      "source_surah_id": 1,
+      "source_start_ayah": 1,
+      "source_end_ayah": 1,
+      "source_reference": "",
+      "source_text": "",
+      "ayahs": [1]
+    }
+  ]
+}

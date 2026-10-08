@@ -1,6 +1,7 @@
 import type { Page } from '@playwright/test'
 import type { HadithSearchResponse } from '../../../app/types/hadith'
 import { hadithFixture } from '../../fixtures/hadith'
+import { emptyQuranContent } from '../../fixtures/quran-content'
 
 export interface MockVerseData {
   sourate_id: number
@@ -109,6 +110,8 @@ export async function setupMockApi(
     recognizeStatus?: number
     recognizeErrorDetail?: string
     tajwidResponse?: typeof defaultMockTajwid
+    quranContentResponse?: Record<string, unknown>
+    quranContentStatus?: number
   } = {},
 ) {
   // UI checks must not wait on external font or analytics services.
@@ -239,6 +242,33 @@ export async function setupMockApi(
         headers: corsHeaders,
         contentType: 'application/json',
         body: JSON.stringify(body),
+      })
+    },
+  )
+
+  await page.route(
+    (url) => url.pathname === '/quran/content',
+    async (route) => {
+      if (route.request().method() === 'OPTIONS') {
+        await route.fulfill({ status: 204, headers: corsHeaders })
+        return
+      }
+      const query = new URL(route.request().url()).searchParams
+      const status = options.quranContentStatus ?? 200
+      await route.fulfill({
+        status,
+        headers: { ...corsHeaders, 'Cache-Control': 'no-store' },
+        contentType: 'application/json',
+        body: JSON.stringify(
+          status >= 400
+            ? { detail: 'Contenu indisponible' }
+            : (options.quranContentResponse ??
+                emptyQuranContent(
+                  Number(query.get('surah_id')),
+                  Number(query.get('start_verse')),
+                  Number(query.get('end_verse')),
+                )),
+        ),
       })
     },
   )

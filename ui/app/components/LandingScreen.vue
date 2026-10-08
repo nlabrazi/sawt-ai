@@ -15,74 +15,48 @@ const bars = [14, 24, 38, 28, 48, 60, 42, 68, 42, 60, 48, 28, 38, 24, 14]
     <div class="landing-content">
       <MotionReveal class="product-animation" aria-hidden="true" :distance="10">
         <div class="signal-halo" />
-        <Motion
-          class="signal-orbit"
-          :initial="false"
-          :animate="{ rotate: canAnimate ? 360 : 0 }"
-          :transition="{ type: 'tween', duration: canAnimate ? 36 : 0, repeat: canAnimate ? Infinity : 0, ease: 'linear' }"
-        >
+        <Motion class="signal-orbit" :initial="false" :animate="{ rotate: canAnimate ? 360 : 0 }"
+          :transition="{ type: 'tween', duration: canAnimate ? 36 : 0, repeat: canAnimate ? Infinity : 0, ease: 'linear' }">
           <span class="orbit-dot" />
         </Motion>
         <div class="signal-disc">
           <div class="sound-wave">
-            <Motion
-              v-for="(height, index) in bars"
-              :key="index"
-              as="span"
-              :style="{ height: `${height}px` }"
+            <Motion v-for="(height, index) in bars" :key="index" as="span" :style="{ height: `${height}px` }"
               :initial="false"
               :animate="{ scaleY: canAnimate ? [0.45, 1, 0.45] : 0.65, opacity: canAnimate ? [0.55, 1, 0.55] : 1 }"
-              :transition="{ type: 'tween', duration: canAnimate ? 2.6 : 0, delay: canAnimate ? index * 0.09 : 0, repeat: canAnimate ? Infinity : 0, ease: 'easeInOut' }"
-            />
+              :transition="{ type: 'tween', duration: canAnimate ? 2.6 : 0, delay: canAnimate ? index * 0.09 : 0, repeat: canAnimate ? Infinity : 0, ease: 'easeInOut' }" />
           </div>
         </div>
-        <Motion
-          class="symbol-badge microphone-badge"
-          :initial="false"
-          :animate="{ y: canAnimate ? [0, -7, 0] : 0 }"
-          :transition="{ type: 'tween', duration: canAnimate ? 5 : 0, repeat: canAnimate ? Infinity : 0, ease: 'easeInOut' }"
-        ><Mic :size="25" :stroke-width="1.6" /></Motion>
-        <Motion
-          class="symbol-badge book-badge"
-          :initial="false"
-          :animate="{ y: canAnimate ? [0, 7, 0] : 0 }"
-          :transition="{ type: 'tween', duration: canAnimate ? 6 : 0, repeat: canAnimate ? Infinity : 0, ease: 'easeInOut' }"
-        ><BookOpen :size="25" :stroke-width="1.6" /></Motion>
+        <Motion class="symbol-badge microphone-badge" :initial="false" :animate="{ y: canAnimate ? [0, -7, 0] : 0 }"
+          :transition="{ type: 'tween', duration: canAnimate ? 5 : 0, repeat: canAnimate ? Infinity : 0, ease: 'easeInOut' }">
+          <Mic :size="25" :stroke-width="1.6" />
+        </Motion>
+        <Motion class="symbol-badge book-badge" :initial="false" :animate="{ y: canAnimate ? [0, 7, 0] : 0 }"
+          :transition="{ type: 'tween', duration: canAnimate ? 6 : 0, repeat: canAnimate ? Infinity : 0, ease: 'easeInOut' }">
+          <BookOpen :size="25" :stroke-width="1.6" />
+        </Motion>
       </MotionReveal>
       <MotionReveal :delay="0.08">
-        <h1 id="landing-title">Retrouvez les mots<br /><span>qui vous inspirent.</span></h1>
+        <h1 id="landing-title">Identifier un verset.<br /><span>Rechercher un hadith.</span></h1>
       </MotionReveal>
       <MotionReveal :delay="0.16">
         <p class="landing-description">
-        <span>Une récitation, un passage du Coran.</span>
-        <span>Quelques mots, un hadith à retrouver.</span>
-        <span>Sawt AI vous accompagne dans votre recherche.</span>
+          <span>Un outil de recherche consacré au Coran, parole d’Allah,</span>
+          <span>et aux hadiths du Prophète <span class="prophetic-blessing" lang="ar">ﷺ</span>.</span>
         </p>
       </MotionReveal>
       <MotionReveal class="landing-actions" :delay="0.24">
-        <Motion
-          as="button"
-          class="primary-action"
-          type="button"
-          :disabled="disabled"
+        <Motion as="button" class="primary-action" type="button" :disabled="disabled"
           :while-hover="canAnimate && !disabled ? { y: -3, scale: 1.025 } : undefined"
-          :while-press="canAnimate && !disabled ? { scale: 0.97 } : undefined"
-          :transition="spring"
-          @click="$emit('navigate', 'quran')"
-        >
-          <Mic :size="18" aria-hidden="true" /> Explorer le Coran
+          :while-press="canAnimate && !disabled ? { scale: 0.97 } : undefined" :transition="spring"
+          @click="$emit('navigate', 'quran')">
+          <Mic :size="18" aria-hidden="true" /> Identifier un verset
           <ArrowRight :size="17" aria-hidden="true" />
         </Motion>
-        <Motion
-          as="button"
-          class="secondary-action"
-          type="button"
-          :disabled="disabled"
+        <Motion as="button" class="secondary-action" type="button" :disabled="disabled"
           :while-hover="canAnimate && !disabled ? { y: -3 } : undefined"
-          :while-press="canAnimate && !disabled ? { scale: 0.97 } : undefined"
-          :transition="spring"
-          @click="$emit('navigate', 'hadith')"
-        >
+          :while-press="canAnimate && !disabled ? { scale: 0.97 } : undefined" :transition="spring"
+          @click="$emit('navigate', 'hadith')">
           <BookOpen :size="18" aria-hidden="true" /> Rechercher un hadith
         </Motion>
       </MotionReveal>
@@ -161,8 +135,16 @@ const bars = [14, 24, 38, 28, 48, 60, 42, 68, 42, 60, 48, 28, 38, 24, 14]
   box-shadow: 0 12px 30px rgba(0, 0, 0, .25);
 }
 
-.microphone-badge { left: 8px; top: 42px; }
-.book-badge { right: 8px; bottom: 34px; color: #a5b4fc; }
+.microphone-badge {
+  left: 8px;
+  top: 42px;
+}
+
+.book-badge {
+  right: 8px;
+  bottom: 34px;
+  color: #a5b4fc;
+}
 
 .sound-wave {
   display: flex;
@@ -200,6 +182,11 @@ h1 span {
   font-size: 15px;
   line-height: 1.6;
   text-wrap: balance;
+}
+
+.prophetic-blessing {
+  font-family: Amiri, serif;
+  font-size: 1.2em;
 }
 
 .landing-actions {
@@ -256,15 +243,38 @@ button:disabled {
 }
 
 @media (max-width: 640px) {
-  .landing-screen { padding: 24px 16px; }
-  .product-animation { height: 190px; margin-bottom: 20px; }
-  .signal-orbit { width: 186px; height: 186px; }
-  .landing-description { font-size: 14px; margin: 20px 0 24px; }
-  .landing-actions { flex-direction: column; align-items: center; }
-  button { width: min(100%, 280px); }
+  .landing-screen {
+    padding: 24px 16px;
+  }
+
+  .product-animation {
+    height: 190px;
+    margin-bottom: 20px;
+  }
+
+  .signal-orbit {
+    width: 186px;
+    height: 186px;
+  }
+
+  .landing-description {
+    font-size: 14px;
+    margin: 20px 0 24px;
+  }
+
+  .landing-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  button {
+    width: min(100%, 280px);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  button { transition: none; }
+  button {
+    transition: none;
+  }
 }
 </style>

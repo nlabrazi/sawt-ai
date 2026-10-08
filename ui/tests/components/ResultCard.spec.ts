@@ -1,8 +1,17 @@
 import { flushPromises, mount } from '@vue/test-utils'
+import { $fetch } from 'ofetch'
 
 import ResultCard from '~/components/ResultCard.vue'
+import { emptyQuranContent } from '../fixtures/quran-content'
+
+vi.mock('ofetch', () => ({ $fetch: vi.fn() }))
 
 describe('ResultCard', () => {
+  beforeEach(() => {
+    vi.mocked($fetch)
+      .mockReset()
+      .mockResolvedValue(emptyQuranContent(112, 1, 4))
+  })
   it('shows a compact passage reference without the full Arabic verse', () => {
     const wrapper = mount(ResultCard, {
       props: {
@@ -195,6 +204,7 @@ describe('ResultCard', () => {
     await flushPromises()
 
     expect(wrapper.find('.sheet-overlay').exists()).toBe(true)
+    wrapper.unmount()
   })
 
   it('distinguishes an unavailable imam service from an unknown imam result', () => {

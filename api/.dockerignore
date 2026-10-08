@@ -10,4 +10,5 @@ __pycache__/
 .env.*
 !.env.example
 evaluation/reports/
+data/tafsir/
 assets/hadith_index_meta.before-search-documents.json

@@ -1,4 +1,5 @@
 import { defineNuxtConfig } from 'nuxt/config'
+import { legalInformation } from './app/content/legal'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 const hmrClientPort = process.env.NUXT_HMR_CLIENT_PORT
@@ -9,10 +10,11 @@ const siteUrl = (process.env.NUXT_PUBLIC_SITE_URL || 'https://sawt-ai.nabster.de
   /\/$/,
   '',
 )
-const contactEmail = process.env.NUXT_PUBLIC_CONTACT_EMAIL?.trim() || ''
+const contactEmail = process.env.NUXT_PUBLIC_CONTACT_EMAIL?.trim() || legalInformation.contactEmail
+const web3formsAccessKey = process.env.NUXT_PUBLIC_WEB3FORMS_ACCESS_KEY?.trim() || ''
 const siteName = 'Sawt AI'
 const siteDescription =
-  'Identifiez un verset du Coran à partir d’un enregistrement audio grâce à l’intelligence artificielle.'
+  'Reconnaissance de versets du Coran à partir d’une récitation, recherche de hadiths et consultation des sources.'
 const socialImage = `${siteUrl}/assets/images/screenshot.png`
 const structuredData = {
   '@context': 'https://schema.org',
@@ -43,8 +45,13 @@ export default defineNuxtConfig({
     public: {
       apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
       contactEmail,
+      web3formsAccessKey,
       siteUrl,
     },
+  },
+  routeRules: {
+    '/privacy-policy': { redirect: { to: '/legal-notice#privacy', statusCode: 301 } },
+    '/privacy-policy/': { redirect: { to: '/legal-notice#privacy', statusCode: 301 } },
   },
   vite: {
     server: {
@@ -116,11 +123,6 @@ export default defineNuxtConfig({
         {
           type: 'application/ld+json',
           innerHTML: JSON.stringify(structuredData),
-        },
-        {
-          src: 'https://umami.nabster.dev/script.js',
-          defer: true,
-          'data-website-id': '6c8e5246-8c6c-4964-a20d-f8e66169aed6',
         },
       ],
     },

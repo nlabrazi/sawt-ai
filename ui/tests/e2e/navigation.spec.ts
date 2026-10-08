@@ -8,9 +8,9 @@ test.beforeEach(async ({ page }) => {
 
 test('presents the product and opens both tools from the landing CTAs', async ({ page }) => {
   await expect(
-    page.getByRole('heading', { name: 'Retrouvez les mots qui vous inspirent.' }),
+    page.getByRole('heading', { name: 'Identifier un verset. Rechercher un hadith.' }),
   ).toBeVisible()
-  await page.getByRole('button', { name: 'Explorer le Coran', exact: true }).click()
+  await page.getByRole('button', { name: 'Identifier un verset', exact: true }).click()
   await expect(page.locator('#recognition-title')).toBeVisible()
   await page.getByRole('button', { name: 'Sawt AI — Accueil et réinitialisation' }).click()
   await expect(page.locator('#landing-title')).toBeVisible()
