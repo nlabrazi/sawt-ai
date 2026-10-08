@@ -27,16 +27,25 @@ async function start() {
       theme: 'dark',
       size: 'compact',
       hl: 'fr',
-      callback: (token) => { failed.value = false; emit('verified', token) },
+      callback: (token) => {
+        failed.value = false
+        emit('verified', token)
+      },
       'expired-callback': () => emit('verified', ''),
-      'error-callback': () => { failed.value = true; emit('verified', '') },
+      'error-callback': () => {
+        failed.value = true
+        emit('verified', '')
+      },
     })
   } catch {
     if (mounted) failed.value = true
   }
 }
 
-onMounted(() => { mounted = true; void start() })
+onMounted(() => {
+  mounted = true
+  void start()
+})
 onBeforeUnmount(() => {
   mounted = false
   if (widget !== undefined) api?.remove(widget)

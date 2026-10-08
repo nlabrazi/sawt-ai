@@ -9,7 +9,8 @@ import { legalInformation } from '~/content/legal'
 
 // Structure et présentation reprises du composant Contact.vue du portfolio.
 const config = useRuntimeConfig()
-const contactEmail = String(config.public.contactEmail ?? '').trim() || legalInformation.contactEmail
+const contactEmail =
+  String(config.public.contactEmail ?? '').trim() || legalInformation.contactEmail
 const accessKey = String(config.public.web3formsAccessKey ?? '').trim()
 const form = ref<HTMLFormElement | null>(null)
 const formState = reactive({ name: '', email: '', subject: '', message: '' })
@@ -24,13 +25,24 @@ let requestController: AbortController | null = null
 
 const contactItems = [
   { label: 'E-mail', href: `mailto:${contactEmail}`, value: contactEmail, icon: '' },
-  { label: 'LinkedIn', href: 'https://fr.linkedin.com/in/nabil-labrazi', value: 'fr.linkedin.com/in/nabil-labrazi', icon: 'linkedin' },
-  { label: 'GitHub', href: 'https://github.com/nlabrazi', value: 'github.com/nlabrazi', icon: 'github' },
+  {
+    label: 'LinkedIn',
+    href: 'https://fr.linkedin.com/in/nabil-labrazi',
+    value: 'fr.linkedin.com/in/nabil-labrazi',
+    icon: 'linkedin',
+  },
+  {
+    label: 'GitHub',
+    href: 'https://github.com/nlabrazi',
+    value: 'github.com/nlabrazi',
+    icon: 'github',
+  },
   { label: 'X', href: 'https://x.com/Nabil71405502', value: 'x.com/Nabil', icon: 'x-twitter' },
 ]
 
 async function submitMessage() {
-  if (isSending.value || !ready.value || !accessKey || !form.value || !form.value.reportValidity()) return
+  if (isSending.value || !ready.value || !accessKey || !form.value || !form.value.reportValidity())
+    return
   captchaEnabled.value = true
   errorMessage.value = ''
   successMessage.value = ''
@@ -67,7 +79,8 @@ async function submitMessage() {
     Object.assign(formState, { name: '', email: '', subject: '', message: '' })
     successMessage.value = 'Votre message a été transmis.'
   } catch {
-    errorMessage.value = 'L’envoi n’a pas pu être confirmé. Veuillez réessayer ultérieurement ou utiliser l’adresse e-mail indiquée sur cette page.'
+    errorMessage.value =
+      'L’envoi n’a pas pu être confirmé. Veuillez réessayer ultérieurement ou utiliser l’adresse e-mail indiquée sur cette page.'
   } finally {
     isSending.value = false
     requestController = null
@@ -76,7 +89,9 @@ async function submitMessage() {
   }
 }
 
-onMounted(() => { ready.value = true })
+onMounted(() => {
+  ready.value = true
+})
 onBeforeUnmount(() => requestController?.abort())
 </script>
 

@@ -13,7 +13,9 @@ import { useHadithSearch } from '~/composables/useHadithSearch'
 const HadithSearchScreen = defineAsyncComponent(() => import('~/components/HadithSearchScreen.vue'))
 const FaqScreen = defineAsyncComponent(() => import('~/components/FaqScreen.vue'))
 const TafsirReviewScreen = defineAsyncComponent(() => import('~/components/TafsirReviewScreen.vue'))
-const TermsOfServiceScreen = defineAsyncComponent(() => import('~/components/TermsOfServiceScreen.vue'))
+const TermsOfServiceScreen = defineAsyncComponent(
+  () => import('~/components/TermsOfServiceScreen.vue'),
+)
 const LegalNoticeScreen = defineAsyncComponent(() => import('~/components/LegalNoticeScreen.vue'))
 const ContactScreen = defineAsyncComponent(() => import('~/components/ContactScreen.vue'))
 const pathname = useRequestURL().pathname.replace(/\/$/, '')

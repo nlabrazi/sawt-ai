@@ -13,7 +13,8 @@ const props = withDefaults(
   { showDocumentDetails: true },
 )
 const config = useRuntimeConfig()
-const contactEmail = String(config.public.contactEmail ?? '').trim() || legalInformation.contactEmail
+const contactEmail =
+  String(config.public.contactEmail ?? '').trim() || legalInformation.contactEmail
 const siteUrl = String(config.public.siteUrl || 'https://sawt-ai.nabster.dev').replace(/\/$/, '')
 const canonicalUrl = `${siteUrl}${props.path}`
 const pageTitle = `${props.title} — Sawt AI`
