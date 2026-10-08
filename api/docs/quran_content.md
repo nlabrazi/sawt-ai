@@ -1024,12 +1024,149 @@ Aucune traduction réelle n'a été lancée pour cette étape.
 
 Commit proposé : `feat: resume tafsir translation from saved progress`.
 
+## Étape 12 : récupération des originaux du pilote
+
+`api/scripts/import_tafsir_sources.py` prépare une archive privée par auteur
+à partir de **Content Sync**, avec les ressources arabes `14` et `91` déjà
+référencées. La traduction reste une commande séparée. L'import source ne
+consomme aucun caractère DeepL, ne modifie pas Supabase et n'expose rien au public.
+
+### Accès Quran Foundation
+
+La clé DeepL n'ouvre pas l'accès aux textes originaux. Créer une application
+**backend** dans la [Developer Console Quran Foundation](https://dev-console.quran.foundation/)
+et renseigner ses accès dans `api/.env` :
+
+```dotenv
+QF_CLIENT_ID=<identifiant de l'application>
+QF_CLIENT_SECRET=<secret de l'application>
+QF_ENV=prelive
+```
+
+Selon [le guide d'authentification officiel](https://api-docs.quran.com/docs/quickstart/),
+les nouveaux accès commencent en `prelive`. L'accès de production se demande
+dans la Console. Utiliser `QF_ENV=production` uniquement avec les accès de
+production correspondants ; le script ne change pas automatiquement de serveur.
+Si `14` ou `91` n'est pas disponible dans l'environnement autorisé, l'import
+échoue explicitement, sans remplacer l'ouvrage par une autre ressource.
+
+Vérification réelle du catalogue `prelive` le 8 octobre 2026 : les deux
+ressources arabes `14` et `91` sont absentes, et leur bootstrap Content Sync
+renvoie une liste vide. Le pilote actuel nécessite donc une autorisation de
+**production**, même s'il cible seulement Al-Fatiha et quelques versets
+d'Al-Baqara. La présence d'Ibn Kathir anglais abrégé (`169`) ou d'As-Sa‘di russe
+(`170`) dans `prelive` ne remplace pas les originaux arabes choisis.
+
+Le client HTTP envoie un `User-Agent` identifiant Sawt-AI pour tous les appels,
+y compris l'authentification. Le client Python générique était refusé par
+Cloudflare avec HTTP `403` et erreur `1010` avant même l'accès au catalogue ;
+la vérification avec cet en-tête donne HTTP `200` sur le catalogue et Content
+Sync. Un éventuel nouveau refus HTTP indique désormais l'environnement et
+le chemin concernés, sans afficher de secret ni de jeton.
+
+Ces variables restent dans le backend. Avec Docker, après modification de
+`api/.env`, recréer le conteneur pour qu'il les recharge :
+
+```bash
+docker compose up -d --force-recreate api
+```
+
+### Importer puis compter
+
+Depuis la racine du projet :
+
+```bash
+docker compose exec api python scripts/import_tafsir_sources.py --source ibn_kathir
+docker compose exec api python scripts/import_tafsir_sources.py --source as_saadi
+```
+
+Les sorties sont `api/data/tafsir/inputs/ibn_kathir-source.json` et
+`api/data/tafsir/inputs/as_saadi-source.json` sur l'hôte, accessibles sous
+`/app/data/tafsir/inputs/` dans le conteneur. `--output <nouveau chemin>` permet
+de choisir une autre destination. Une sortie existante est refusée avant tout
+appel réseau ; aucun import n'écrase un fichier source utilisé pour la review.
+
+Le script obtient un jeton OAuth avec le scope `content`, vérifie l'identité
+et la langue dans le catalogue, termine la pagination du bootstrap
+`tafsirs:<id>`, puis récupère le snapshot indiqué. Il conserve le checkpoint
+**de la dernière page**, distinct de la séquence du snapshot, qui peut être
+plus récent. Les adresses retournées sont contrôlées avant l'envoi des accès
+et les redirections HTTP sont refusées. Une réponse `401` renouvelle le jeton
+une seule fois. Les secrets et jetons d'accès ne sont jamais archivés.
+
+Content Sync renvoie un ouvrage complet au téléchargement, sans filtre de
+versets documenté. **Seuls les passages couvrant le pilote sont enregistrés** ;
+les autres lignes restent hors du dataset local et ne sont pas traduites.
+Le pilote reste 1:1–7, 2:1–5 et 2:255.
+
+La sélection utilise `start_verse_id`–`end_verse_id`, comme demandé par
+[le contrat des tafsirs Content Sync](https://api-docs.quran.com/docs/tutorials/content-sync/full-copies-and-recovery/#tafsir-records).
+La ligne porteuse peut être celle du dernier verset du groupe. Les références,
+les identifiants globaux et le nombre de versets sont comparés au catalogue
+local. Un chevauchement ambigu, une autre source ou une plage incohérente
+interrompt l'import. Les lignes vides ne constituent pas des commentaires ;
+les références sans contenu sont signalées, sans compléter le texte.
+
+Chaque archive contient les métadonnées de l'ouvrage, le checkpoint, les
+**lignes originales intégrales**, la liste des versets sans contenu et
+`generation_batch`, au format déjà accepté par DeepL. Les balises de présentation
+sont retirées pour la traduction, avec conservation des titres, mots et
+paragraphes ; le HTML brut reste dans l'archive. Une empreinte SHA-256 du
+contenu pilote et de ses métadonnées tient lieu de version de cette extraction,
+sans inventer une édition physique ou un numéro de version fournisseur.
+L'écriture est atomique, sans écrasement, en mode `0600`. Le répertoire reste
+exclu de Git et des images Docker.
+
+Le générateur accepte aussi ses anciens lots JSON directs. Pour une archive
+Quran Foundation, il reconstruit et compare le lot aux lignes sources avant
+tout appel DeepL. Le checkpoint de traduction porte sur ce lot ; les dates
+de récupération et le jeton Content Sync ne déclenchent pas une retraduction.
+Le texte original, les références de lignes et la version restent dans la
+provenance des brouillons français, comme pour un lot fourni manuellement.
+
+Compter les caractères à traduire après les deux imports :
+
+```bash
+docker compose exec api python scripts/generate_tafsir_fr.py --input /app/data/tafsir/inputs/ibn_kathir-source.json --dry-run
+docker compose exec api python scripts/generate_tafsir_fr.py --input /app/data/tafsir/inputs/as_saadi-source.json --dry-run
+```
+
+La génération et l'import Supabase suivent ensuite les commandes des étapes
+10 et 11 ; toutes les entrées françaises commencent en `need_review`.
+
+### Limite de cette étape
+
+Cette étape réalise le **bootstrap du pilote**. Elle archive le checkpoint
+pour la maintenance à venir et ne programme pas encore les synchronisations
+incrémentales. Avant une conservation durable et une publication du pilote,
+raccorder les mises à jour et retraits Content Sync aux contenus dérivés :
+[les conditions du fournisseur](https://api-docs.quran.com/legal/developer-terms/)
+demandent une synchronisation au moins tous les sept jours lorsque la connexion
+est disponible. Une correction de la source devra repasser par la review ;
+elle ne doit jamais remplacer automatiquement un texte français validé.
+
+### Vérification
+
+```bash
+api/.venv/bin/pytest -c api/pytest.ini api/tests/services/test_tafsir_source_import.py api/tests/services/test_tafsir_generation_service.py api/tests/services/test_tafsir_sources.py api/tests/integration/test_tafsir_pilot_workflow.py
+```
+
+Les réponses Quran Foundation et DeepL sont simulées avec des textes de test
+explicitement fictifs. Les tests couvrent l'authentification et la pagination,
+les groupes ancrés au dernier verset, les textes manquants, la séparation des
+sources, le refus des incohérences et liens externes, la sortie privée sans
+écrasement et le passage archive → traduction en `need_review`. Aucun corpus
+réel ni appel de traduction payant n'est exécuté pendant ces tests.
+
+Commit proposé : `feat: import original tafsir pilot through Content Sync`.
+
 ## Sources et génération restantes
 
 Le projet sait importer un français déjà préparé, conserver son texte source,
 le stocker en `need_review`, le faire relire et afficher uniquement le résultat
 validé. La commande manuelle de l'étape 10 ajoute la traduction DeepL des
-originaux arabes ; aucun corpus réel de tafsir n'est encore fourni.
+originaux arabes ; l'étape 12 permet leur récupération via Content Sync avec
+les accès du fournisseur. Aucun corpus réel de tafsir n'est fourni dans Git.
 Le format d'import actuel accepte une langue source
 `ar` ou `fr` ; une source anglaise nécessitera l'ajout explicite de `en` dans
 le contrat Pydantic d'import. La colonne JSON de provenance peut déjà conserver
@@ -1061,7 +1198,9 @@ source anglaise As-Sa‘di distincte, identifiée et réutilisable ; l'anglais
 Ibn Kathir du catalogue ne doit pas être présenté comme une édition intégrale.
 La langue, l'édition, la référence, la version et les conditions de réutilisation
 du texte effectivement fourni doivent être conservées. La génération est
-raccordée à l'import existant ; il reste à fournir les lots sources réels.
+raccordée à l'import existant ; les lots sources réels peuvent être préparés
+par la commande de l'étape 12. Leur maintenance Content Sync reste à raccorder
+avant publication durable.
 Les règles de stockage Quran Foundation
 mentionnées à l'étape 3 s'appliquent également aux ressources anglaises.
 
@@ -1076,7 +1215,8 @@ mentionnées à l'étape 3 s'appliquent également aux ressources anglaises.
 2. **Sources identifiées ; pipeline d'import local réalisé.** Les deux ressources
    arabes Quran Foundation sont référencées. L'import de lots locaux conserve
    les passages originaux et impose `need_review`. Fournir un corpus local
-   réutilisable ou connecter Content Sync pour préparer les lots réels, et
+   réutilisable ou utiliser le bootstrap Content Sync de l'étape 12 pour préparer
+   les lots réels, raccorder ensuite leur maintenance périodique et
    préciser les éditions françaises de review. Conserver le texte source
    et sa provenance dans des fichiers internes séparés. Commencer par l'import
    de français existant ou utiliser la génération DeepL de l'étape 10, qui traduit
@@ -1118,9 +1258,10 @@ traduction française de Rachid Maach sous la clé `french_rashid`.
 La version sera lue depuis les métadonnées du fournisseur, sans valeur inventée.
 
 Les ressources arabes des tafsirs sont référencées à l'étape 3. L'import local
-et la persistance sont prêts ; les corpus réellement réutilisables, l'éventuelle
-connexion Content Sync et les éditions physiques françaises de review restent
-à préciser avant l'import religieux. Aucun contenu religieux fictif n'est
+et la persistance sont prêts ; le bootstrap Content Sync prépare les originaux
+avec les accès fournisseur. Leur maintenance périodique et les éditions
+physiques françaises de review restent à préciser avant publication durable.
+Aucun contenu religieux fictif n'est
 ajouté aux données du projet.
 
 ## Validation progressive

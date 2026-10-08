@@ -17,6 +17,8 @@ from app.services.tafsir_generation_service import (
     validate_tafsir_generation_batch,
 )
 from app.services.tafsir_import_service import TafsirImportError
+from app.services.tafsir_source_import import read_archive_batch
+from app.services.tafsir_sources import PROVIDER, TafsirSourceError
 from app.services.tafsir_generation_progress import (
     TafsirProgressError,
     generation_fingerprint,
@@ -31,6 +33,11 @@ def read_source_batch(input_path: Path) -> dict:
     except (OSError, ValueError) as exc:
         raise TafsirGenerationError("Impossible de lire le lot source JSON.") from exc
     load_quran_catalog()
+    if isinstance(payload, dict) and payload.get("provider") == PROVIDER:
+        try:
+            return read_archive_batch(payload)
+        except TafsirSourceError as exc:
+            raise TafsirGenerationError(str(exc)) from exc
     return payload
 
 

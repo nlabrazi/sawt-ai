@@ -421,6 +421,12 @@ the same batch resumes after quota exhaustion or interruption. Configure
 the remaining source characters without API calls. No translation is
 triggered by recognition or public display, and no real tafsir corpus is bundled.
 See [the pilot generation guide](api/docs/quran_content.md#étape-10--génération-française-du-pilote-avec-deepl).
+`import_tafsir_sources.py` prepares each original Arabic pilot from Quran
+Foundation Content Sync. It keeps the selected raw passages and sync checkpoint
+in a private archive accepted by the generator. Configure backend-only
+`QF_CLIENT_ID`, `QF_CLIENT_SECRET` and `QF_ENV` with matching Developer Console
+credentials. No DeepL call or Supabase write occurs during source import. See
+[the source import guide](api/docs/quran_content.md#étape-12--récupération-des-originaux-du-pilote).
 Use the Supabase Project URL, not the Postgres connection string, for `SUPABASE_URL`.
 Use a server-side key only for `SUPABASE_API_KEY`, not an `anon` or `sb_publishable` key.
 
