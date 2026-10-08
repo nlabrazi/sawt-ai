@@ -140,34 +140,31 @@ test('offers a retry when the captcha script is blocked', async ({ page }) => {
 })
 
 for (const width of [375, 1440]) {
-  test(
-    `lays out the portfolio contact cards and identity fields at ${width}px`,
-    async ({ page }) => {
-      await setupMockApi(page)
-      await page.setViewportSize({ width, height: 900 })
-      await page.goto('/contact')
-      const cards = await page.locator('.contact-card').evaluateAll((nodes) =>
-        nodes.map((node) => {
-          const box = node.getBoundingClientRect()
-          return { x: box.x, y: box.y, width: box.width }
-        }),
-      )
-      expect(cards).toHaveLength(2)
-      const [left, right] = cards
-      if (!left || !right) throw new Error('Expected both contact cards')
-      expect(Math.abs(left.width - right.width)).toBeLessThan(2)
-      if (width >= 1024) {
-        expect(Math.abs(left.y - right.y)).toBeLessThan(2)
-        const name = await page.locator('#contact-name').boundingBox()
-        const email = await page.locator('#contact-email').boundingBox()
-        if (!name || !email) throw new Error('Expected visible identity fields')
-        expect(Math.abs(name.y - email.y)).toBeLessThan(2)
-      } else {
-        expect(right.y).toBeGreaterThan(left.y)
-      }
-      expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(
-        false,
-      )
-    },
-  )
+  test(`lays out the portfolio contact cards and identity fields at ${width}px`, async ({
+    page,
+  }) => {
+    await setupMockApi(page)
+    await page.setViewportSize({ width, height: 900 })
+    await page.goto('/contact')
+    const cards = await page.locator('.contact-card').evaluateAll((nodes) =>
+      nodes.map((node) => {
+        const box = node.getBoundingClientRect()
+        return { x: box.x, y: box.y, width: box.width }
+      }),
+    )
+    expect(cards).toHaveLength(2)
+    const [left, right] = cards
+    if (!left || !right) throw new Error('Expected both contact cards')
+    expect(Math.abs(left.width - right.width)).toBeLessThan(2)
+    if (width >= 1024) {
+      expect(Math.abs(left.y - right.y)).toBeLessThan(2)
+      const name = await page.locator('#contact-name').boundingBox()
+      const email = await page.locator('#contact-email').boundingBox()
+      if (!name || !email) throw new Error('Expected visible identity fields')
+      expect(Math.abs(name.y - email.y)).toBeLessThan(2)
+    } else {
+      expect(right.y).toBeGreaterThan(left.y)
+    }
+    expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false)
+  })
 }
