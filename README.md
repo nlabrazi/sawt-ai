@@ -128,6 +128,39 @@ second press or when the 90-second safety limit is reached.
 - The maximum audio duration expected by the UI is `90 seconds`
 - Imam detection depends on the model mounted from `./training`
 
+### Pages de confidentialité et conditions d’utilisation
+
+Les pages publiques `/privacy-policy` et `/terms-of-service` sont accessibles
+directement et depuis le footer. Leur contenu est rendu côté serveur et reste
+lisible sans JavaScript. Elles suivent le mécanisme de sélection par URL déjà
+utilisé pour `/internal/tafsir`.
+
+Ces pages s’adressent aux visiteurs de Sawt-AI et décrivent l’utilisation du site,
+ses limites et ses traitements de données. L’hébergement est OVHcloud, avec les
+serveurs du site situés en Allemagne. Cette localisation n’est pas attribuée aux
+services tiers Supabase, Umami ou Google Fonts.
+
+`ui/app/content/legal.ts` contient la date de mise à jour, l’hébergement et les
+coordonnées de l’éditeur. Les coordonnées non renseignées ne sont pas affichées.
+Le contact réutilise `NUXT_PUBLIC_CONTACT_EMAIL`, comme le footer. Avec Docker
+Compose, définir cette variable dans l’environnement de Compose (par exemple
+le `.env` à la racine), puis recréer le service `ui`.
+
+La politique décrit la suppression du fichier audio reçu en fin de requête et
+les retours volontaires conservés dans Supabase. Aucune durée de conservation
+ni procédure automatique de purge n’est inventée pour les retours, journaux ou
+statistiques. Actualiser le texte si la configuration de ces services évolue.
+
+Vérification locale : ouvrir `http://localhost:3000/privacy-policy` et
+`http://localhost:3000/terms-of-service`, tester les liens du footer et le retour
+à l’accueil. Les contrôles automatisés sont disponibles avec :
+
+```bash
+cd ui
+npm test -- tests/app.spec.ts tests/components/AppFooter.spec.ts
+npm run test:e2e -- tests/e2e/legal-pages.spec.ts tests/e2e/navigation.spec.ts tests/e2e/tafsir-review.spec.ts
+```
+
 ### 🧪 Tests
 
 Backend API test runner with your `py=/usr/bin/python3` alias:

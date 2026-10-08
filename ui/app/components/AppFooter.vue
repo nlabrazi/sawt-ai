@@ -15,6 +15,8 @@ const contactHref = contactEmail
       </p>
 
       <nav class="footer-links" aria-label="Liens utiles">
+        <a href="/privacy-policy">Confidentialité</a>
+        <a href="/terms-of-service">Conditions d’utilisation</a>
         <a href="https://github.com/nlabrazi/sawt-ai" target="_blank" rel="noreferrer">
           GitHub
         </a>

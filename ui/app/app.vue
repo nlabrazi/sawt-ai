@@ -13,7 +13,10 @@ import { useHadithSearch } from '~/composables/useHadithSearch'
 const HadithSearchScreen = defineAsyncComponent(() => import('~/components/HadithSearchScreen.vue'))
 const FaqScreen = defineAsyncComponent(() => import('~/components/FaqScreen.vue'))
 const TafsirReviewScreen = defineAsyncComponent(() => import('~/components/TafsirReviewScreen.vue'))
-const internalReview = useRequestURL().pathname.replace(/\/$/, '') === '/internal/tafsir'
+const PrivacyPolicyScreen = defineAsyncComponent(() => import('~/components/PrivacyPolicyScreen.vue'))
+const TermsOfServiceScreen = defineAsyncComponent(() => import('~/components/TermsOfServiceScreen.vue'))
+const pathname = useRequestURL().pathname.replace(/\/$/, '')
+const internalReview = pathname === '/internal/tafsir'
 useHead(
   internalReview
     ? {
@@ -65,6 +68,8 @@ async function returnHome() {
 
 <template>
   <TafsirReviewScreen v-if="internalReview" />
+  <PrivacyPolicyScreen v-else-if="pathname === '/privacy-policy'" />
+  <TermsOfServiceScreen v-else-if="pathname === '/terms-of-service'" />
   <MotionConfig v-else reduced-motion="user">
     <main class="page">
       <div class="page-content">

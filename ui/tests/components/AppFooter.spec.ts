@@ -25,6 +25,8 @@ describe('AppFooter', () => {
     const contactLink = wrapper.get('a[href^="mailto:"]')
 
     expect(contactLink.attributes('href')).toBe('mailto:contact@sawt-ai.example')
+    expect(wrapper.get('a[href="/privacy-policy"]').text()).toBe('Confidentialité')
+    expect(wrapper.get('a[href="/terms-of-service"]').text()).toBe('Conditions d’utilisation')
     expect(wrapper.html()).not.toContain('gmail.com')
   })
 
