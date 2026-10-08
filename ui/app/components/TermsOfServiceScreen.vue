@@ -4,7 +4,7 @@ import LegalPageShell from '~/components/LegalPageShell.vue'
 
 <template>
   <LegalPageShell
-    title="Conditions d’utilisation"
+    title="Conditions générales d’utilisation"
     description="Conditions d’accès à Sawt-AI, limites de la reconnaissance audio, sources religieuses et règles d’utilisation du service."
     path="/terms-of-service"
   >
@@ -118,7 +118,7 @@ import LegalPageShell from '~/components/LegalPageShell.vue'
       <p>
         Les traitements des enregistrements audio, recherches, signalements volontaires et
         statistiques sont décrits
-        dans la <a href="/privacy-policy">politique de confidentialité</a>.
+        dans la <a href="/legal-notice#privacy">politique de confidentialité</a>.
         Celle-ci précise les finalités des traitements, les modalités de conservation et
         les droits des personnes concernées.
       </p>

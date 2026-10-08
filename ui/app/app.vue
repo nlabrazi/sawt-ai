@@ -13,8 +13,9 @@ import { useHadithSearch } from '~/composables/useHadithSearch'
 const HadithSearchScreen = defineAsyncComponent(() => import('~/components/HadithSearchScreen.vue'))
 const FaqScreen = defineAsyncComponent(() => import('~/components/FaqScreen.vue'))
 const TafsirReviewScreen = defineAsyncComponent(() => import('~/components/TafsirReviewScreen.vue'))
-const PrivacyPolicyScreen = defineAsyncComponent(() => import('~/components/PrivacyPolicyScreen.vue'))
 const TermsOfServiceScreen = defineAsyncComponent(() => import('~/components/TermsOfServiceScreen.vue'))
+const LegalNoticeScreen = defineAsyncComponent(() => import('~/components/LegalNoticeScreen.vue'))
+const ContactScreen = defineAsyncComponent(() => import('~/components/ContactScreen.vue'))
 const pathname = useRequestURL().pathname.replace(/\/$/, '')
 const internalReview = pathname === '/internal/tafsir'
 useHead(
@@ -68,8 +69,9 @@ async function returnHome() {
 
 <template>
   <TafsirReviewScreen v-if="internalReview" />
-  <PrivacyPolicyScreen v-else-if="pathname === '/privacy-policy'" />
   <TermsOfServiceScreen v-else-if="pathname === '/terms-of-service'" />
+  <LegalNoticeScreen v-else-if="pathname === '/legal-notice'" />
+  <ContactScreen v-else-if="pathname === '/contact'" />
   <MotionConfig v-else reduced-motion="user">
     <main class="page">
       <div class="page-content">

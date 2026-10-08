@@ -128,38 +128,94 @@ second press or when the 90-second safety limit is reached.
 - The maximum audio duration expected by the UI is `90 seconds`
 - Imam detection depends on the model mounted from `./training`
 
-### Pages de confidentialité et conditions d’utilisation
+### Pages publiques et formulaire de contact
 
-Les pages publiques `/privacy-policy` et `/terms-of-service` sont accessibles
+Les pages publiques `/legal-notice` (mentions légales et confidentialité),
+`/terms-of-service` (CGU) et `/contact` sont accessibles
 directement et depuis le footer. Leur contenu est rendu côté serveur et reste
 lisible sans JavaScript. Elles suivent le mécanisme de sélection par URL déjà
 utilisé pour `/internal/tafsir`.
 
+Le footer propose uniquement deux documents légaux, « Mentions légales » et
+« CGU », ainsi que la page Contact. La confidentialité est intégrée à la section
+`/legal-notice#privacy`. Les anciennes adresses `/privacy-policy` et
+`/privacy-policy/` redirigent vers cette section avec un statut HTTP 301.
+
 Ces pages s’adressent aux visiteurs de Sawt-AI et décrivent l’utilisation du site,
 ses limites et ses traitements de données. L’hébergement est OVHcloud, avec les
 serveurs du site situés en Allemagne. Cette localisation n’est pas attribuée aux
-services tiers Supabase, Umami ou Google Fonts.
+services tiers Supabase, Web3Forms, Umami ou Google Fonts.
 
 `ui/app/content/legal.ts` contient la date de mise à jour, l’hébergement et les
 coordonnées de l’éditeur. Les coordonnées non renseignées ne sont pas affichées.
-Le contact réutilise `NUXT_PUBLIC_CONTACT_EMAIL`, comme le footer. Avec Docker
-Compose, définir cette variable dans l’environnement de Compose (par exemple
-le `.env` à la racine), puis recréer le service `ui`.
+L’éditeur est Nabil Labrazi et l’adresse de contact par défaut est
+`na.labrazi@gmail.com`. `NUXT_PUBLIC_CONTACT_EMAIL` permet de remplacer cette
+adresse dans la page Contact et les documents légaux.
+
+Le formulaire transmet les messages directement depuis le navigateur à
+Web3Forms. Dans le `.env` **à la racine du projet**, renseigner :
+
+```dotenv
+NUXT_PUBLIC_CONTACT_EMAIL=na.labrazi@gmail.com
+NUXT_PUBLIC_WEB3FORMS_ACCESS_KEY=cle_web3forms_associee_a_cette_adresse
+```
+
+Le fichier `.env.example` présente ces variables. Docker Compose lit le `.env`
+racine pour les transmettre au service `ui`. Le fichier `api/.env` est chargé
+uniquement par le backend et ne configure pas le formulaire de contact.
+
+La clé Web3Forms est une
+[clé publique prévue pour le frontend](https://docs.web3forms.com/getting-started/faq),
+associée à l’adresse destinataire chez Web3Forms. Une clé d’un autre site peut
+être réutilisée si elle correspond à cette adresse et si les éventuelles
+restrictions de domaine autorisent Sawt-AI. Modifier `NUXT_PUBLIC_CONTACT_EMAIL`
+seul ne change pas le destinataire du formulaire.
+
+Après une modification de ces variables avec Docker Compose :
+
+```bash
+docker compose up -d --force-recreate --no-deps ui
+```
+
+La page reprend la structure et les styles du
+[composant Contact du portfolio](https://github.com/nlabrazi/portfolio-3d/blob/ac175ee9c1bf2741a2acb7628d4478dc3494d2fa/app/components/sections/Contact.vue) :
+deux cartes de même largeur, coordonnées à gauche, formulaire à droite, nom et
+e-mail côte à côte sur ordinateur, bouton dégradé et hCaptcha chargé lors de
+l’interaction. Les styles Tailwind sont adaptés en CSS local pour conserver
+les dépendances de Sawt-AI. Les icônes de marque reprises du portfolio sont
+issues de Font Awesome Free, par Fonticons, Inc. ([CC BY 4.0](https://creativecommons.org/licenses/by/4.0/)).
+
+Sans clé, la présentation reste visible mais le formulaire est désactivé ; le
+contact par e-mail reste accessible. Le formulaire présente quatre champs
+obligatoires, empêche les envois simultanés et conserve les champs en cas
+d’échec. Une nouvelle vérification hCaptcha est requise après chaque tentative.
+La clé de site hCaptcha partagée de Web3Forms Free est utilisée, comme dans le
+portfolio ; aucune clé hCaptcha personnelle supplémentaire n’est nécessaire.
+Il n’effectue aucune relance automatique. Une confirmation n’est affichée
+qu’après une réponse positive de Web3Forms. Sans JavaScript, les coordonnées
+restent lisibles et le contact est possible par e-mail.
 
 La politique décrit la suppression du fichier audio reçu en fin de requête et
 les retours volontaires conservés dans Supabase. Aucune durée de conservation
 ni procédure automatique de purge n’est inventée pour les retours, journaux ou
-statistiques. Actualiser le texte si la configuration de ces services évolue.
+statistiques. Elle précise également le traitement des messages de contact par
+Web3Forms, hCaptcha et la messagerie de l’éditeur. Actualiser le texte si la configuration
+de ces services évolue.
 
-Vérification locale : ouvrir `http://localhost:3000/privacy-policy` et
-`http://localhost:3000/terms-of-service`, tester les liens du footer et le retour
+Vérification locale : ouvrir les trois pages sur `http://localhost:3000`,
+tester les liens du footer à 320 et 375 pixels de largeur, puis le retour
 à l’accueil. Les contrôles automatisés sont disponibles avec :
 
 ```bash
 cd ui
-npm test -- tests/app.spec.ts tests/components/AppFooter.spec.ts
-npm run test:e2e -- tests/e2e/legal-pages.spec.ts tests/e2e/navigation.spec.ts tests/e2e/tafsir-review.spec.ts
+npm test -- tests/app.spec.ts tests/components/AppFooter.spec.ts tests/components/ContactScreen.spec.ts
+PLAYWRIGHT_BASE_URL=http://localhost:3100 npm run test:e2e -- tests/e2e/legal-pages.spec.ts tests/e2e/contact.spec.ts tests/e2e/navigation.spec.ts
 ```
+
+Playwright configure une clé factice lorsqu’il démarre son serveur ; les tests
+de contact simulent Web3Forms et hCaptcha et n’envoient aucun e-mail. Si un serveur existant
+est réutilisé sans clé configurée, les tests d’envoi sont ignorés. Utiliser un port
+libre, comme `3100`, pour tester le formulaire avec le serveur dédié.
 
 ### 🧪 Tests
 
@@ -501,7 +557,7 @@ See the full license in [`LICENSE.txt`](https://en.wikipedia.org/wiki/MIT_Licens
 ### 📬 Contact
 
 - 🛟 [Support and bug reports][issues-url]
-- 📧 Configure `NUXT_PUBLIC_CONTACT_EMAIL` with the branded Sawt mailbox before deployment; no personal email is bundled in the application
+- 📧 [Contact Sawt-AI](https://sawt-ai.nabster.dev/contact) — the email can be overridden with `NUXT_PUBLIC_CONTACT_EMAIL`
 - 📁 [Project Repository](https://github.com/nlabrazi/sawt-ai)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>

@@ -26,6 +26,7 @@ export default defineConfig({
     },
   ],
   webServer: {
+    env: { NUXT_PUBLIC_WEB3FORMS_ACCESS_KEY: 'web3forms-e2e-test-key' },
     command: `npm run dev -- --port ${new URL(baseURL).port || '3000'}`,
     url: baseURL,
     reuseExistingServer: !process.env.CI,

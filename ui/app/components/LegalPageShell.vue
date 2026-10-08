@@ -3,13 +3,17 @@ import { useHead, useRuntimeConfig } from '#app'
 import AppFooter from '~/components/AppFooter.vue'
 import { legalInformation } from '~/content/legal'
 
-const props = defineProps<{
-  title: string
-  description: string
-  path: '/privacy-policy' | '/terms-of-service'
-}>()
+const props = withDefaults(
+  defineProps<{
+    title: string
+    description: string
+    path: '/terms-of-service' | '/legal-notice' | '/contact'
+    showDocumentDetails?: boolean
+  }>(),
+  { showDocumentDetails: true },
+)
 const config = useRuntimeConfig()
-const contactEmail = String(config.public.contactEmail ?? '').trim()
+const contactEmail = String(config.public.contactEmail ?? '').trim() || legalInformation.contactEmail
 const siteUrl = String(config.public.siteUrl || 'https://sawt-ai.nabster.dev').replace(/\/$/, '')
 const canonicalUrl = `${siteUrl}${props.path}`
 const pageTitle = `${props.title} — Sawt AI`
@@ -32,23 +36,23 @@ useHead({
   <div class="legal-page">
     <header class="legal-header">
       <a href="/">← Retour à Sawt AI</a>
-      <nav aria-label="Documents légaux">
-        <a href="/privacy-policy" :aria-current="path === '/privacy-policy' ? 'page' : undefined">
-          Confidentialité
+      <nav v-if="showDocumentDetails" aria-label="Documents légaux">
+        <a href="/legal-notice" :aria-current="path === '/legal-notice' ? 'page' : undefined">
+          Mentions légales
         </a>
         <a href="/terms-of-service" :aria-current="path === '/terms-of-service' ? 'page' : undefined">
-          Conditions d’utilisation
+          CGU
         </a>
       </nav>
     </header>
 
     <main id="legal-content" class="legal-content">
       <h1>{{ title }}</h1>
-      <p class="updated-at">
+      <p v-if="showDocumentDetails" class="updated-at">
         Dernière mise à jour :
         <time :datetime="legalInformation.updatedAt">{{ legalInformation.updatedAtLabel }}</time>.
       </p>
-      <section aria-labelledby="site-information-title">
+      <section v-if="showDocumentDetails" aria-labelledby="site-information-title">
         <h2 id="site-information-title">Informations sur le site</h2>
         <p v-if="legalInformation.publisher.name">
           Éditeur et responsable des traitements :
@@ -67,7 +71,7 @@ useHead({
           Les demandes relatives au service ou aux données personnelles peuvent être adressées à :
           <a :href="`mailto:${contactEmail}`">{{ contactEmail }}</a>.
         </p>
-        <p v-else>L’éditeur peut être contacté au moyen du lien « Contact » figurant en pied de page.</p>
+        <p>Les demandes peuvent également être adressées au moyen de la <a href="/contact">page Contact</a>.</p>
       </section>
 
       <slot />
@@ -169,6 +173,21 @@ useHead({
 
 .legal-content :deep(p) {
   margin-bottom: 12px;
+}
+
+.legal-content :deep(#privacy article + article) {
+  margin-top: 28px;
+}
+
+.legal-content :deep(h3) {
+  margin: 0 0 12px;
+  color: #e4edfa;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.legal-content :deep(#privacy) {
+  scroll-margin-top: 24px;
 }
 
 .legal-content :deep(li) {

@@ -2,6 +2,7 @@ type RuntimeConfig = {
   public: {
     apiBaseUrl: string
     contactEmail?: string
+    web3formsAccessKey?: string
     siteUrl?: string
   }
 }

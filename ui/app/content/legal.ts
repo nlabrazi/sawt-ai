@@ -4,9 +4,10 @@ export const legalInformation = {
   updatedAt: '2026-10-08',
   updatedAtLabel: '8 octobre 2026',
   publisher: {
-    name: '',
+    name: 'Nabil Labrazi',
     postalAddress: '',
   },
+  contactEmail: 'na.labrazi@gmail.com',
   hosting: {
     provider: 'OVHcloud',
     country: 'Allemagne',

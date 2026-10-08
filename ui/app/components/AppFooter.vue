@@ -1,35 +1,15 @@
-<script setup lang="ts">
-import { useRuntimeConfig } from '#app'
-
-const contactEmail = String(useRuntimeConfig().public.contactEmail ?? '').trim()
-const contactHref = contactEmail
-  ? `mailto:${contactEmail}`
-  : 'https://github.com/nlabrazi/sawt-ai/issues/new'
-</script>
-
 <template>
   <footer class="app-footer">
     <div class="footer-inner">
       <p class="footer-brand">
-        © 2026 <a href="/" aria-label="Accueil Sawt AI">Sawt AI</a>
+        <span>© 2026 <a href="/" aria-label="Accueil Sawt AI">Sawt AI</a>.</span>
+        <span>Tous droits réservés.</span>
       </p>
 
       <nav class="footer-links" aria-label="Liens utiles">
-        <a href="/privacy-policy">Confidentialité</a>
-        <a href="/terms-of-service">Conditions d’utilisation</a>
-        <a href="https://github.com/nlabrazi/sawt-ai" target="_blank" rel="noreferrer">
-          GitHub
-        </a>
-        <a href="https://nabster.dev" target="_blank" rel="noreferrer">
-          Portfolio
-        </a>
-        <a
-          :href="contactHref"
-          :target="contactEmail ? undefined : '_blank'"
-          :rel="contactEmail ? undefined : 'noreferrer'"
-        >
-          Contact
-        </a>
+        <a href="/legal-notice">Mentions légales</a>
+        <a href="/terms-of-service" aria-label="Conditions générales d’utilisation">CGU</a>
+        <a href="/contact">Contact</a>
       </nav>
     </div>
   </footer>
@@ -39,7 +19,8 @@ const contactHref = contactEmail
 .app-footer {
   position: relative;
   z-index: 1;
-  padding: 0 max(20px, env(safe-area-inset-right, 0px)) calc(12px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
+  width: 100%;
+  padding: 12px max(20px, env(safe-area-inset-right, 0px)) calc(16px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
 }
 
 .footer-inner {
@@ -49,12 +30,16 @@ const contactHref = contactEmail
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px 24px;
 }
 
 .footer-brand {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
   margin: 0;
   font-size: 13px;
+  line-height: 1.6;
   color: #8c9db4;
 }
 
@@ -66,7 +51,9 @@ const contactHref = contactEmail
 .footer-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0 18px;
 }
 
 .footer-links a {
@@ -83,11 +70,27 @@ const contactHref = contactEmail
   color: #fff;
 }
 
+.footer-links a:focus-visible,
+.footer-brand a:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 4px;
+}
+
 @media (max-width: 640px) {
   .footer-inner {
+    flex-direction: column;
+    gap: 6px;
+    text-align: center;
+  }
+
+  .footer-brand {
     justify-content: center;
-    flex-wrap: wrap;
-    gap: 4px 16px;
+  }
+
+  .footer-links {
+    width: 100%;
+    justify-content: center;
+    gap: 0 16px;
   }
 }
 
