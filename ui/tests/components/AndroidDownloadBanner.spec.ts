@@ -17,12 +17,12 @@ describe('Android download', () => {
     })
   })
 
-  it('offers a direct APK download and installation instructions', () => {
+  it('offers a direct APK download with a separate beta label', () => {
     const wrapper = mount(AndroidDownloadBanner)
     expect(wrapper.get('a').attributes('href')).toBe('/downloads/sawt-ai-android.apk')
     expect(wrapper.get('a').attributes('download')).toBe('sawt-ai-android.apk')
-    expect(wrapper.text()).toContain('Télécharger l’application Android')
-    expect(wrapper.text()).toContain('autorisez l’installation')
+    expect(wrapper.get('a').attributes('aria-label')).toBe('Télécharger l’application Android')
+    expect(wrapper.get('aside > .beta-label').text()).toBe('Bêta')
   })
 
   it('hides the download inside the Android app', () => {

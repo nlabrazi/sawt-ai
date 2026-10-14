@@ -34,6 +34,12 @@ import LegalPageShell from '~/components/LegalPageShell.vue'
         Le code du projet est soumis à sa licence propre. La mention « Tous droits réservés »
         ne modifie pas les droits accordés par cette licence ni ceux attachés aux contenus de tiers.
       </p>
+      <p>
+        Le robot Android est reproduit à partir d’une œuvre créée et partagée par Google,
+        utilisée selon les conditions de la
+        <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noreferrer">licence Creative Commons Attribution 3.0</a>.
+        Android est une marque de Google LLC.
+      </p>
     </section>
 
     <section aria-labelledby="legal-data-title">
