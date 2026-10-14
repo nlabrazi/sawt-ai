@@ -102,7 +102,14 @@ cd sawt-ai
 docker compose up --build
 ```
 
-### ▶️ Usage
+### 📱 Android
+
+Une version Android bêta embarque l'interface Nuxt avec Capacitor et utilise
+la même API FastAPI. Le bouton de téléchargement est disponible sur le site.
+Voir le [guide Android](ui/ANDROID.md) pour la génération des APK signés,
+la conservation de la clé, les tests et le déploiement de la bêta sur le VPS.
+
+### ▶️ Usage web
 
 1. Open `http://localhost:3000`
 2. Press the central microphone once to start recording

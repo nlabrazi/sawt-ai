@@ -175,3 +175,62 @@ production lit aussi les références du `tsconfig.json` racine : le script
 le cache de compilation web. Il est appelé avant la génération Android et les
 tests de bout en bout. Un ancien cache Docker avec des permissions différentes
 a été conservé dans `.cache/nuxt-before-android` sur le poste de travail.
+
+## Bêta publiée le 14 octobre 2026
+
+Version `0.1.0-beta.1`, versionCode `1`, sources applicatives du commit
+`736b458`. Le bouton et les fichiers sont accessibles sur
+<https://sawt-ai.nabster.dev>, avec l'APK à
+<https://sawt-ai.nabster.dev/downloads/sawt-ai-android.apk>.
+Le SHA-256 de l'APK téléchargé a été comparé à l'artefact local, puis sa
+signature a été vérifiée de nouveau. Le préflight `POST /recognize` depuis
+`https://localhost` est accepté et le contenu de `/health` est identique à
+celui d'avant le déploiement.
+
+La publication utilise un snapshot du build Nuxt validé, distinct du checkout
+`master` du VPS :
+
+- snapshot : `/srv/apps/sawt-ai/releases/android-736b458` ;
+- image active : `sawt-ai-ui:android-736b458` ;
+- override : `/srv/apps/sawt-ai/docker-compose.android-beta.yml` ;
+- APK persistants : `/srv/apps/sawt-ai/data/android` ;
+- sauvegarde de l'environnement et Compose de retour arrière :
+  `/srv/apps/sawt-ai/data/android-private` (permissions privées) ;
+- image web précédente conservée : `sawt-ai-ui:before-android-736b458`.
+
+Les 1,3 Go de cache des modèles de l'API ont été conservés avant recréation et
+sont montés depuis `data/android-model-cache` dans `/root/.cache`. Le volume
+Hadith existant reste présent. Le code du backend n'a pas été remplacé.
+
+Pour recréer les services de cette bêta depuis `/srv/apps/sawt-ai` :
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.android-beta.yml up -d --no-deps --no-build sawt-ui sawt-api
+```
+
+Pour revenir à la configuration d'avant cette publication, si aucune autre
+modification d'environnement n'a été appliquée depuis :
+
+```bash
+cp data/android-private/api-env-before-android-736b458 repo/api/.env
+docker compose -f docker-compose.yml -f data/android-private/rollback-compose.yml up -d --no-deps --no-build sawt-ui sawt-api
+```
+
+Le `deploy.sh` historique utilise seulement le Compose principal : il n'active
+pas ce snapshot bêta. Après intégration des commits applicatifs dans `master`,
+recopier les téléchargements persistants dans `repo/ui/public/downloads` avant
+le build standard, et conserver le montage du cache des modèles dans la
+configuration de production. Le Dockerfile.vps auparavant créé manuellement
+sur le VPS devra être sauvegardé si Git le signale comme fichier non suivi
+entrant en conflit avec le fichier désormais versionné.
+
+Validation effectuée : 217 tests unitaires, suite de 54 tests navigateur avec
+revalidation ciblée du contact, lint/formatage, builds web/debug/release,
+Android Lint et téléchargement HTTPS signé. La détection d'un téléphone via
+ADB a été refusée : le micro, les interruptions et l'affichage natif doivent
+encore être validés sur appareil avant de promouvoir la bêta.
+
+Le SDK 36 utilisé sur le poste est dans `/tmp/sawt-android-sdk` et Java 21 dans
+`/home/kaox/.local/share/nexus/android/jdk-21`. Pour les prochaines compilations,
+installer le SDK dans un emplacement persistant avec Android Studio et
+configurer `ANDROID_HOME` / `JAVA_HOME` selon le poste.
