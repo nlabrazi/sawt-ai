@@ -1,6 +1,8 @@
 node_modules
 .nuxt
 .nuxt-android
+.nuxt-e2e
+.nuxt-web-release
 .output
 .output-android
 .android-release

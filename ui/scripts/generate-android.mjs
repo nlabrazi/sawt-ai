@@ -3,6 +3,13 @@ import { rmSync } from 'node:fs'
 import { resolveMobileApiUrl } from '../config/mobile.mjs'
 
 const apiBaseUrl = resolveMobileApiUrl(process.env.NUXT_PUBLIC_API_BASE_URL)
+const prepared = spawnSync(process.execPath, ['scripts/prepare-types.mjs'], {
+  cwd: new URL('..', import.meta.url),
+  stdio: 'inherit',
+  env: process.env,
+})
+if (prepared.error) throw prepared.error
+if (prepared.status !== 0) process.exit(prepared.status ?? 1)
 const result = spawnSync(process.execPath, ['node_modules/nuxt/bin/nuxt.mjs', 'generate'], {
   cwd: new URL('..', import.meta.url),
   stdio: 'inherit',

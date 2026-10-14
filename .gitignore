@@ -4,6 +4,8 @@
 .nuxt
 .nuxt-build
 .nuxt-android
+.nuxt-e2e
+.nuxt-web-release
 .output-android
 .nitro
 .cache

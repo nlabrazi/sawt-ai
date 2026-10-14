@@ -1,4 +1,6 @@
 import { defineNuxtConfig } from 'nuxt/config'
+import { fileURLToPath } from 'node:url'
+import { dirname, resolve } from 'node:path'
 import { legalInformation } from './app/content/legal'
 import { resolveMobileApiUrl } from './config/mobile.mjs'
 
@@ -8,6 +10,7 @@ const hmrHost = process.env.NUXT_HMR_HOST
 const isDevelopment = process.env.NODE_ENV === 'development'
 const usePolling = process.env.CHOKIDAR_USEPOLLING === 'true'
 const isAndroidBuild = process.env.SAWT_BUILD_TARGET === 'android'
+const buildDirectory = isAndroidBuild ? '.nuxt-android' : process.env.SAWT_NUXT_BUILD_DIR || '.nuxt'
 const siteUrl = (process.env.NUXT_PUBLIC_SITE_URL || 'https://sawt-ai.nabster.dev').replace(
   /\/$/,
   '',
@@ -36,10 +39,10 @@ const structuredData = {
 }
 
 export default defineNuxtConfig({
+  buildDir: buildDirectory,
   ...(isAndroidBuild
     ? {
         ssr: false,
-        buildDir: '.nuxt-android',
         nitro: {
           output: {
             dir: '.output-android',
@@ -65,6 +68,7 @@ export default defineNuxtConfig({
       contactEmail,
       web3formsAccessKey,
       siteUrl,
+      androidDownloadUrl: process.env.NUXT_PUBLIC_ANDROID_DOWNLOAD_URL?.trim() || '',
     },
   },
   routeRules: isAndroidBuild
@@ -74,6 +78,7 @@ export default defineNuxtConfig({
         '/privacy-policy/': { redirect: { to: '/legal-notice#privacy', statusCode: 301 } },
       },
   vite: {
+    tsconfig: resolve(dirname(fileURLToPath(import.meta.url)), buildDirectory, 'tsconfig.app.json'),
     server: {
       hmr: {
         ...(hmrClientPort ? { clientPort: Number(hmrClientPort) } : {}),
