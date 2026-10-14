@@ -1,11 +1,13 @@
 import { defineNuxtConfig } from 'nuxt/config'
 import { legalInformation } from './app/content/legal'
+import { resolveMobileApiUrl } from './config/mobile.mjs'
 
 // https://nuxt.com/docs/api/configuration/nuxt-config
 const hmrClientPort = process.env.NUXT_HMR_CLIENT_PORT
 const hmrHost = process.env.NUXT_HMR_HOST
 const isDevelopment = process.env.NODE_ENV === 'development'
 const usePolling = process.env.CHOKIDAR_USEPOLLING === 'true'
+const isAndroidBuild = process.env.SAWT_BUILD_TARGET === 'android'
 const siteUrl = (process.env.NUXT_PUBLIC_SITE_URL || 'https://sawt-ai.nabster.dev').replace(
   /\/$/,
   '',
@@ -34,6 +36,20 @@ const structuredData = {
 }
 
 export default defineNuxtConfig({
+  ...(isAndroidBuild
+    ? {
+        ssr: false,
+        buildDir: '.nuxt-android',
+        nitro: {
+          output: {
+            dir: '.output-android',
+            publicDir: '.output-android/public',
+            serverDir: '.output-android/server',
+          },
+          prerender: { crawlLinks: false, routes: ['/'] },
+        },
+      }
+    : {}),
   compatibilityDate: '2025-07-15',
   modules: ['motion-v/nuxt'],
   devtools: { enabled: isDevelopment },
@@ -43,16 +59,20 @@ export default defineNuxtConfig({
   },
   runtimeConfig: {
     public: {
-      apiBaseUrl: process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
+      apiBaseUrl: isAndroidBuild
+        ? resolveMobileApiUrl(process.env.NUXT_PUBLIC_API_BASE_URL)
+        : process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
       contactEmail,
       web3formsAccessKey,
       siteUrl,
     },
   },
-  routeRules: {
-    '/privacy-policy': { redirect: { to: '/legal-notice#privacy', statusCode: 301 } },
-    '/privacy-policy/': { redirect: { to: '/legal-notice#privacy', statusCode: 301 } },
-  },
+  routeRules: isAndroidBuild
+    ? {}
+    : {
+        '/privacy-policy': { redirect: { to: '/legal-notice#privacy', statusCode: 301 } },
+        '/privacy-policy/': { redirect: { to: '/legal-notice#privacy', statusCode: 301 } },
+      },
   vite: {
     server: {
       hmr: {

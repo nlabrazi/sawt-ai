@@ -8,6 +8,7 @@
     "format": "biome format . --write",
     "format:check": "biome check . --formatter-enabled=true --linter-enabled=false --assist-enabled=false --max-diagnostics=none",
     "generate": "nuxt generate",
+    "generate:android": "node scripts/generate-android.mjs",
     "lint": "biome lint . --max-diagnostics=none --error-on-warnings",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare",

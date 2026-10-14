@@ -3,6 +3,8 @@
 .data
 .nuxt
 .nuxt-build
+.nuxt-android
+.output-android
 .nitro
 .cache
 dist
