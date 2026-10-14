@@ -269,4 +269,52 @@ describe('useMicrophoneRecorder', () => {
     expect(recorder.isRecording.value).toBe(true)
     recorder.cleanup()
   })
+
+  it('does not retry when microphone access is denied', async () => {
+    const { getUserMedia } = setupRecorderEnvironment()
+    getUserMedia.mockRejectedValue(new DOMException('Denied', 'NotAllowedError'))
+    const recorder = useMicrophoneRecorder(ref(30))
+    await recorder.startRecording()
+    expect(getUserMedia).toHaveBeenCalledTimes(1)
+    expect(recorder.isRecording.value).toBe(false)
+    expect(recorder.micError.value).toContain('refusé')
+  })
+
+  it('releases the microphone when the document goes into the background', async () => {
+    const { stopTrack } = setupRecorderEnvironment()
+    const scope = effectScope()
+    const recorder = scope.run(() => useMicrophoneRecorder(ref(30)))
+    if (!recorder) throw new Error('Recorder scope was not created')
+    await recorder.startRecording()
+    vi.spyOn(document, 'hidden', 'get').mockReturnValue(true)
+    document.dispatchEvent(new Event('visibilitychange'))
+    expect(recorder.isRecording.value).toBe(false)
+    expect(recorder.micError.value).toContain('interrompu')
+    expect(stopTrack).toHaveBeenCalledTimes(1)
+    scope.stop()
+    vi.restoreAllMocks()
+  })
+
+  it('releases a late permission grant after the app goes into the background', async () => {
+    const { stopTrack, getUserMedia } = setupRecorderEnvironment()
+    let grant!: (stream: MediaStream) => void
+    getUserMedia.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          grant = resolve
+        }),
+    )
+    const scope = effectScope()
+    const recorder = scope.run(() => useMicrophoneRecorder(ref(30)))
+    if (!recorder) throw new Error('Recorder scope was not created')
+    const pending = recorder.startRecording()
+    vi.spyOn(document, 'hidden', 'get').mockReturnValue(true)
+    document.dispatchEvent(new Event('visibilitychange'))
+    grant({ getTracks: () => [{ stop: stopTrack }] } as unknown as MediaStream)
+    await pending
+    expect(recorder.isRecording.value).toBe(false)
+    expect(stopTrack).toHaveBeenCalledTimes(1)
+    scope.stop()
+    vi.restoreAllMocks()
+  })
 })

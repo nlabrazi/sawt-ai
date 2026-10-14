@@ -7,6 +7,8 @@
 // - expose un compteur simple pour l'UI
 // - expose un niveau audio temps réel pour animer l'UI
 
+import { App } from '@capacitor/app'
+import { Capacitor, type PluginListenerHandle } from '@capacitor/core'
 import { computed, getCurrentScope, onScopeDispose, ref, type Ref } from 'vue'
 
 function resolveRecordedExtension(mimeType: string) {
@@ -58,6 +60,7 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
   let animationFrameId: number | null = null
   let stopPromise: Promise<File | null> | null = null
   let recordingVersion = 0
+  let requestingMicrophone = false
 
   function getSupportedMimeType() {
     const candidates = [
@@ -174,11 +177,13 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
   }
 
   async function startRecording() {
-    if (isFinalizingRecording.value || stopPromise) return
+    if (requestingMicrophone || isRecording.value || isFinalizingRecording.value || stopPromise)
+      return
 
     const activeVersion = ++recordingVersion
     micError.value = null
     resetRecordingState()
+    requestingMicrophone = true
 
     try {
       if (!window.isSecureContext) {
@@ -202,7 +207,9 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
       let stream: MediaStream
       try {
         stream = await navigator.mediaDevices.getUserMedia(MICROPHONE_AUDIO_CONSTRAINTS)
-      } catch {
+      } catch (error) {
+        // A permission denial must not trigger a second Android permission prompt.
+        if (error instanceof Error && error.name === 'NotAllowedError') throw error
         stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       }
       if (activeVersion !== recordingVersion) {
@@ -234,8 +241,13 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
     } catch (error) {
       console.error(error)
       if (activeVersion !== recordingVersion) return
-      micError.value = 'Impossible d’accéder au microphone.'
+      micError.value =
+        error instanceof Error && error.name === 'NotAllowedError'
+          ? 'Accès au microphone refusé. Autorisez-le dans les paramètres de l’application ou du navigateur.'
+          : 'Impossible d’accéder au microphone.'
       cleanup()
+    } finally {
+      if (activeVersion === recordingVersion) requestingMicrophone = false
     }
   }
 
@@ -294,6 +306,7 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
   function cleanup() {
     recordingVersion += 1
     stopPromise = null
+    requestingMicrophone = false
     stopTimer()
     stopAudioLevelTracking()
 
@@ -315,8 +328,33 @@ export function useMicrophoneRecorder(maxRecordingSecondsLimit?: Ref<number | nu
     resetRecordingState()
   }
 
-  if (getCurrentScope()) {
+  if (getCurrentScope() && typeof document !== 'undefined') {
+    let disposed = false
+    let nativeListener: PluginListenerHandle | undefined
+    const interruptRecording = () => {
+      if (!isRecording.value && !requestingMicrophone && !isFinalizingRecording.value) return
+      cleanup()
+      micError.value =
+        'Enregistrement interrompu. Gardez l’application ouverte pendant la récitation.'
+    }
+    const handleVisibilityChange = () => {
+      if (document.hidden) interruptRecording()
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    if (Capacitor.getPlatform() === 'android') {
+      void App.addListener('appStateChange', ({ isActive }) => {
+        if (!isActive) interruptRecording()
+      })
+        .then((listener) => {
+          if (disposed) void listener.remove()
+          else nativeListener = listener
+        })
+        .catch((error) => console.error('Android microphone lifecycle listener failed', error))
+    }
     onScopeDispose(() => {
+      disposed = true
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      void nativeListener?.remove()
       cleanup()
     })
   }

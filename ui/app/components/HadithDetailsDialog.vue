@@ -1,11 +1,16 @@
 <script setup lang="ts">
 import { ArrowUpRight, X } from '@lucide/vue'
 import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { useAndroidBackHandler } from '~/composables/useAndroidBackHandler'
 import { useMotionEntrance } from '~/composables/useMotionEntrance'
 import type { HadithResult } from '~/types/hadith'
 
 defineProps<{ hadith: HadithResult }>()
 const emit = defineEmits<{ close: [] }>()
+useAndroidBackHandler(() => {
+  emit('close')
+  return true
+})
 const dialog = ref<HTMLDialogElement | null>(null)
 useMotionEntrance(dialog, 24)
 let previousFocus: HTMLElement | null = null

@@ -1,0 +1,17 @@
+node_modules
+.cache
+.nuxt
+.nuxt-android
+.nuxt-e2e
+.nuxt-web-release
+.output
+.output-android
+.android-release
+artifacts
+android
+test-results
+playwright-report
+.env
+.env.*
+*.jks
+*.keystore

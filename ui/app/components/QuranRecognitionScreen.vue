@@ -5,6 +5,7 @@ import MotionScreenTransition from '~/components/MotionScreenTransition.vue'
 import RecognitionIdleScreen from '~/components/RecognitionIdleScreen.vue'
 import RecognitionLoadingScreen from '~/components/RecognitionLoadingScreen.vue'
 import { useRecognitionFlow } from '~/composables/useRecognitionFlow'
+import { useAndroidBackHandler } from '~/composables/useAndroidBackHandler'
 
 const loadRecognitionResultScreen = () => import('~/components/RecognitionResultScreen.vue')
 const RecognitionResultScreen = defineAsyncComponent(loadRecognitionResultScreen)
@@ -42,6 +43,12 @@ watch(navigationLocked, (locked) => emit('navigation-lock', locked), {
   flush: 'sync',
 })
 onBeforeUnmount(resetApp)
+useAndroidBackHandler(() => {
+  if (navigationLocked.value) return true
+  if (screenState.value === 'idle') return false
+  resetApp()
+  return true
+})
 
 async function handleMicroClick() {
   if (isRecording.value || isFinalizingRecording.value || loading.value) return onMicroClick()

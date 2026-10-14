@@ -102,7 +102,24 @@ cd sawt-ai
 docker compose up --build
 ```
 
-### ▶️ Usage
+Le conteneur UI exécute `npm ci` à chaque démarrage pour synchroniser son
+volume `node_modules` avec le lockfile, y compris après l'ajout de Capacitor.
+Cette installation nécessite l'accès au registre npm. Le cache Nuxt utilise
+un volume dédié pour éviter les conflits de permissions avec les builds locaux.
+Après une modification du Dockerfile, reconstruire et relancer uniquement l'UI :
+
+```bash
+docker compose up -d --build --no-deps ui
+```
+
+### 📱 Android
+
+Une version Android bêta embarque l'interface Nuxt avec Capacitor et utilise
+la même API FastAPI. Le bouton de téléchargement est disponible sur le site.
+Voir le [guide Android](ui/ANDROID.md) pour la génération des APK signés,
+la conservation de la clé et la distribution de l'application.
+
+### ▶️ Usage web
 
 1. Open `http://localhost:3000`
 2. Press the central microphone once to start recording

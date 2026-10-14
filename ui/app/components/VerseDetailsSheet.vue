@@ -2,6 +2,7 @@
 import { ArrowLeft, BookOpen, Copy } from '@lucide/vue'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useMotionEntrance } from '~/composables/useMotionEntrance'
+import { useAndroidBackHandler } from '~/composables/useAndroidBackHandler'
 
 import MiniToast from '~/components/MiniToast.vue'
 import QuranAyahContent from '~/components/QuranAyahContent.vue'
@@ -22,6 +23,11 @@ const props = defineProps<{
 const emit = defineEmits<{
   close: []
 }>()
+useAndroidBackHandler(() => {
+  if (!props.open) return false
+  emit('close')
+  return true
+})
 
 const { loading, fetchTajwid, error } = useTajwid()
 const {

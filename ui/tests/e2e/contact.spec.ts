@@ -52,6 +52,10 @@ test('requires a fresh captcha after a failed send and preserves the message unt
   page,
 }) => {
   const submissions: Record<string, unknown>[] = []
+  const hydrationWarnings: string[] = []
+  page.on('console', (message) => {
+    if (/hydration/i.test(message.text())) hydrationWarnings.push(message.text())
+  })
   await setupMockApi(page)
   await page.route('https://js.hcaptcha.com/1/api.js?*', (route) =>
     route.fulfill({ contentType: 'application/javascript', body: captchaScript }),
@@ -115,6 +119,7 @@ test('requires a fresh captcha after a failed send and preserves the message unt
     'h-captcha-response': 'test-captcha-token',
   })
   expect(submissions[0]).not.toHaveProperty('redirect')
+  expect(hydrationWarnings).toEqual([])
   await expect(page).toHaveURL(/\/contact$/)
   expect(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth)).toBe(false)
 })

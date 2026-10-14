@@ -3,6 +3,10 @@
 .data
 .nuxt
 .nuxt-build
+.nuxt-android
+.nuxt-e2e
+.nuxt-web-release
+.output-android
 .nitro
 .cache
 dist
@@ -23,6 +27,22 @@ ui/test-results/
 ui/playwright-report/
 ui/blob-report/
 ui/.playwright/
+
+# Android generated files and private release material
+ui/android/.gradle/
+ui/android/**/build/
+ui/android/local.properties
+ui/android/app/src/main/assets/public/
+ui/android/app/src/main/assets/capacitor.config.json
+ui/android/app/src/main/assets/capacitor.plugins.json
+ui/android/capacitor-cordova-android-plugins/
+*.apk
+*.aab
+*.jks
+*.keystore
+ui/.android-release/
+ui/artifacts/
+ui/public/downloads/
 
 # Misc
 .DS_Store

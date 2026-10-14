@@ -1,14 +1,17 @@
 <script setup lang="ts">
-import { useHead, useRequestURL } from '#app'
+import { useHead, useRequestURL, useRuntimeConfig } from '#app'
 import { BookOpen, CircleHelp, Mic } from '@lucide/vue'
 import { Motion, MotionConfig } from 'motion-v'
 import { computed, defineAsyncComponent, nextTick, onMounted, ref } from 'vue'
 import AppFooter from '~/components/AppFooter.vue'
+import AndroidDownloadBanner from '~/components/AndroidDownloadBanner.vue'
 import LandingScreen from '~/components/LandingScreen.vue'
 import MotionScreenTransition from '~/components/MotionScreenTransition.vue'
 import { useUiMotion } from '~/composables/useUiMotion'
 import QuranRecognitionScreen from '~/components/QuranRecognitionScreen.vue'
 import { useHadithSearch } from '~/composables/useHadithSearch'
+import { useAndroidBackHandler } from '~/composables/useAndroidBackHandler'
+import { useAndroidNavigation } from '~/composables/useAndroidNavigation'
 
 const HadithSearchScreen = defineAsyncComponent(() => import('~/components/HadithSearchScreen.vue'))
 const FaqScreen = defineAsyncComponent(() => import('~/components/FaqScreen.vue'))
@@ -18,10 +21,10 @@ const TermsOfServiceScreen = defineAsyncComponent(
 )
 const LegalNoticeScreen = defineAsyncComponent(() => import('~/components/LegalNoticeScreen.vue'))
 const ContactScreen = defineAsyncComponent(() => import('~/components/ContactScreen.vue'))
-const pathname = useRequestURL().pathname.replace(/\/$/, '')
-const internalReview = pathname === '/internal/tafsir'
-useHead(
-  internalReview
+const pathname = ref(useRequestURL().pathname.replace(/\/$/, '') || '/')
+const internalReview = computed(() => pathname.value === '/internal/tafsir')
+useHead(() =>
+  internalReview.value
     ? {
         title: 'Review des tafsirs — Sawt AI',
         meta: [{ name: 'robots', content: 'noindex, nofollow' }],
@@ -53,6 +56,19 @@ onMounted(() => {
 const hadithSearch = useHadithSearch()
 const navigationLocked = ref(false)
 const content = ref<HTMLElement | null>(null)
+useAndroidNavigation({
+  siteUrl: String(useRuntimeConfig().public.siteUrl || 'https://sawt-ai.nabster.dev'),
+  getPath: () => pathname.value,
+  setPath: (path) => {
+    pathname.value = path
+  },
+})
+useAndroidBackHandler(async () => {
+  if (navigationLocked.value) return true
+  if (pathname.value !== '/' || mode.value === 'home') return false
+  await returnHome()
+  return true
+})
 
 async function selectMode(nextMode: Screen) {
   if (navigationLocked.value || mode.value === nextMode) return
@@ -77,6 +93,7 @@ async function returnHome() {
   <MotionConfig v-else reduced-motion="user">
     <main class="page">
       <div class="page-content">
+        <AndroidDownloadBanner />
         <header class="app-header">
           <button
             class="brand"

@@ -1,0 +1,14 @@
+<!-- Google Play symbol. Google Play is a trademark of Google LLC. -->
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <defs>
+    <clipPath id="play-outline">
+      <path d="M4.5 2.2C3.7 1.75 3 2.2 3 3.1v17.8c0 .9.7 1.35 1.5.9l16.1-8.95c.9-.5.9-1.2 0-1.7L4.5 2.2Z" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#play-outline)">
+    <path fill="#4285F4" d="M3 2v20l10-10L3 2Z" />
+    <path fill="#34A853" d="m3 2 13 6.65L13 12 3 2Z" />
+    <path fill="#EA4335" d="m3 22 13-6.65L13 12 3 22Z" />
+    <path fill="#FBBC04" d="m13 12 3-3.35L22 12l-6 3.35L13 12Z" />
+  </g>
+</svg>
