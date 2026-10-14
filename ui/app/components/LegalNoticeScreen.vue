@@ -67,7 +67,10 @@ import LegalPageShell from '~/components/LegalPageShell.vue'
             <strong>Enregistrements audio.</strong> Les fichiers enregistrés ou importés par l’utilisateur
             sont transmis au serveur de Sawt-AI pour transcription et analyse. Le traitement est effectué
             sur le serveur du site. L’activation du microphone intervient à la demande de l’utilisateur,
-            sous réserve de l’autorisation accordée dans le navigateur.
+            sous réserve de l’autorisation accordée dans le navigateur ou dans Android.
+            La version Android utilise le même serveur d’analyse et nécessite une connexion Internet.
+            Le micro est arrêté lorsque l’application passe en arrière-plan ; un enregistrement
+            interrompu n’est pas transmis automatiquement.
           </li>
           <li>
             <strong>Recherches et résultats.</strong> Les phrases saisies, transcriptions et résultats
@@ -155,7 +158,7 @@ import LegalPageShell from '~/components/LegalPageShell.vue'
           dans le navigateur. La vérification antispam du formulaire de contact repose sur hCaptcha,
           dont les modalités de stockage sont précisées dans sa politique de confidentialité.
           L’autorisation d’accès au microphone peut être révoquée à tout moment
-          dans les paramètres du navigateur.
+          dans les paramètres du navigateur ou les permissions de l’application Android.
         </p>
       </article>
 

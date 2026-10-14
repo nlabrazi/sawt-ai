@@ -4,6 +4,7 @@ import { BookOpen, CircleHelp, Mic } from '@lucide/vue'
 import { Motion, MotionConfig } from 'motion-v'
 import { computed, defineAsyncComponent, nextTick, onMounted, ref } from 'vue'
 import AppFooter from '~/components/AppFooter.vue'
+import AndroidDownloadBanner from '~/components/AndroidDownloadBanner.vue'
 import LandingScreen from '~/components/LandingScreen.vue'
 import MotionScreenTransition from '~/components/MotionScreenTransition.vue'
 import { useUiMotion } from '~/composables/useUiMotion'
@@ -92,6 +93,7 @@ async function returnHome() {
   <MotionConfig v-else reduced-motion="user">
     <main class="page">
       <div class="page-content">
+        <AndroidDownloadBanner />
         <header class="app-header">
           <button
             class="brand"

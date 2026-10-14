@@ -148,3 +148,30 @@ Installation bêta : télécharger l'APK, l'ouvrir puis autoriser les installati
 depuis le navigateur si Android le demande. Les mises à jour de l'interface
 nécessitent un nouvel APK ; les modifications de l'API compatibles profitent
 aux versions déjà installées.
+
+## Bouton web
+
+Après publication de l'APK, définir dans l'environnement du serveur Nuxt :
+
+```dotenv
+NUXT_PUBLIC_ANDROID_DOWNLOAD_URL=/downloads/sawt-ai-android.apk
+```
+
+Le bouton apparaît en haut de l'accueil avec les instructions d'installation.
+Il reste masqué sans URL valide et à l'intérieur de l'application Android.
+Une URL absolue HTTPS terminant par `.apk` permet aussi un hébergement externe.
+En local Docker Compose transmet cette variable depuis le `.env` racine.
+
+Les tests de bout en bout vérifient le lien et les instructions à 320 px. Ils
+ne remplacent pas une installation réelle et un test micro sur téléphone.
+
+## Caches Nuxt et TypeScript
+
+Les tests navigateur utilisent `.nuxt-e2e`, Android `.nuxt-android` et le site
+peut utiliser un cache dédié avec `SAWT_NUXT_BUILD_DIR=.nuxt-web-release`.
+Vite reçoit le tsconfig correspondant au build. Le transformateur Vue de
+production lit aussi les références du `tsconfig.json` racine : le script
+`prepare-types.mjs` les génère via les API officielles Nuxt Kit, sans vider
+le cache de compilation web. Il est appelé avant la génération Android et les
+tests de bout en bout. Un ancien cache Docker avec des permissions différentes
+a été conservé dans `.cache/nuxt-before-android` sur le poste de travail.

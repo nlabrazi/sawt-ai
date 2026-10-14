@@ -162,10 +162,7 @@ onBeforeUnmount(() => requestController?.abort())
           <p v-if="!accessKey" class="form-unavailable">
             Le formulaire est temporairement indisponible. Le contact par e-mail reste accessible.
           </p>
-          <noscript>
-            <p class="form-unavailable">L’envoi par formulaire nécessite JavaScript. Le contact par e-mail reste
-              accessible.</p>
-          </noscript>
+          <noscript>L’envoi par formulaire nécessite JavaScript. Le contact par e-mail reste accessible.</noscript>
           <p class="privacy-notice">
             Les champs marqués d’un astérisque sont obligatoires.
             <a href="/legal-notice#privacy">Informations sur la protection des données</a>.

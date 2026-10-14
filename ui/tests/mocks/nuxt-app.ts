@@ -4,6 +4,7 @@ type RuntimeConfig = {
     contactEmail?: string
     web3formsAccessKey?: string
     siteUrl?: string
+    androidDownloadUrl?: string
   }
 }
 
