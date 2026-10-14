@@ -1,0 +1,14 @@
+node_modules
+.nuxt
+.nuxt-android
+.output
+.output-android
+.android-release
+artifacts
+android
+test-results
+playwright-report
+.env
+.env.*
+*.jks
+*.keystore

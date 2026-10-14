@@ -105,3 +105,46 @@ L'icône micro cyan sur fond Sawt sombre est vectorielle, avec variantes
 adaptatives et monochromes Android 13+. Aucune permission caméra n'est ajoutée.
 
 Référence : [SystemBars](https://capacitorjs.com/docs/apis/system-bars).
+
+## APK signé et mises à jour
+
+Avec `JAVA_HOME` pointant vers Java 21 et `ANDROID_HOME` vers le SDK Android 36 :
+
+```bash
+npm run android:keygen   # Une seule fois, refuse de remplacer une clé existante.
+npm run android:publish
+```
+
+La clé RSA 4096 et ses mots de passe aléatoires sont dans `.android-release`,
+avec permissions privées. Sauvegarder ce dossier de manière sécurisée, hors
+du dépôt et des téléchargements publics. Une restauration sur un autre poste
+nécessite d'ajuster `SAWT_ANDROID_KEYSTORE` au chemin restauré. Les variables
+`SAWT_ANDROID_KEYSTORE`, `SAWT_ANDROID_STORE_PASSWORD`, `SAWT_ANDROID_KEY_ALIAS`
+et `SAWT_ANDROID_KEY_PASSWORD` peuvent remplacer la configuration locale, par
+exemple dans un gestionnaire de secrets CI. Aucun mot de passe n'est passé dans
+les arguments de commande ou écrit dans les logs. Les fichiers privés et le
+projet Android sont exclus du contexte Docker du site.
+
+Le script recompile Nuxt, synchronise Capacitor, compile la release et vérifie
+sa signature avec `apksigner`. L'APK et son SHA-256 sont dans `artifacts/android`.
+La commande `android:publish` prépare ensuite `public/downloads` : un APK
+versionné, un alias `sawt-ai-android.apk`, le checksum et `android-release.json`.
+Ces artefacts ne sont pas versionnés et sont exclus des APK suivants.
+
+Avant chaque mise à jour distribuée, augmenter `versionCode` et modifier
+`versionName` dans `android/version.properties`. Garder l'identifiant et la
+clé pour que les installations existantes puissent être mises à jour.
+`npm run android:debug` génère une version de développement, et
+`npm run android:bundle` prépare un AAB signé pour le Play Store ultérieur.
+
+Pour héberger l'APK avec Nuxt, préparer les téléchargements **avant** `npm run
+build` (ou le build Docker) : Nitro doit inclure les fichiers dans son inventaire
+d'assets. Conserver également une copie hors checkout, par exemple dans
+`/srv/apps/sawt-ai/data/android`, pour les restaurer avant les builds suivants.
+Le Dockerfile de production `Dockerfile.vps` est maintenant versionné et utilise
+Node 22. Le wrapper Gradle vérifie le SHA-256 officiel de sa distribution.
+
+Installation bêta : télécharger l'APK, l'ouvrir puis autoriser les installations
+depuis le navigateur si Android le demande. Les mises à jour de l'interface
+nécessitent un nouvel APK ; les modifications de l'API compatibles profitent
+aux versions déjà installées.
