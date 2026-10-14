@@ -5,6 +5,7 @@ import HadithResultCard from '~/components/HadithResultCard.vue'
 import MotionReveal from '~/components/MotionReveal.vue'
 import type { useHadithSearch } from '~/composables/useHadithSearch'
 import { useHadithVoiceSearch } from '~/composables/useHadithVoiceSearch'
+import { useAndroidBackHandler } from '~/composables/useAndroidBackHandler'
 import type { HadithResult } from '~/types/hadith'
 
 const HadithDetailsDialog = defineAsyncComponent(
@@ -31,6 +32,17 @@ function submitSearch() {
 
 const selected = ref<HadithResult | null>(null)
 const resultsTitle = ref<HTMLElement | null>(null)
+useAndroidBackHandler(() => {
+  if (voiceBusy.value) {
+    cancelVoice()
+    return true
+  }
+  if (loading.value) {
+    cancel()
+    return true
+  }
+  return false
+})
 
 watch(response, async (value) => {
   if (!value) return

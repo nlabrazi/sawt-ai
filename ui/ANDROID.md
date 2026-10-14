@@ -79,3 +79,17 @@ Vérifications sur appareil avant promotion de la bêta : accepter/refuser la
 permission, réessayer après activation dans les paramètres, enregistrer puis
 reconnaître une récitation, verrouiller le téléphone pendant la capture,
 changer d'application et tester la recherche vocale de hadiths.
+
+## Navigation
+
+Le bouton Retour ferme d'abord les détails ouverts. Dans le parcours Coran,
+il annule une analyse ou revient à l'enregistrement avant de retourner à
+l'accueil. Pendant une capture Coran, il est bloqué comme la navigation web.
+Dans les hadiths, il annule d'abord une capture ou recherche active. Depuis
+l'accueil, il quitte l'application.
+
+Les pages légales sont ouvertes localement sans serveur Nuxt. Les sources
+externes et le contact utilisent le plugin Browser (Android Custom Tabs) :
+le formulaire et son captcha restent sur leur origine web publique.
+Les liens `mailto:` et `tel:` restent traités par Android. Aucun remplacement
+des liens du site ni des routes SSR publiques n'est nécessaire.
