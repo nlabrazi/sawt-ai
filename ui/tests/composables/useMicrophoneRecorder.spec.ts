@@ -283,7 +283,8 @@ describe('useMicrophoneRecorder', () => {
   it('releases the microphone when the document goes into the background', async () => {
     const { stopTrack } = setupRecorderEnvironment()
     const scope = effectScope()
-    const recorder = scope.run(() => useMicrophoneRecorder(ref(30)))!
+    const recorder = scope.run(() => useMicrophoneRecorder(ref(30)))
+    if (!recorder) throw new Error('Recorder scope was not created')
     await recorder.startRecording()
     vi.spyOn(document, 'hidden', 'get').mockReturnValue(true)
     document.dispatchEvent(new Event('visibilitychange'))
@@ -304,7 +305,8 @@ describe('useMicrophoneRecorder', () => {
         }),
     )
     const scope = effectScope()
-    const recorder = scope.run(() => useMicrophoneRecorder(ref(30)))!
+    const recorder = scope.run(() => useMicrophoneRecorder(ref(30)))
+    if (!recorder) throw new Error('Recorder scope was not created')
     const pending = recorder.startRecording()
     vi.spyOn(document, 'hidden', 'get').mockReturnValue(true)
     document.dispatchEvent(new Event('visibilitychange'))

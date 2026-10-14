@@ -14,6 +14,20 @@ const config: CapacitorConfig = {
     webContentsDebuggingEnabled: false,
     backgroundColor: '#07101d',
   },
+  plugins: {
+    SystemBars: {
+      insetsHandling: 'native',
+      initialViewportFitValueHint: 'cover',
+      hidden: true,
+      style: 'DARK',
+    },
+    SplashScreen: {
+      launchAutoHide: false,
+      backgroundColor: '#07101d',
+      androidSplashResourceName: 'sawt_splash',
+      showSpinner: false,
+    },
+  },
 }
 
 export default config

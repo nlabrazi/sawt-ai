@@ -93,3 +93,15 @@ externes et le contact utilisent le plugin Browser (Android Custom Tabs) :
 le formulaire et son captcha restent sur leur origine web publique.
 Les liens `mailto:` et `tel:` restent traités par Android. Aucun remplacement
 des liens du site ni des routes SSR publiques n'est nécessaire.
+
+## Affichage
+
+Le plugin SystemBars intégré à Capacitor 8 active le plein écran immersif.
+Le système peut réafficher temporairement les barres lors d'un geste. La gestion
+native des insets reste active avec `viewport-fit=cover` et le CSS existant
+`env(safe-area-inset-*)`. Le clavier n'est pas bloqué par une hauteur fixe.
+L'écran de lancement reste visible jusqu'au montage de Vue puis disparaît.
+L'icône micro cyan sur fond Sawt sombre est vectorielle, avec variantes
+adaptatives et monochromes Android 13+. Aucune permission caméra n'est ajoutée.
+
+Référence : [SystemBars](https://capacitorjs.com/docs/apis/system-bars).
