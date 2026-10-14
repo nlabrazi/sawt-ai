@@ -12,7 +12,7 @@ const showDownload = downloadUrl && Capacitor.getPlatform() !== 'android'
   <aside v-if="showDownload" class="android-download" aria-label="Application Android">
     <a class="download-link" :href="downloadUrl ?? undefined" download="sawt-ai-android.apk">
       <Download :size="16" aria-hidden="true" />
-      Télécharger pour Android <span class="beta-label">Bêta</span>
+      <span>Télécharger l’application Android</span> <span class="beta-label">Bêta</span>
     </a>
     <details class="install-help">
       <summary>Comment installer ?</summary>
@@ -38,6 +38,7 @@ const showDownload = downloadUrl && Capacitor.getPlatform() !== 'android'
   justify-content: center;
   gap: 8px;
   min-height: 44px;
+  max-width: 100%;
   padding: 0 14px;
   box-sizing: border-box;
   border: 1px solid #2b6173;
@@ -47,6 +48,7 @@ const showDownload = downloadUrl && Capacitor.getPlatform() !== 'android'
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
+  text-align: center;
 }
 .download-link:hover { background: #12394b; }
 .download-link:focus-visible, summary:focus-visible {

@@ -151,14 +151,17 @@ aux versions déjà installées.
 
 ## Bouton web
 
-Après publication de l'APK, définir dans l'environnement du serveur Nuxt :
+Le lien « Télécharger l’application Android » utilise par défaut l'APK bêta
+publié à `https://sawt-ai.nabster.dev/downloads/sawt-ai-android.apk`, y compris
+en développement local. Pour servir une autre version depuis le serveur Nuxt,
+définir dans son environnement :
 
 ```dotenv
 NUXT_PUBLIC_ANDROID_DOWNLOAD_URL=/downloads/sawt-ai-android.apk
 ```
 
 Le bouton apparaît en haut de l'accueil avec les instructions d'installation.
-Il reste masqué sans URL valide et à l'intérieur de l'application Android.
+Il reste masqué si l'URL configurée est invalide et à l'intérieur de l'application Android.
 Une URL absolue HTTPS terminant par `.apk` permet aussi un hébergement externe.
 En local Docker Compose transmet cette variable depuis le `.env` racine.
 

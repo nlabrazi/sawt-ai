@@ -21,7 +21,7 @@ describe('Android download', () => {
     const wrapper = mount(AndroidDownloadBanner)
     expect(wrapper.get('a').attributes('href')).toBe('/downloads/sawt-ai-android.apk')
     expect(wrapper.get('a').attributes('download')).toBe('sawt-ai-android.apk')
-    expect(wrapper.text()).toContain('Télécharger pour Android')
+    expect(wrapper.text()).toContain('Télécharger l’application Android')
     expect(wrapper.text()).toContain('autorisez l’installation')
   })
 

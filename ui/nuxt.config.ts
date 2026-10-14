@@ -68,7 +68,9 @@ export default defineNuxtConfig({
       contactEmail,
       web3formsAccessKey,
       siteUrl,
-      androidDownloadUrl: process.env.NUXT_PUBLIC_ANDROID_DOWNLOAD_URL?.trim() || '',
+      androidDownloadUrl:
+        process.env.NUXT_PUBLIC_ANDROID_DOWNLOAD_URL?.trim() ||
+        'https://sawt-ai.nabster.dev/downloads/sawt-ai-android.apk',
     },
   },
   routeRules: isAndroidBuild
