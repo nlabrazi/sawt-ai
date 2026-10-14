@@ -16,7 +16,7 @@ const showDownload = downloadUrl && Capacitor.getPlatform() !== 'android'
       aria-label="Télécharger l’application Android"
       aria-describedby="android-beta-label"
     >
-      <img class="android-logo" src="/assets/icons/android-robot.svg" width="40" height="24" alt="" />
+      <img class="download-logo" src="/assets/icons/google-play.svg" width="24" height="24" alt="" />
       <span class="download-copy">
         <span class="download-caption">Télécharger l’application</span>
         <span class="download-platform">Android<sup aria-hidden="true">™</sup></span>
@@ -43,20 +43,20 @@ const showDownload = downloadUrl && Capacitor.getPlatform() !== 'android'
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
+  gap: 8px;
 }
 .download-link {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 12px;
-  width: 228px;
-  min-height: 64px;
+  gap: 8px;
+  width: 172px;
+  min-height: 44px;
   max-width: 100%;
-  padding: 8px 12px;
+  padding: 3px 9px;
   box-sizing: border-box;
   border: 1px solid #a6a6a6;
-  border-radius: 10px;
+  border-radius: 7px;
   background: #000;
   color: #fff;
   font-family: Roboto, Arial, sans-serif;
@@ -72,37 +72,37 @@ const showDownload = downloadUrl && Capacitor.getPlatform() !== 'android'
   outline: 2px solid #67e8f9;
   outline-offset: 4px;
 }
-.android-logo { flex-shrink: 0; }
+.download-logo { flex-shrink: 0; }
 .download-copy {
   display: flex;
   flex-direction: column;
   gap: 1px;
 }
 .download-caption {
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 400;
   line-height: 1.35;
   white-space: nowrap;
 }
 .download-platform {
-  font-size: 27px;
+  font-size: 19px;
   font-weight: 500;
   line-height: 1.1;
-  letter-spacing: -.5px;
+  letter-spacing: -.25px;
 }
 .download-platform sup {
   margin-left: 2px;
-  font-size: 9px;
+  font-size: 7px;
   letter-spacing: 0;
   vertical-align: super;
 }
 .beta-label {
   flex-shrink: 0;
-  padding: 4px 8px;
+  padding: 3px 6px;
   border: 1px solid #536178;
   border-radius: 999px;
   color: #d7e1ee;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 500;
   line-height: 1.2;
 }
