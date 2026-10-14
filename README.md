@@ -102,6 +102,16 @@ cd sawt-ai
 docker compose up --build
 ```
 
+Le conteneur UI exécute `npm ci` à chaque démarrage pour synchroniser son
+volume `node_modules` avec le lockfile, y compris après l'ajout de Capacitor.
+Cette installation nécessite l'accès au registre npm. Le cache Nuxt utilise
+un volume dédié pour éviter les conflits de permissions avec les builds locaux.
+Après une modification du Dockerfile, reconstruire et relancer uniquement l'UI :
+
+```bash
+docker compose up -d --build --no-deps ui
+```
+
 ### 📱 Android
 
 Une version Android bêta embarque l'interface Nuxt avec Capacitor et utilise

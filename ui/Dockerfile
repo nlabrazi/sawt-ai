@@ -7,8 +7,9 @@ FROM node:22
 WORKDIR /app
 
 COPY package*.json ./
-RUN npm install
+RUN npm ci
 
 COPY . .
 
-CMD ["sh", "-c", "if [ ! -x node_modules/.bin/nuxt ]; then npm install; fi && npm run dev -- --host 0.0.0.0"]
+# The persistent node_modules volume can outlive the image and its lockfile.
+CMD ["sh", "-c", "npm ci && exec npm run dev -- --host 0.0.0.0"]
