@@ -52,3 +52,13 @@ La WebView sert les fichiers embarqués depuis `https://localhost` ; aucune
 URL distante ni exception HTTP n'est activée dans la configuration Capacitor.
 Les fichiers web copiés, caches Gradle, SDK local et clés privées sont ignorés
 par Git. Après un checkout, effectuer `npm ci` puis `npm run android:sync`.
+
+## Dépendances et sécurité
+
+L'audit du 14 octobre 2026 a conduit à actualiser les dépendances compatibles,
+notamment Nuxt 4.5.2, Vue 3.5.44 et Vitest 4.1.11. Les cinq vulnérabilités
+critiques initiales ne sont plus présentes. Des alertes subsistent dans des
+dépendances de l'outillage (`braces`, `node-forge`, `xcode/uuid`) sans correctif
+compatible disponible pour certaines d'entre elles. Ne pas utiliser
+`npm audit fix --force` pour rétrograder Capacitor ou changer les versions
+majeures. Le lockfile est versionné ; utiliser `npm ci` pour le reproduire.
