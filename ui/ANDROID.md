@@ -33,3 +33,22 @@ du modèle de reconnaissance ni des routes FastAPI n'est nécessaire.
 Documentation de référence :
 [Capacitor](https://capacitorjs.com/docs/getting-started),
 [prérequis Android](https://capacitorjs.com/docs/getting-started/environment-setup).
+
+## Projet natif
+
+Capacitor 8.5.3 est installé avec ses plugins officiels App, Browser et
+SplashScreen. L'identifiant stable est `dev.nabster.sawtai`. Installer Android
+Studio 2025.2.1 ou supérieur et le SDK Android 36, avec Java 21. Le Docker UI
+utilise désormais Node 22 ; il ne contient pas le SDK Android.
+
+```bash
+npm run android:sync
+npm run android:open
+```
+
+`android:sync` recompile l'interface avant de synchroniser les fichiers et
+plugins natifs. Android Studio permet ensuite de lancer un APK de développement.
+La WebView sert les fichiers embarqués depuis `https://localhost` ; aucune
+URL distante ni exception HTTP n'est activée dans la configuration Capacitor.
+Les fichiers web copiés, caches Gradle, SDK local et clés privées sont ignorés
+par Git. Après un checkout, effectuer `npm ci` puis `npm run android:sync`.
