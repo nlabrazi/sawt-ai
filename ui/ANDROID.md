@@ -62,3 +62,20 @@ dépendances de l'outillage (`braces`, `node-forge`, `xcode/uuid`) sans correcti
 compatible disponible pour certaines d'entre elles. Ne pas utiliser
 `npm audit fix --force` pour rétrograder Capacitor ou changer les versions
 majeures. Le lockfile est versionné ; utiliser `npm ci` pour le reproduire.
+
+## Microphone et interruptions
+
+Capacitor transmet la demande `getUserMedia` à Android. Le manifeste déclare
+`RECORD_AUDIO` et `MODIFY_AUDIO_SETTINGS` ; la permission est demandée à la
+première interaction avec le micro, pas au lancement. Aucun plugin audio tiers
+ni service d'enregistrement en arrière-plan n'est ajouté.
+
+Un refus affiche une instruction pour les paramètres et n'entraîne pas une
+deuxième demande immédiate. Le passage en arrière-plan ou la fermeture de
+l'écran libère le micro et invalide une autorisation encore en attente. Un
+enregistrement interrompu n'est pas envoyé automatiquement à l'API.
+
+Vérifications sur appareil avant promotion de la bêta : accepter/refuser la
+permission, réessayer après activation dans les paramètres, enregistrer puis
+reconnaître une récitation, verrouiller le téléphone pendant la capture,
+changer d'application et tester la recherche vocale de hadiths.
