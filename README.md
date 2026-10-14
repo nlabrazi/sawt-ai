@@ -117,7 +117,7 @@ docker compose up -d --build --no-deps ui
 Une version Android bêta embarque l'interface Nuxt avec Capacitor et utilise
 la même API FastAPI. Le bouton de téléchargement est disponible sur le site.
 Voir le [guide Android](ui/ANDROID.md) pour la génération des APK signés,
-la conservation de la clé, les tests et le déploiement de la bêta sur le VPS.
+la conservation de la clé et la distribution de l'application.
 
 ### ▶️ Usage web
 

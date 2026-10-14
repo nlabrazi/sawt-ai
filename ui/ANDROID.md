@@ -1,239 +1,94 @@
-# Sawt AI sur Android
+# Application Android
 
-Le site conserve son rendu Nuxt côté serveur. Android embarque une compilation
-côté client du même code Vue et utilise la même API FastAPI.
+Capacitor embarque une compilation de l'interface Nuxt dans une application
+Android. Le web et Android partagent le même code Vue et la même API FastAPI.
+La reconnaissance audio et la recherche nécessitent une connexion Internet.
 
-## Génération de l'interface
+## Prérequis
 
-Depuis `ui`, avec Node 22 ou supérieur :
+- Node.js 22.12 ou supérieur.
+- Java 21, avec `JAVA_HOME` configuré.
+- Android Studio et le SDK Android 36, avec les Build Tools installés.
+- `ANDROID_HOME` pointant vers le SDK Android.
+
+L'application prend en charge Android 7.0 et les versions suivantes.
+Toutes les commandes ci-dessous s'exécutent depuis le dossier `ui`.
+
+## Développement
 
 ```bash
 npm ci
-npm run generate:android
-```
-
-Les fichiers mobiles sont générés dans `.output-android/public`, indépendamment
-des sorties web `.nuxt` et `.output`. L'API par défaut est
-`https://api.sawt-ai.nabster.dev`, vérifiée depuis la configuration du site public.
-Pour la remplacer, définir `NUXT_PUBLIC_API_BASE_URL` dans l'environnement de la
-commande. Cette adresse est intégrée à l'APK à la compilation ; elle doit être
-en HTTPS et ne doit contenir aucun secret.
-
-Dans l'environnement de l'API de production, ajouter `https://localhost` à
-`ALLOWED_ORIGINS`, en conservant les origines web existantes :
-
-```dotenv
-ALLOWED_ORIGINS=https://sawt-ai.nabster.dev,https://localhost
-```
-
-Cette origine correspond au serveur local sécurisé de la WebView Capacitor.
-Les CORS ne constituent pas un mécanisme d'authentification. Aucun changement
-du modèle de reconnaissance ni des routes FastAPI n'est nécessaire.
-
-Documentation de référence :
-[Capacitor](https://capacitorjs.com/docs/getting-started),
-[prérequis Android](https://capacitorjs.com/docs/getting-started/environment-setup).
-
-## Projet natif
-
-Capacitor 8.5.3 est installé avec ses plugins officiels App, Browser et
-SplashScreen. L'identifiant stable est `dev.nabster.sawtai`. Installer Android
-Studio 2025.2.1 ou supérieur et le SDK Android 36, avec Java 21. Le Docker UI
-utilise désormais Node 22 ; il ne contient pas le SDK Android.
-
-```bash
 npm run android:sync
 npm run android:open
 ```
 
-`android:sync` recompile l'interface avant de synchroniser les fichiers et
-plugins natifs. Android Studio permet ensuite de lancer un APK de développement.
-La WebView sert les fichiers embarqués depuis `https://localhost` ; aucune
-URL distante ni exception HTTP n'est activée dans la configuration Capacitor.
-Les fichiers web copiés, caches Gradle, SDK local et clés privées sont ignorés
-par Git. Après un checkout, effectuer `npm ci` puis `npm run android:sync`.
+`android:sync` compile l'interface dans `.output-android/public` et synchronise
+le projet natif. `android:open` ouvre Android Studio pour lancer l'application
+sur un téléphone ou un émulateur. Après une modification de l'interface,
+relancer `android:sync`.
 
-## Dépendances et sécurité
-
-L'audit du 14 octobre 2026 a conduit à actualiser les dépendances compatibles,
-notamment Nuxt 4.5.2, Vue 3.5.44 et Vitest 4.1.11. Les cinq vulnérabilités
-critiques initiales ne sont plus présentes. Des alertes subsistent dans des
-dépendances de l'outillage (`braces`, `node-forge`, `xcode/uuid`) sans correctif
-compatible disponible pour certaines d'entre elles. Ne pas utiliser
-`npm audit fix --force` pour rétrograder Capacitor ou changer les versions
-majeures. Le lockfile est versionné ; utiliser `npm ci` pour le reproduire.
-
-## Microphone et interruptions
-
-Capacitor transmet la demande `getUserMedia` à Android. Le manifeste déclare
-`RECORD_AUDIO` et `MODIFY_AUDIO_SETTINGS` ; la permission est demandée à la
-première interaction avec le micro, pas au lancement. Aucun plugin audio tiers
-ni service d'enregistrement en arrière-plan n'est ajouté.
-
-Un refus affiche une instruction pour les paramètres et n'entraîne pas une
-deuxième demande immédiate. Le passage en arrière-plan ou la fermeture de
-l'écran libère le micro et invalide une autorisation encore en attente. Un
-enregistrement interrompu n'est pas envoyé automatiquement à l'API.
-
-Vérifications sur appareil avant promotion de la bêta : accepter/refuser la
-permission, réessayer après activation dans les paramètres, enregistrer puis
-reconnaître une récitation, verrouiller le téléphone pendant la capture,
-changer d'application et tester la recherche vocale de hadiths.
-
-## Navigation
-
-Le bouton Retour ferme d'abord les détails ouverts. Dans le parcours Coran,
-il annule une analyse ou revient à l'enregistrement avant de retourner à
-l'accueil. Pendant une capture Coran, il est bloqué comme la navigation web.
-Dans les hadiths, il annule d'abord une capture ou recherche active. Depuis
-l'accueil, il quitte l'application.
-
-Les pages légales sont ouvertes localement sans serveur Nuxt. Les sources
-externes et le contact utilisent le plugin Browser (Android Custom Tabs) :
-le formulaire et son captcha restent sur leur origine web publique.
-Les liens `mailto:` et `tel:` restent traités par Android. Aucun remplacement
-des liens du site ni des routes SSR publiques n'est nécessaire.
-
-## Affichage
-
-Le plugin SystemBars intégré à Capacitor 8 active le plein écran immersif.
-Le système peut réafficher temporairement les barres lors d'un geste. La gestion
-native des insets reste active avec `viewport-fit=cover` et le CSS existant
-`env(safe-area-inset-*)`. Le clavier n'est pas bloqué par une hauteur fixe.
-L'écran de lancement reste visible jusqu'au montage de Vue puis disparaît.
-L'icône micro cyan sur fond Sawt sombre est vectorielle, avec variantes
-adaptatives et monochromes Android 13+. Aucune permission caméra n'est ajoutée.
-
-Référence : [SystemBars](https://capacitorjs.com/docs/apis/system-bars).
-
-## APK signé et mises à jour
-
-Avec `JAVA_HOME` pointant vers Java 21 et `ANDROID_HOME` vers le SDK Android 36 :
+Pour générer un APK de développement en ligne de commande :
 
 ```bash
-npm run android:keygen   # Une seule fois, refuse de remplacer une clé existante.
+npm run android:debug
+```
+
+L'APK est disponible dans `android/app/build/outputs/apk/debug/app-debug.apk`.
+
+## Connexion à l'API
+
+L'adresse de l'API est intégrée à l'APK pendant la compilation. Pour remplacer
+l'adresse définie dans `config/mobile.mjs` :
+
+```bash
+NUXT_PUBLIC_API_BASE_URL=https://api.example.org npm run android:sync
+```
+
+Utiliser une API accessible en HTTPS. Dans son paramètre `ALLOWED_ORIGINS`,
+ajouter `https://localhost` en conservant les origines web existantes : c'est
+l'origine de la WebView Capacitor.
+
+## APK signé
+
+Créer la clé de signature une seule fois, puis générer l'APK distribuable :
+
+```bash
+npm run android:keygen
 npm run android:publish
 ```
 
-La clé RSA 4096 et ses mots de passe aléatoires sont dans `.android-release`,
-avec permissions privées. Sauvegarder ce dossier de manière sécurisée, hors
-du dépôt et des téléchargements publics. Une restauration sur un autre poste
-nécessite d'ajuster `SAWT_ANDROID_KEYSTORE` au chemin restauré. Les variables
-`SAWT_ANDROID_KEYSTORE`, `SAWT_ANDROID_STORE_PASSWORD`, `SAWT_ANDROID_KEY_ALIAS`
-et `SAWT_ANDROID_KEY_PASSWORD` peuvent remplacer la configuration locale, par
-exemple dans un gestionnaire de secrets CI. Aucun mot de passe n'est passé dans
-les arguments de commande ou écrit dans les logs. Les fichiers privés et le
-projet Android sont exclus du contexte Docker du site.
+La clé et sa configuration sont conservées dans `.android-release`, exclu
+de Git. Sauvegarder ce dossier de manière sécurisée : la même clé est requise
+pour mettre à jour une application déjà installée. Après restauration sur
+un autre poste, ajuster `SAWT_ANDROID_KEYSTORE` au chemin de la clé.
 
-Le script recompile Nuxt, synchronise Capacitor, compile la release et vérifie
-sa signature avec `apksigner`. L'APK et son SHA-256 sont dans `artifacts/android`.
-La commande `android:publish` prépare ensuite `public/downloads` : un APK
-versionné, un alias `sawt-ai-android.apk`, le checksum et `android-release.json`.
-Ces artefacts ne sont pas versionnés et sont exclus des APK suivants.
+`android:publish` compile l'application, vérifie sa signature et prépare l'APK,
+son SHA-256 et les fichiers de téléchargement dans `public/downloads`.
+L'APK versionné est également conservé dans `artifacts/android`.
 
-Avant chaque mise à jour distribuée, augmenter `versionCode` et modifier
-`versionName` dans `android/version.properties`. Garder l'identifiant et la
-clé pour que les installations existantes puissent être mises à jour.
-`npm run android:debug` génère une version de développement, et
-`npm run android:bundle` prépare un AAB signé pour le Play Store ultérieur.
+## Distribution et mises à jour
 
-Pour héberger l'APK avec Nuxt, préparer les téléchargements **avant** `npm run
-build` (ou le build Docker) : Nitro doit inclure les fichiers dans son inventaire
-d'assets. Conserver également une copie hors checkout, par exemple dans
-`/srv/apps/sawt-ai/data/android`, pour les restaurer avant les builds suivants.
-Le Dockerfile de production `Dockerfile.vps` est maintenant versionné et utilise
-Node 22. Le wrapper Gradle vérifie le SHA-256 officiel de sa distribution.
+Avant chaque nouvelle version, augmenter `versionCode` et modifier `versionName`
+dans `android/version.properties`. Conserver l'identifiant de l'application
+et sa clé de signature. Une modification de l'interface nécessite un nouvel APK.
 
-Installation bêta : télécharger l'APK, l'ouvrir puis autoriser les installations
-depuis le navigateur si Android le demande. Les mises à jour de l'interface
-nécessitent un nouvel APK ; les modifications de l'API compatibles profitent
-aux versions déjà installées.
-
-## Bouton web
-
-Le lien « Télécharger l’application Android » utilise par défaut l'APK bêta
-publié à `https://sawt-ai.nabster.dev/downloads/sawt-ai-android.apk`, y compris
-en développement local. Pour servir une autre version depuis le serveur Nuxt,
-définir dans son environnement :
+L'APK peut être distribué par un lien HTTPS. Pour l'héberger avec Nuxt, exécuter
+`android:publish` avant le build web, puis configurer le lien de téléchargement :
 
 ```dotenv
 NUXT_PUBLIC_ANDROID_DOWNLOAD_URL=/downloads/sawt-ai-android.apk
 ```
 
-Le bouton apparaît en haut de l'accueil avec les instructions d'installation.
-Il reste masqué si l'URL configurée est invalide et à l'intérieur de l'application Android.
-Une URL absolue HTTPS terminant par `.apk` permet aussi un hébergement externe.
-En local Docker Compose transmet cette variable depuis le `.env` racine.
+Une URL absolue HTTPS vers un APK est également acceptée. Le lien est masqué
+dans l'application Android. Les APK et les clés privées ne sont pas versionnés.
 
-Les tests de bout en bout vérifient le lien et les instructions à 320 px. Ils
-ne remplacent pas une installation réelle et un test micro sur téléphone.
-
-## Caches Nuxt et TypeScript
-
-Les tests navigateur utilisent `.nuxt-e2e`, Android `.nuxt-android` et le site
-peut utiliser un cache dédié avec `SAWT_NUXT_BUILD_DIR=.nuxt-web-release`.
-Vite reçoit le tsconfig correspondant au build. Le transformateur Vue de
-production lit aussi les références du `tsconfig.json` racine : le script
-`prepare-types.mjs` les génère via les API officielles Nuxt Kit, sans vider
-le cache de compilation web. Il est appelé avant la génération Android et les
-tests de bout en bout. Un ancien cache Docker avec des permissions différentes
-a été conservé dans `.cache/nuxt-before-android` sur le poste de travail.
-
-## Bêta publiée le 14 octobre 2026
-
-Version `0.1.0-beta.1`, versionCode `1`, sources applicatives du commit
-`736b458`. Le bouton et les fichiers sont accessibles sur
-<https://sawt-ai.nabster.dev>, avec l'APK à
-<https://sawt-ai.nabster.dev/downloads/sawt-ai-android.apk>.
-Le SHA-256 de l'APK téléchargé a été comparé à l'artefact local, puis sa
-signature a été vérifiée de nouveau. Le préflight `POST /recognize` depuis
-`https://localhost` est accepté et le contenu de `/health` est identique à
-celui d'avant le déploiement.
-
-La publication utilise un snapshot du build Nuxt validé, distinct du checkout
-`master` du VPS :
-
-- snapshot : `/srv/apps/sawt-ai/releases/android-736b458` ;
-- image active : `sawt-ai-ui:android-736b458` ;
-- override : `/srv/apps/sawt-ai/docker-compose.android-beta.yml` ;
-- APK persistants : `/srv/apps/sawt-ai/data/android` ;
-- sauvegarde de l'environnement et Compose de retour arrière :
-  `/srv/apps/sawt-ai/data/android-private` (permissions privées) ;
-- image web précédente conservée : `sawt-ai-ui:before-android-736b458`.
-
-Les 1,3 Go de cache des modèles de l'API ont été conservés avant recréation et
-sont montés depuis `data/android-model-cache` dans `/root/.cache`. Le volume
-Hadith existant reste présent. Le code du backend n'a pas été remplacé.
-
-Pour recréer les services de cette bêta depuis `/srv/apps/sawt-ai` :
+Pour préparer un Android App Bundle destiné au Google Play Store :
 
 ```bash
-docker compose -f docker-compose.yml -f docker-compose.android-beta.yml up -d --no-deps --no-build sawt-ui sawt-api
+npm run android:bundle
 ```
 
-Pour revenir à la configuration d'avant cette publication, si aucune autre
-modification d'environnement n'a été appliquée depuis :
+Avant distribution, vérifier sur téléphone le micro (autorisation et refus),
+l'arrêt de l'enregistrement en arrière-plan, le bouton Retour et le plein écran.
 
-```bash
-cp data/android-private/api-env-before-android-736b458 repo/api/.env
-docker compose -f docker-compose.yml -f data/android-private/rollback-compose.yml up -d --no-deps --no-build sawt-ui sawt-api
-```
-
-Le `deploy.sh` historique utilise seulement le Compose principal : il n'active
-pas ce snapshot bêta. Après intégration des commits applicatifs dans `master`,
-recopier les téléchargements persistants dans `repo/ui/public/downloads` avant
-le build standard, et conserver le montage du cache des modèles dans la
-configuration de production. Le Dockerfile.vps auparavant créé manuellement
-sur le VPS devra être sauvegardé si Git le signale comme fichier non suivi
-entrant en conflit avec le fichier désormais versionné.
-
-Validation effectuée : 217 tests unitaires, suite de 54 tests navigateur avec
-revalidation ciblée du contact, lint/formatage, builds web/debug/release,
-Android Lint et téléchargement HTTPS signé. La détection d'un téléphone via
-ADB a été refusée : le micro, les interruptions et l'affichage natif doivent
-encore être validés sur appareil avant de promouvoir la bêta.
-
-Le SDK 36 utilisé sur le poste est dans `/tmp/sawt-android-sdk` et Java 21 dans
-`/home/kaox/.local/share/nexus/android/jdk-21`. Pour les prochaines compilations,
-installer le SDK dans un emplacement persistant avec Android Studio et
-configurer `ANDROID_HOME` / `JAVA_HOME` selon le poste.
+Référence : [documentation Capacitor Android](https://capacitorjs.com/docs/android).
