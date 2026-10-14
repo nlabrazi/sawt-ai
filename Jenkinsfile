@@ -29,7 +29,7 @@ pipeline {
         stage('Frontend CI') {
             agent {
                 docker {
-                    image 'node:20'
+                    image 'node:22'
                     reuseNode true
                 }
             }
