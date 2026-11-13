@@ -2,7 +2,7 @@ fastapi==0.115.0
 uvicorn[standard]==0.30.6
 python-multipart==0.0.33
 
-faster-whisper==1.1.1
+faster-whisper==1.2.1
 rapidfuzz==3.9.7
 librosa==0.10.2.post1
 numpy==1.26.4
