@@ -9,7 +9,7 @@ numpy==1.26.4
 ctranslate2==4.6.2
 av==12.3.0
 torch==2.8.0
-torchaudio==2.8.0
+torchaudio==2.11.1
 speechbrain==1.0.3
 soundfile==0.12.1
 huggingface_hub==0.25.2
