@@ -16,4 +16,4 @@ huggingface_hub==0.25.2
 
 # Embeddings; transformers pinned to the version compatible with the existing hub.
 sentence-transformers==3.4.1
-transformers==4.48.3
+transformers==4.57.6
