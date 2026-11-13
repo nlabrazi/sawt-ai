@@ -8,7 +8,7 @@ librosa==1.0.1
 numpy==1.26.4
 ctranslate2==4.9.0
 av==12.3.0
-torch==2.8.0
+torch==2.15.0
 torchaudio==2.11.1
 speechbrain==1.0.3
 soundfile==0.12.1
