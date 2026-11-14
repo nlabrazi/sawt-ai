@@ -7,7 +7,7 @@ rapidfuzz==3.9.7
 librosa==1.0.1
 numpy==2.2.6
 ctranslate2==4.9.0
-av==12.3.0
+av==19.0.2
 torch==2.15.0
 torchaudio==2.11.1
 torchcodec==0.17.0
