@@ -13,7 +13,7 @@ pipeline {
         stage('Backend unit tests') {
             agent {
                 docker {
-                    image 'python:3.11'
+                    image 'python:3.12'
                     reuseNode true
                 }
             }

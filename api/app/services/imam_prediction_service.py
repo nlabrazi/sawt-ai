@@ -152,7 +152,7 @@ def load_imam_resources() -> tuple[Any, Any, dict[int, str]]:
         if encoder is None:
             encoder = EncoderClassifier.from_hparams(
                 source="speechbrain/spkrec-ecapa-voxceleb",
-                run_opts={"device": device},
+                run_opts={"device": str(device)},
             )
 
         checkpoint = torch.load(MODEL_PATH, map_location=device)

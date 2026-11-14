@@ -5,12 +5,13 @@ python-multipart==0.0.33
 faster-whisper==1.2.1
 rapidfuzz==3.9.7
 librosa==1.0.1
-numpy==1.26.4
+numpy==2.2.6
 ctranslate2==4.9.0
 av==12.3.0
-torch==2.8.0
+torch==2.15.0
 torchaudio==2.11.1
-speechbrain==1.0.3
+torchcodec==0.17.0
+speechbrain==1.1.1
 soundfile==0.12.1
 huggingface_hub==0.36.2
 

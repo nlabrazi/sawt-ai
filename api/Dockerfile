@@ -2,7 +2,7 @@
 # ----
 # Container de dev FastAPI pour Sawt AI.
 
-FROM python:3.15
+FROM python:3.12
 
 WORKDIR /app
 
