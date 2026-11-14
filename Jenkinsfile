@@ -10,15 +10,6 @@ pipeline {
             }
         }
 
-        stage('Notify Renovate PR') {
-            when {
-                changeRequest target: 'staging'
-            }
-            steps {
-                notifyRenovatePr()
-            }
-        }
-
         stage('Backend unit tests') {
             agent {
                 docker {
