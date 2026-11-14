@@ -35,18 +35,16 @@ describe('useHadithSearch', () => {
     expect(state.response.value).toEqual(result)
     expect(state.loading.value).toBe(false)
   })
-  it.each([
-    '',
-    '  ',
-    'ab',
-    'x'.repeat(301),
-  ])('rejects invalid input before calling the API', async (query) => {
-    const state = useHadithSearch()
-    state.query.value = query
-    await state.search()
-    expect(state.validationError.value).toBeTruthy()
-    expect($fetch).not.toHaveBeenCalled()
-  })
+  it.each(['', '  ', 'ab', 'x'.repeat(301)])(
+    'rejects invalid input before calling the API',
+    async (query) => {
+      const state = useHadithSearch()
+      state.query.value = query
+      await state.search()
+      expect(state.validationError.value).toBeTruthy()
+      expect($fetch).not.toHaveBeenCalled()
+    },
+  )
   it('ignores repeated submission while the same query is pending', async () => {
     const pending = deferred<typeof result>()
     vi.mocked($fetch).mockReturnValueOnce(pending.promise)
@@ -116,22 +114,21 @@ describe('useHadithSearch', () => {
     await request
     expect(state.response.value).toBeNull()
   })
-  it.each([
-    503,
-    422,
-    undefined,
-  ])('exposes a recoverable message for error %s', async (statusCode) => {
-    vi.mocked($fetch).mockRejectedValueOnce({ statusCode })
-    const state = useHadithSearch()
-    state.query.value = 'la colère'
-    await state.search()
-    expect(state.error.value).toBeTruthy()
-    expect(state.response.value).toBeNull()
-    vi.mocked($fetch).mockResolvedValueOnce(result)
-    await state.search()
-    expect(state.error.value).toBeNull()
-    expect(state.response.value).toEqual(result)
-  })
+  it.each([503, 422, undefined])(
+    'exposes a recoverable message for error %s',
+    async (statusCode) => {
+      vi.mocked($fetch).mockRejectedValueOnce({ statusCode })
+      const state = useHadithSearch()
+      state.query.value = 'la colère'
+      await state.search()
+      expect(state.error.value).toBeTruthy()
+      expect(state.response.value).toBeNull()
+      vi.mocked($fetch).mockResolvedValueOnce(result)
+      await state.search()
+      expect(state.error.value).toBeNull()
+      expect(state.response.value).toEqual(result)
+    },
+  )
   it('aborts when its Vue scope is disposed', async () => {
     const pending = deferred<typeof result>()
     vi.mocked($fetch).mockReturnValueOnce(pending.promise)
@@ -197,25 +194,25 @@ describe('useHadithSearch voice queries', () => {
     await request
   })
 
-  it.each([
-    'cancel',
-    'reset',
-  ] as const)('discards a late transcription after %s', async (action) => {
-    const pending = deferred<{ query: string }>()
-    vi.mocked($fetch).mockReturnValueOnce(pending.promise)
-    const state = useHadithSearch()
-    state.query.value = 'ancien brouillon'
-    const request = state.transcribeAndSearch(file)
-    const signal = vi.mocked($fetch).mock.calls[0]?.[1]?.signal as AbortSignal
-    state[action]()
-    expect(signal.aborted).toBe(true)
-    expect(state.transcribing.value).toBe(false)
-    pending.resolve({ query })
-    await request
-    expect(state.query.value).toBe(action === 'reset' ? '' : 'ancien brouillon')
-    expect($fetch).toHaveBeenCalledTimes(1)
-    expect(state.response.value).toBeNull()
-  })
+  it.each(['cancel', 'reset'] as const)(
+    'discards a late transcription after %s',
+    async (action) => {
+      const pending = deferred<{ query: string }>()
+      vi.mocked($fetch).mockReturnValueOnce(pending.promise)
+      const state = useHadithSearch()
+      state.query.value = 'ancien brouillon'
+      const request = state.transcribeAndSearch(file)
+      const signal = vi.mocked($fetch).mock.calls[0]?.[1]?.signal as AbortSignal
+      state[action]()
+      expect(signal.aborted).toBe(true)
+      expect(state.transcribing.value).toBe(false)
+      pending.resolve({ query })
+      await request
+      expect(state.query.value).toBe(action === 'reset' ? '' : 'ancien brouillon')
+      expect($fetch).toHaveBeenCalledTimes(1)
+      expect(state.response.value).toBeNull()
+    },
+  )
 
   it('discards transcription superseded by a typed search', async () => {
     const pending = deferred<{ query: string }>()
@@ -231,29 +228,25 @@ describe('useHadithSearch voice queries', () => {
     expect($fetch).toHaveBeenCalledTimes(2)
   })
 
-  it.each([
-    400,
-    413,
-    415,
-    422,
-    503,
-    undefined,
-  ])('keeps the draft and allows typing after voice error %s', async (statusCode) => {
-    vi.mocked($fetch).mockRejectedValueOnce({ statusCode })
-    const state = useHadithSearch()
-    state.query.value = result.query
-    await state.transcribeAndSearch(file)
-    expect(state.transcriptionError.value).toBeTruthy()
-    expect(state.error.value).toBeNull()
-    expect(state.query.value).toBe(result.query)
-    expect(state.loading.value).toBe(false)
-    expect(state.transcribing.value).toBe(false)
-    expect($fetch).toHaveBeenCalledTimes(1)
-    vi.mocked($fetch).mockResolvedValueOnce(result)
-    await state.search()
-    expect(state.transcriptionError.value).toBeNull()
-    expect(state.response.value).toEqual(result)
-  })
+  it.each([400, 413, 415, 422, 503, undefined])(
+    'keeps the draft and allows typing after voice error %s',
+    async (statusCode) => {
+      vi.mocked($fetch).mockRejectedValueOnce({ statusCode })
+      const state = useHadithSearch()
+      state.query.value = result.query
+      await state.transcribeAndSearch(file)
+      expect(state.transcriptionError.value).toBeTruthy()
+      expect(state.error.value).toBeNull()
+      expect(state.query.value).toBe(result.query)
+      expect(state.loading.value).toBe(false)
+      expect(state.transcribing.value).toBe(false)
+      expect($fetch).toHaveBeenCalledTimes(1)
+      vi.mocked($fetch).mockResolvedValueOnce(result)
+      await state.search()
+      expect(state.transcriptionError.value).toBeNull()
+      expect(state.response.value).toEqual(result)
+    },
+  )
 
   it('retains the transcription when hadith retrieval fails', async () => {
     vi.mocked($fetch).mockResolvedValueOnce({ query }).mockRejectedValueOnce({ statusCode: 503 })

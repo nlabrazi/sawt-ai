@@ -76,27 +76,26 @@ describe('useQuranContent', () => {
     expect(content.value?.ayahs.every((entry) => !entry.tafsirs.length)).toBe(true)
   })
 
-  it.each([
-    'wrong range',
-    'wrong ayah',
-    'http failure',
-  ])('handles %s without exposing unrelated content or server details', async (failure) => {
-    const response = quranContentFixture()
-    if (failure === 'http failure') {
-      vi.mocked($fetch).mockRejectedValue(new Error('Private provider details'))
-    } else {
-      vi.mocked($fetch).mockResolvedValue(
-        failure === 'wrong range'
-          ? { ...response, surah_id: 2 }
-          : { ...response, ayahs: response.ayahs.toReversed() },
-      )
-    }
-    const { content, fetchContent, error, loading } = useQuranContent()
-    await fetchContent(1, 1, 2)
-    expect(content.value).toBeNull()
-    expect(error.value).toBe('Impossible de charger le contenu français. Réessayez.')
-    expect(loading.value).toBe(false)
-  })
+  it.each(['wrong range', 'wrong ayah', 'http failure'])(
+    'handles %s without exposing unrelated content or server details',
+    async (failure) => {
+      const response = quranContentFixture()
+      if (failure === 'http failure') {
+        vi.mocked($fetch).mockRejectedValue(new Error('Private provider details'))
+      } else {
+        vi.mocked($fetch).mockResolvedValue(
+          failure === 'wrong range'
+            ? { ...response, surah_id: 2 }
+            : { ...response, ayahs: response.ayahs.toReversed() },
+        )
+      }
+      const { content, fetchContent, error, loading } = useQuranContent()
+      await fetchContent(1, 1, 2)
+      expect(content.value).toBeNull()
+      expect(error.value).toBe('Impossible de charger le contenu français. Réessayez.')
+      expect(loading.value).toBe(false)
+    },
+  )
 
   it('cancels the previous passage and ignores late responses while the new one loads', async () => {
     let resolvePrevious: (value: unknown) => void = () => {}
