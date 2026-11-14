@@ -12,7 +12,7 @@ torch==2.15.0
 torchaudio==2.11.1
 torchcodec==0.17.0
 speechbrain==1.1.1
-soundfile==0.12.1
+soundfile==0.14.0
 huggingface_hub==0.36.2
 
 # Embeddings; transformers pinned to the version compatible with the existing hub.
