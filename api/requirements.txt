@@ -16,5 +16,5 @@ soundfile==0.12.1
 huggingface_hub==0.36.2
 
 # Embeddings; transformers pinned to the version compatible with the existing hub.
-sentence-transformers==3.4.1
+sentence-transformers==6.3.0
 transformers==4.48.3
