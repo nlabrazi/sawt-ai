@@ -4,10 +4,10 @@ import { Motion } from 'motion-v'
 import { computed } from 'vue'
 
 import FeedbackForm from '~/components/FeedbackForm.vue'
-import ResultCard from '~/components/ResultCard.vue'
 import MotionReveal from '~/components/MotionReveal.vue'
-import { useUiMotion } from '~/composables/useUiMotion'
+import ResultCard from '~/components/ResultCard.vue'
 import type { RecognizeResponse } from '~/composables/useRecognition'
+import { useUiMotion } from '~/composables/useUiMotion'
 
 const props = defineProps<{
   result: RecognizeResponse | null

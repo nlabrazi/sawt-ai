@@ -1,6 +1,6 @@
-import { useRuntimeConfig } from '#app'
 import { $fetch } from 'ofetch'
 import { computed, ref } from 'vue'
+import { useRuntimeConfig } from '#app'
 
 const DEFAULT_IMAM_UNAVAILABLE_MESSAGE =
   'La reconnaissance de l’imam est temporairement indisponible.'

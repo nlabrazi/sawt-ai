@@ -1,8 +1,8 @@
 <script setup lang="ts">
-import { useRuntimeConfig } from '#app'
 import { Mail } from '@lucide/vue'
 import { $fetch } from 'ofetch'
 import { onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { useRuntimeConfig } from '#app'
 import ContactCaptcha from '~/components/ContactCaptcha.vue'
 import LegalPageShell from '~/components/LegalPageShell.vue'
 import { legalInformation } from '~/content/legal'

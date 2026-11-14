@@ -1,9 +1,8 @@
 <script setup lang="ts">
 import { FlaskConical, Upload } from '@lucide/vue'
 import { computed, ref } from 'vue'
-
-import RecognitionActionButton from '~/components/RecognitionActionButton.vue'
 import MotionReveal from '~/components/MotionReveal.vue'
+import RecognitionActionButton from '~/components/RecognitionActionButton.vue'
 
 const props = withDefaults(
   defineProps<{

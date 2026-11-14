@@ -3,9 +3,9 @@ import { Mic, Search, Square } from '@lucide/vue'
 import { defineAsyncComponent, nextTick, onBeforeUnmount, ref, watch } from 'vue'
 import HadithResultCard from '~/components/HadithResultCard.vue'
 import MotionReveal from '~/components/MotionReveal.vue'
+import { useAndroidBackHandler } from '~/composables/useAndroidBackHandler'
 import type { useHadithSearch } from '~/composables/useHadithSearch'
 import { useHadithVoiceSearch } from '~/composables/useHadithVoiceSearch'
-import { useAndroidBackHandler } from '~/composables/useAndroidBackHandler'
 import type { HadithResult } from '~/types/hadith'
 
 const HadithDetailsDialog = defineAsyncComponent(

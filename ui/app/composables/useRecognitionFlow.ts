@@ -1,7 +1,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useApiHealth } from '~/composables/useApiHealth'
-import { useRecognition } from '~/composables/useRecognition'
 import { useMicrophoneRecorder } from '~/composables/useMicrophoneRecorder'
+import { useRecognition } from '~/composables/useRecognition'
 import { clearTajwidCache } from '~/composables/useTajwid'
 
 export type RecognitionScreenState = 'idle' | 'loading' | 'result'

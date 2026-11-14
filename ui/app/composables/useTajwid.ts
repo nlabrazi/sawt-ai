@@ -3,9 +3,9 @@
 // Charge le texte tajwid à la demande depuis le backend
 // et garde les résultats en cache mémoire.
 
-import { useRuntimeConfig } from '#app'
 import { $fetch } from 'ofetch'
 import { ref } from 'vue'
+import { useRuntimeConfig } from '#app'
 
 export type TajwidAyah = {
   number: number

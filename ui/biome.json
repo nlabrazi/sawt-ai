@@ -1,5 +1,5 @@
 {
-  "$schema": "https://biomejs.dev/schemas/2.6.7/schema.json",
+  "extends": ["@nlabrazi/config-biome/configs/recommended"],
   "vcs": {
     "enabled": true,
     "clientKind": "git",
@@ -7,40 +7,6 @@
     "root": ".."
   },
   "files": {
-    "ignoreUnknown": true
-  },
-  "formatter": {
-    "enabled": true,
-    "indentStyle": "space",
-    "indentWidth": 2,
-    "lineEnding": "lf",
-    "lineWidth": 100
-  },
-  "javascript": {
-    "formatter": {
-      "quoteStyle": "single",
-      "jsxQuoteStyle": "double",
-      "semicolons": "asNeeded",
-      "trailingCommas": "all"
-    }
-  },
-  "linter": {
-    "enabled": true,
-    "rules": {
-      "preset": "recommended"
-    }
-  },
-  "overrides": [
-    {
-      "includes": ["**/*.vue"],
-      "linter": {
-        "rules": {
-          "correctness": {
-            "noUnusedImports": "off",
-            "noUnusedVariables": "off"
-          }
-        }
-      }
-    }
-  ]
+    "includes": ["!**/*.css"]
+  }
 }

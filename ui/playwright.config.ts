@@ -1,39 +1,16 @@
-import { defineConfig, devices } from '@playwright/test'
+import { defineSharedPlaywrightConfig } from '@nlabrazi/config-playwright'
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL || 'http://localhost:3000'
-
-export default defineConfig({
-  testDir: './tests/e2e',
-  timeout: 30_000,
-  expect: {
-    timeout: 5000,
-  },
-  fullyParallel: false,
-  forbidOnly: Boolean(process.env.CI),
+export default defineSharedPlaywrightConfig({
   retries: process.env.CI ? 2 : 0,
   workers: 1,
   reporter: [['list'], ['html', { open: 'never', outputFolder: 'playwright-report' }]],
   use: {
-    baseURL,
-    trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
   },
-  projects: [
-    {
-      name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
-    },
-  ],
-  webServer: {
-    env: {
-      NUXT_PUBLIC_WEB3FORMS_ACCESS_KEY: 'web3forms-e2e-test-key',
-      NUXT_PUBLIC_ANDROID_DOWNLOAD_URL: '/downloads/sawt-ai-android.apk',
-      SAWT_NUXT_BUILD_DIR: '.nuxt-e2e',
-    },
-    command: `npm run dev -- --port ${new URL(baseURL).port || '3000'}`,
-    url: baseURL,
-    reuseExistingServer: !process.env.CI,
-    timeout: 120 * 1000,
+  env: {
+    NUXT_PUBLIC_WEB3FORMS_ACCESS_KEY: 'web3forms-e2e-test-key',
+    NUXT_PUBLIC_ANDROID_DOWNLOAD_URL: '/downloads/sawt-ai-android.apk',
+    SAWT_NUXT_BUILD_DIR: '.nuxt-e2e',
   },
 })

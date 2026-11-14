@@ -2,9 +2,8 @@
 import { Check } from '@lucide/vue'
 import { Motion } from 'motion-v'
 import { computed } from 'vue'
-
-import RecognitionActionButton from '~/components/RecognitionActionButton.vue'
 import MotionReveal from '~/components/MotionReveal.vue'
+import RecognitionActionButton from '~/components/RecognitionActionButton.vue'
 import type { LoadingStep } from '~/composables/useRecognition'
 import { useUiMotion } from '~/composables/useUiMotion'
 
