@@ -5,7 +5,7 @@ python-multipart==0.0.33
 faster-whisper==1.2.1
 rapidfuzz==3.9.7
 librosa==1.0.1
-numpy==2.2.6
+numpy==2.5.4
 ctranslate2==4.9.0
 av==12.3.0
 torch==2.15.0
