@@ -1,20 +1,20 @@
-fastapi==0.115.0
+fastapi==0.162.7
 uvicorn[standard]==0.54.0
 python-multipart==0.0.33
 
 faster-whisper==1.2.1
-rapidfuzz==3.9.7
+rapidfuzz==3.14.6
 librosa==1.0.1
-numpy==2.2.6
+numpy==2.5.4
 ctranslate2==4.9.0
 av==12.3.0
 torch==2.15.0
 torchaudio==2.11.1
 torchcodec==0.17.0
-speechbrain==1.1.1
-soundfile==0.12.1
+speechbrain==1.1.2
+soundfile==0.14.0
 huggingface_hub==0.36.2
 
 # Embeddings; transformers pinned to the version compatible with the existing hub.
 sentence-transformers==3.4.1
-transformers==4.48.3
+transformers==4.57.6
