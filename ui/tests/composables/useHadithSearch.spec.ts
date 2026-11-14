@@ -161,8 +161,9 @@ describe('useHadithSearch voice queries', () => {
     const call = vi.mocked($fetch).mock.calls[0]
     if (!call) throw new Error('Missing transcription request')
     const [url, options] = call
+    if (!options) throw new Error('Missing transcription request options')
     expect(url).toBe('http://localhost:8000/hadith/transcribe')
-    expect((options?.body as FormData).get('file')).toBeInstanceOf(File)
+    expect((options.body as FormData).get('file')).toBeInstanceOf(File)
     expect(options).toMatchObject({ method: 'POST', retry: 0, timeout: 60_000 })
     await Promise.resolve()
     expect(state.query.value).toBe(query)

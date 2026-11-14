@@ -16,13 +16,15 @@ describe('TajwidLegend', () => {
 
     const items = wrapper.findAll('.tajwid-legend-item')
     expect(items).toHaveLength(2)
+    const firstItem = items[0]
+    if (!firstItem) throw new Error('Missing first tajwid rule')
     expect(items[0]?.text()).toContain('Qalqalah')
     expect(items[0]?.text()).toContain('قلقلة')
     expect(items[1]?.text()).toContain('Madd obligatoire')
     expect(wrapper.text()).not.toContain('Règle inconnue')
 
     expect(
-      (items[0]?.get('.tajwid-legend-swatch').element as HTMLElement).style.getPropertyValue(
+      (firstItem.get('.tajwid-legend-swatch').element as HTMLElement).style.getPropertyValue(
         '--tajwid-legend-color',
       ),
     ).toBe(TAJWID_RULES.q.displayColor)
