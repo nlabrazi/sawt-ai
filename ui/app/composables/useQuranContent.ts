@@ -1,6 +1,6 @@
-import { useRuntimeConfig } from '#app'
 import { $fetch } from 'ofetch'
 import { getCurrentScope, onScopeDispose, ref } from 'vue'
+import { useRuntimeConfig } from '#app'
 import type { TafsirSource } from '~/composables/useTafsirReview'
 
 export type QuranTranslation = {

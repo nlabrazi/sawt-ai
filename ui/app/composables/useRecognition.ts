@@ -3,9 +3,9 @@
 // Gère l'appel API vers FastAPI pour envoyer un audio,
 // piloter le loader visuel et récupérer le résultat.
 
-import { useRuntimeConfig } from '#app'
 import { $fetch } from 'ofetch'
 import { ref } from 'vue'
+import { useRuntimeConfig } from '#app'
 import { useApiHealth } from '~/composables/useApiHealth'
 import { isVerseConfident } from '~/utils/verseConfidence'
 

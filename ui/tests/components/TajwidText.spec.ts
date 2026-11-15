@@ -1,8 +1,8 @@
 import { mount } from '@vue/test-utils'
 
 import TajwidText from '~/components/TajwidText.vue'
-import { parseTajwidToTokens } from '~/utils/parseTajwid'
 import type { TajwidToken } from '~/utils/parseTajwid'
+import { parseTajwidToTokens } from '~/utils/parseTajwid'
 import { TAJWID_RULES, TAJWID_SOURCE_CODES } from '~/utils/tajwidRules'
 
 describe('TajwidText', () => {

@@ -1,14 +1,13 @@
 <script setup lang="ts">
 import { ArrowLeft, BookOpen, Copy } from '@lucide/vue'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { useMotionEntrance } from '~/composables/useMotionEntrance'
-import { useAndroidBackHandler } from '~/composables/useAndroidBackHandler'
-
 import MiniToast from '~/components/MiniToast.vue'
 import QuranAyahContent from '~/components/QuranAyahContent.vue'
 import TajwidLegend from '~/components/TajwidLegend.vue'
 import TajwidText from '~/components/TajwidText.vue'
+import { useAndroidBackHandler } from '~/composables/useAndroidBackHandler'
 import { useMiniToast } from '~/composables/useMiniToast'
+import { useMotionEntrance } from '~/composables/useMotionEntrance'
 import { useQuranContent } from '~/composables/useQuranContent'
 import type { RecognizeResponse } from '~/composables/useRecognition'
 import { type TajwidResponse, useTajwid } from '~/composables/useTajwid'

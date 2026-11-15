@@ -1,6 +1,6 @@
-import { useRuntimeConfig } from '#app'
 import { $fetch, type FetchOptions } from 'ofetch'
 import { getCurrentScope, onScopeDispose, ref } from 'vue'
+import { useRuntimeConfig } from '#app'
 
 export type TafsirSource = 'ibn_kathir' | 'as_saadi'
 export type TafsirReviewEntry = {

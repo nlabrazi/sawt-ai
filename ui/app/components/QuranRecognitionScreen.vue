@@ -4,8 +4,8 @@ import { computed, defineAsyncComponent, onBeforeUnmount, ref, watch } from 'vue
 import MotionScreenTransition from '~/components/MotionScreenTransition.vue'
 import RecognitionIdleScreen from '~/components/RecognitionIdleScreen.vue'
 import RecognitionLoadingScreen from '~/components/RecognitionLoadingScreen.vue'
-import { useRecognitionFlow } from '~/composables/useRecognitionFlow'
 import { useAndroidBackHandler } from '~/composables/useAndroidBackHandler'
+import { useRecognitionFlow } from '~/composables/useRecognitionFlow'
 
 const loadRecognitionResultScreen = () => import('~/components/RecognitionResultScreen.vue')
 const RecognitionResultScreen = defineAsyncComponent(loadRecognitionResultScreen)

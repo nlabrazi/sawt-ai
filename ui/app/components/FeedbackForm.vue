@@ -5,8 +5,8 @@ import { computed, ref, watch } from 'vue'
 import MiniToast from '~/components/MiniToast.vue'
 import { useFeedback } from '~/composables/useFeedback'
 import { useMiniToast } from '~/composables/useMiniToast'
-import { useSurahOptions } from '~/composables/useSurahOptions'
 import type { RecognizeResponse } from '~/composables/useRecognition'
+import { useSurahOptions } from '~/composables/useSurahOptions'
 
 const props = defineProps<{
   result: RecognizeResponse

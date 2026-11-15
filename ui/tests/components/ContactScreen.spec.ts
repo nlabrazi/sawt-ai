@@ -98,27 +98,27 @@ it('submits once and clears the fields only after Web3Forms confirms success', a
   wrapper.unmount()
 })
 
-it.each([
-  'rejected response',
-  'network error',
-])('preserves the message after a %s', async (failure) => {
-  if (failure === 'network error')
-    vi.mocked($fetch).mockRejectedValueOnce(new Error('Network error'))
-  else vi.mocked($fetch).mockResolvedValueOnce({ success: false })
-  const wrapper = await mountFilledForm()
-  await wrapper.get('form').trigger('submit')
-  await flushPromises()
-  expect(wrapper.get('[role="alert"]').text()).toContain('L’envoi n’a pas pu être confirmé.')
-  expect(wrapper.find('[role="status"]').exists()).toBe(false)
-  expect((wrapper.get('#contact-message').element as HTMLTextAreaElement).value).toBe(
-    'Une remarque sur la référence 2:255.',
-  )
-  expect(wrapper.get('fieldset').attributes('disabled')).toBeUndefined()
-  await wrapper.get('form').trigger('submit')
-  expect($fetch).toHaveBeenCalledTimes(1)
-  expect(wrapper.get('[role="alert"]').text()).toContain('vérification antispam')
-  wrapper.unmount()
-})
+it.each(['rejected response', 'network error'])(
+  'preserves the message after a %s',
+  async (failure) => {
+    if (failure === 'network error')
+      vi.mocked($fetch).mockRejectedValueOnce(new Error('Network error'))
+    else vi.mocked($fetch).mockResolvedValueOnce({ success: false })
+    const wrapper = await mountFilledForm()
+    await wrapper.get('form').trigger('submit')
+    await flushPromises()
+    expect(wrapper.get('[role="alert"]').text()).toContain('L’envoi n’a pas pu être confirmé.')
+    expect(wrapper.find('[role="status"]').exists()).toBe(false)
+    expect((wrapper.get('#contact-message').element as HTMLTextAreaElement).value).toBe(
+      'Une remarque sur la référence 2:255.',
+    )
+    expect(wrapper.get('fieldset').attributes('disabled')).toBeUndefined()
+    await wrapper.get('form').trigger('submit')
+    expect($fetch).toHaveBeenCalledTimes(1)
+    expect(wrapper.get('[role="alert"]').text()).toContain('vérification antispam')
+    wrapper.unmount()
+  },
+)
 
 it('does not send an incomplete form', async () => {
   const wrapper = mountContact()

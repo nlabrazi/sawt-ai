@@ -1,6 +1,6 @@
-import { defineNuxtPlugin } from '#app'
 import { Capacitor, SystemBars } from '@capacitor/core'
 import { SplashScreen } from '@capacitor/splash-screen'
+import { defineNuxtPlugin } from '#app'
 
 export default defineNuxtPlugin((nuxtApp) => {
   if (Capacitor.getPlatform() !== 'android') return

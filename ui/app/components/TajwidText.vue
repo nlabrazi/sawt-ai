@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-
-import type { TajwidToken } from '~/utils/parseTajwid'
 import { formatAyahNumber } from '~/utils/formatAyahNumber'
+import type { TajwidToken } from '~/utils/parseTajwid'
 import { getTajwidRuleBySourceCode } from '~/utils/tajwidRules'
 
 type RenderableTajwidAyah = {

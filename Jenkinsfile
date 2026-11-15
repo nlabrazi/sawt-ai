@@ -13,7 +13,7 @@ pipeline {
         stage('Backend unit tests') {
             agent {
                 docker {
-                    image 'python:3.11'
+                    image 'python:3.12'
                     reuseNode true
                 }
             }
@@ -29,15 +29,14 @@ pipeline {
         stage('Frontend CI') {
             agent {
                 docker {
-                    image 'node:22'
+                    image 'node:26'
                     reuseNode true
                 }
             }
             steps {
+                npmCi(workingDir: 'ui')
                 dir('ui') {
-                    sh 'npm ci'
-                    sh 'npm run format:check'
-                    sh 'npm run lint'
+                    sh 'npm run check'
                     sh 'npm test'
                     sh 'npm run build'
                 }
@@ -57,8 +56,8 @@ pipeline {
                 HOME = '/tmp'
             }
             steps {
+                npmCi(workingDir: 'ui')
                 dir('ui') {
-                    sh 'npm ci'
                     sh 'npm run test:e2e'
                 }
             }

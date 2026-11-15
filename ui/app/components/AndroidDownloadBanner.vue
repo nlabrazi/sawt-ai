@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { useRuntimeConfig } from '#app'
 import { Capacitor } from '@capacitor/core'
+import { useRuntimeConfig } from '#app'
 import { resolveAndroidDownloadUrl } from '~/utils/androidDownload'
 
 const downloadUrl = resolveAndroidDownloadUrl(useRuntimeConfig().public.androidDownloadUrl)

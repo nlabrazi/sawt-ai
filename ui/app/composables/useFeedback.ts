@@ -2,9 +2,9 @@
 // ----
 // Gère l'envoi du feedback utilisateur vers le backend FastAPI.
 
-import { useRuntimeConfig } from '#app'
 import { $fetch } from 'ofetch'
 import { ref } from 'vue'
+import { useRuntimeConfig } from '#app'
 import type { VerseMatch } from '~/composables/useRecognition'
 
 export type FeedbackCorrection = {

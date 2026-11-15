@@ -32,7 +32,7 @@ function relativeLuminance(hexColor: string) {
     ?.map((value) => Number.parseInt(value, 16) / 255)
     .map((value) => (value <= 0.04045 ? value / 12.92 : ((value + 0.055) / 1.055) ** 2.4))
 
-  if (!channels || channels.length !== 3) throw new Error(`Invalid color: ${hexColor}`)
+  if (channels?.length !== 3) throw new Error(`Invalid color: ${hexColor}`)
 
   return 0.2126 * (channels[0] ?? 0) + 0.7152 * (channels[1] ?? 0) + 0.0722 * (channels[2] ?? 0)
 }

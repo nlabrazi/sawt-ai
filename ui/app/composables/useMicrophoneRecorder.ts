@@ -9,7 +9,7 @@
 
 import { App } from '@capacitor/app'
 import { Capacitor, type PluginListenerHandle } from '@capacitor/core'
-import { computed, getCurrentScope, onScopeDispose, ref, type Ref } from 'vue'
+import { computed, getCurrentScope, onScopeDispose, type Ref, ref } from 'vue'
 
 function resolveRecordedExtension(mimeType: string) {
   if (mimeType.includes('ogg')) {

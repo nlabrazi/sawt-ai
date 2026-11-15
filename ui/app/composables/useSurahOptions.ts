@@ -1,6 +1,6 @@
-import { useRuntimeConfig } from '#app'
 import { $fetch } from 'ofetch'
 import { ref } from 'vue'
+import { useRuntimeConfig } from '#app'
 
 export type SurahOption = {
   id: number

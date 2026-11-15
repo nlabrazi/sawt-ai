@@ -2,7 +2,7 @@
 # ----
 # Container de dev Nuxt pour Sawt AI.
 
-FROM node:22
+FROM node:26
 
 WORKDIR /app
 

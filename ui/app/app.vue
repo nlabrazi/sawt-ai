@@ -1,17 +1,17 @@
 <script setup lang="ts">
-import { useHead, useRequestURL, useRuntimeConfig } from '#app'
 import { BookOpen, CircleHelp, Mic } from '@lucide/vue'
 import { Motion, MotionConfig } from 'motion-v'
 import { computed, defineAsyncComponent, nextTick, onMounted, ref } from 'vue'
-import AppFooter from '~/components/AppFooter.vue'
+import { useHead, useRequestURL, useRuntimeConfig } from '#app'
 import AndroidDownloadBanner from '~/components/AndroidDownloadBanner.vue'
+import AppFooter from '~/components/AppFooter.vue'
 import LandingScreen from '~/components/LandingScreen.vue'
 import MotionScreenTransition from '~/components/MotionScreenTransition.vue'
-import { useUiMotion } from '~/composables/useUiMotion'
 import QuranRecognitionScreen from '~/components/QuranRecognitionScreen.vue'
-import { useHadithSearch } from '~/composables/useHadithSearch'
 import { useAndroidBackHandler } from '~/composables/useAndroidBackHandler'
 import { useAndroidNavigation } from '~/composables/useAndroidNavigation'
+import { useHadithSearch } from '~/composables/useHadithSearch'
+import { useUiMotion } from '~/composables/useUiMotion'
 
 const HadithSearchScreen = defineAsyncComponent(() => import('~/components/HadithSearchScreen.vue'))
 const FaqScreen = defineAsyncComponent(() => import('~/components/FaqScreen.vue'))

@@ -1,6 +1,6 @@
-import { defineNuxtConfig } from 'nuxt/config'
-import { fileURLToPath } from 'node:url'
 import { dirname, resolve } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { defineNuxtConfig } from 'nuxt/config'
 import { legalInformation } from './app/content/legal'
 import { resolveMobileApiUrl } from './config/mobile.mjs'
 
