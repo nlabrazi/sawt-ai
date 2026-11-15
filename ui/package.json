@@ -34,12 +34,12 @@
     "@capacitor/browser": "^8.0.5",
     "@capacitor/core": "^8.5.3",
     "@capacitor/splash-screen": "^8.0.2",
-    "@lucide/vue": "^1.24.0",
-    "@vueuse/core": "^14.4.0",
+    "@lucide/vue": "^1.73.0",
+    "@vueuse/core": "^15.0.0",
     "motion-v": "^2.5.1",
-    "nuxt": "^4.5.2",
+    "nuxt": "^4.6.4",
     "vue": "^3.5.44",
-    "vue-router": "^4.6.4"
+    "vue-router": "^5.5.1"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.3",
@@ -47,6 +47,6 @@
     "@nlabrazi/config-playwright": "^0.1.0",
     "@nlabrazi/config-vitest": "^0.1.0",
     "@nlabrazi/tsconfig": "^0.1.0",
-    "@nuxt/kit": "^4.6.1"
+    "@nuxt/kit": "^4.6.4"
   }
 }
