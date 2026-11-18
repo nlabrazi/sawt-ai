@@ -74,3 +74,8 @@ __pycache__/
 api/assets/hadith_index.npz
 api/assets/hadith_index_meta.json
 api/assets/hadith_index_meta.before-search-documents.json
+
+# Code coverage
+.coverage
+htmlcov/
+coverage/
