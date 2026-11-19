@@ -8,4 +8,9 @@ export default defineSharedVitestConfig({
   alias: {
     '#app': fileURLToPath(new URL('./tests/mocks/nuxt-app.ts', import.meta.url)),
   },
+  coverage: {
+    thresholds: {
+      lines: 80,
+    },
+  },
 })
