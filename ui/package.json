@@ -46,7 +46,7 @@
     "@capacitor/cli": "^8.5.3",
     "@nlabrazi/config-biome": "^0.2.0",
     "@nlabrazi/config-playwright": "^0.1.0",
-    "@nlabrazi/config-vitest": "^0.1.0",
+    "@nlabrazi/config-vitest": "^0.2.2",
     "@nlabrazi/tsconfig": "^0.1.0",
     "@nuxt/kit": "^4.6.4"
   }
