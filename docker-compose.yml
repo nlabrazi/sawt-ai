@@ -15,7 +15,10 @@ services:
       - ./training:/training
 
   ui:
-    build: ./ui
+    build:
+      context: ./ui
+      secrets:
+        - npmrc
     container_name: sawt_ui
     environment:
       CHOKIDAR_USEPOLLING: "true"
@@ -30,6 +33,10 @@ services:
       - ui_nuxt:/app/.nuxt
     ports:
       - "3000:3000"
+
+secrets:
+  npmrc:
+    file: ${NPMRC_FILE:-~/.npmrc}
 
 volumes:
   ui_node_modules:

@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # ROLE
 # ----
 # Container de dev Nuxt pour Sawt AI.
@@ -6,10 +7,10 @@ FROM node:26
 
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm ci
+COPY package*.json .npmrc ./
+RUN --mount=type=secret,id=npmrc,target=/root/.npmrc,required=true npm ci
 
 COPY . .
 
-# The persistent node_modules volume can outlive the image and its lockfile.
-CMD ["sh", "-c", "npm ci && exec npm run dev -- --host 0.0.0.0"]
+# Only reinstall at startup if a mounted node_modules volume is empty.
+CMD ["sh", "-c", "[ -x node_modules/.bin/nuxt ] || npm ci; exec npm run dev -- --host 0.0.0.0"]
