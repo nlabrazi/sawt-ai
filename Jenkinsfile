@@ -67,6 +67,25 @@ pipeline {
                 }
             }
         }
+
+        stage('Docker build & push') {
+            steps {
+                dockerBuildAndPush(
+                    imageName: 'sawt-ai-api',
+                    repoName: 'sawt-ai',
+                    context: 'api',
+                    dockerfile: 'api/Dockerfile',
+                    useGithubPackages: false
+                )
+                dockerBuildAndPush(
+                    imageName: 'sawt-ai-ui',
+                    repoName: 'sawt-ai',
+                    context: 'ui',
+                    dockerfile: 'ui/Dockerfile',
+                    useGithubPackages: true
+                )
+            }
+        }
     }
 
     post {
