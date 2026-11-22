@@ -54,10 +54,12 @@ pipeline {
             environment {
                 CI = 'true'
                 HOME = '/tmp'
+                NUXT_IGNORE_LOCK = '1'
             }
             steps {
                 npmCi(workingDir: 'ui')
                 dir('ui') {
+                    sh 'rm -rf .nuxt-e2e'
                     sh 'npm run test:e2e'
                 }
             }
