@@ -3,6 +3,11 @@
 pipeline {
     agent any
 
+    options {
+        timestamps()
+        disableConcurrentBuilds()
+    }
+
     stages {
         stage('Notify start') {
             steps {
@@ -10,35 +15,43 @@ pipeline {
             }
         }
 
-        stage('Backend unit tests') {
-            agent {
-                docker {
-                    image 'python:3.12'
-                    reuseNode true
+        stage('CI checks') {
+            parallel {
+                stage('Backend unit tests') {
+                    agent {
+                        docker {
+                            image 'python:3.12-slim'
+                            reuseNode true
+                        }
+                    }
+                    steps {
+                        dir('api') {
+                            sh '''
+                                if [ ! -x .venv/bin/python ]; then
+                                    python -m venv .venv
+                                fi
+                                .venv/bin/python -m pip install --cache-dir /tmp/pip-cache -q -r requirements-test.txt
+                                .venv/bin/python -m pytest -c pytest.ini
+                            '''
+                        }
+                    }
                 }
-            }
-            steps {
-                dir('api') {
-                    sh 'python -m venv .venv'
-                    sh '.venv/bin/python -m pip install -r requirements-test.txt'
-                    sh '.venv/bin/python -m pytest -c pytest.ini'
-                }
-            }
-        }
 
-        stage('Frontend CI') {
-            agent {
-                docker {
-                    image 'node:26'
-                    reuseNode true
-                }
-            }
-            steps {
-                npmCi(workingDir: 'ui')
-                dir('ui') {
-                    sh 'npm run check'
-                    sh 'npm test'
-                    sh 'npm run build'
+                stage('Frontend CI') {
+                    agent {
+                        docker {
+                            image 'node:26'
+                            reuseNode true
+                        }
+                    }
+                    steps {
+                        npmCi(workingDir: 'ui')
+                        dir('ui') {
+                            sh 'npm run check'
+                            sh 'npm test'
+                            sh 'npm run build'
+                        }
+                    }
                 }
             }
         }
@@ -57,7 +70,6 @@ pipeline {
                 NUXT_IGNORE_LOCK = '1'
             }
             steps {
-                npmCi(workingDir: 'ui')
                 dir('ui') {
                     sh 'rm -rf .nuxt-e2e'
                     sh 'npm run test:e2e'
@@ -84,6 +96,7 @@ pipeline {
                     repoName: 'sawt-ai',
                     context: 'ui',
                     dockerfile: 'ui/Dockerfile',
+                    target: 'prod',
                     useGithubPackages: true
                 )
             }
