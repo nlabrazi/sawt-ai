@@ -17,6 +17,7 @@ services:
   ui:
     build:
       context: ./ui
+      target: dev
       secrets:
         - npmrc
     container_name: sawt_ui
