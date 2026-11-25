@@ -237,7 +237,7 @@ test('publishes each source only after its own review and withdraws a corrected 
     buffer: createSampleAudioBuffer(),
   })
   await expect(publicPage.locator('#result-title')).toBeVisible()
-  const sheet = publicPage.getByRole('dialog')
+  const sheet = publicPage.getByRole('dialog', { name: 'Passage détecté' })
   const openDetails = publicPage.getByRole('button', { name: 'Voir le verset', exact: true })
   async function readPublicDetails() {
     if (await sheet.isVisible()) {

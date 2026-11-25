@@ -65,7 +65,7 @@ test('loads French content on opening, separates sources, and rechecks validatio
   await open.hover()
   expect(contentRequests).toHaveLength(0)
   await open.click()
-  const sheet = page.getByRole('dialog')
+  const sheet = page.getByRole('dialog', { name: 'Passage détecté' })
   await expect(sheet.locator('.arabic-verse-text')).toHaveText(defaultMockVerse.text)
   const first = sheet.locator('[data-ayah="1"]')
   const second = sheet.locator('[data-ayah="2"]')
@@ -123,7 +123,7 @@ test('keeps recognition, Arabic and tajwid usable when French content fails, the
   await setupMockApi(page, { recognizeResponse: recognizedPassage, quranContentStatus: 503 })
   await recognizePassage(page)
   await page.getByRole('button', { name: 'Voir le verset', exact: true }).click()
-  const sheet = page.getByRole('dialog')
+  const sheet = page.getByRole('dialog', { name: 'Passage détecté' })
   await expect(sheet.locator('.arabic-verse-text')).toHaveText(defaultMockVerse.text)
   await expect(sheet).toContainText('Impossible de charger le contenu français.')
   await sheet.getByRole('button', { name: 'Afficher le tajwid', exact: true }).click()
@@ -161,7 +161,7 @@ test('shows translations without a tafsir section when its storage is unavailabl
   })
   await recognizePassage(page)
   await page.getByRole('button', { name: 'Voir le verset', exact: true }).click()
-  const sheet = page.getByRole('dialog')
+  const sheet = page.getByRole('dialog', { name: 'Passage détecté' })
   await expect(sheet.locator('[data-ayah="1"] .translation-text')).toHaveText(
     'Traduction fictive 1:1.',
   )

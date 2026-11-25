@@ -6,7 +6,7 @@ test.describe('Home / Idle Screen', () => {
     await setupMockApi(page)
     await page.goto('/')
     await page.getByRole('button', { name: 'Coran', exact: true }).click()
-    await page.waitForLoadState('networkidle')
+    await expect(page.locator('#recognition-title')).toBeVisible()
 
     // Brand header
     const brand = page.locator('button.brand')
@@ -71,7 +71,7 @@ test.describe('Home / Idle Screen', () => {
     await setupMockApi(page, { health: customHealth })
     await page.goto('/')
     await page.getByRole('button', { name: 'Coran', exact: true }).click()
-    await page.waitForLoadState('networkidle')
+    await expect(page.locator('#recognition-title')).toBeVisible()
 
     const uploadHint = page.locator('.upload-hint')
     await expect(uploadHint).not.toBeVisible()
@@ -98,7 +98,7 @@ test.describe('Home / Idle Screen', () => {
     await setupMockApi(page, { health: customHealth })
     await page.goto('/')
     await page.getByRole('button', { name: 'Coran', exact: true }).click()
-    await page.waitForLoadState('networkidle')
+    await expect(page.locator('#recognition-title')).toBeVisible()
 
     // Open options details
     const optionsSummary = page.locator('summary', { hasText: 'Options' })
@@ -118,7 +118,7 @@ test.describe('Home / Idle Screen', () => {
     await setupMockApi(page)
     await page.goto('/')
     await page.getByRole('button', { name: 'Coran', exact: true }).click()
-    await page.waitForLoadState('networkidle')
+    await expect(page.locator('#recognition-title')).toBeVisible()
 
     const title = page.locator('#recognition-title')
     await expect(title).toBeVisible()

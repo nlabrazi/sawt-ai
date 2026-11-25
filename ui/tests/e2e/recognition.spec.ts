@@ -10,7 +10,7 @@ test.describe('Recognition Flow', () => {
     await setupMockApi(page)
     await page.goto('/')
     await page.getByRole('button', { name: 'Coran', exact: true }).click()
-    await page.waitForLoadState('networkidle')
+    await expect(page.locator('#recognition-title')).toBeVisible()
 
     const audioBuffer = createSampleAudioBuffer()
     const fileInput = page.locator('input[type="file"]')
@@ -74,7 +74,7 @@ test.describe('Recognition Flow', () => {
     await setupMockApi(page, { recognizeResponse: rejectionResponse })
     await page.goto('/')
     await page.getByRole('button', { name: 'Coran', exact: true }).click()
-    await page.waitForLoadState('networkidle')
+    await expect(page.locator('#recognition-title')).toBeVisible()
 
     const audioBuffer = createSampleAudioBuffer()
     const fileInput = page.locator('input[type="file"]')
@@ -153,7 +153,7 @@ test.describe('Recognition Flow', () => {
     })
     await page.goto('/')
     await page.getByRole('button', { name: 'Coran', exact: true }).click()
-    await page.waitForLoadState('networkidle')
+    await expect(page.locator('#recognition-title')).toBeVisible()
 
     const audioBuffer = createSampleAudioBuffer()
     const fileInput = page.locator('input[type="file"]')
@@ -189,9 +189,10 @@ test.describe('Recognition Flow', () => {
 
     await page.goto('/')
     await page.getByRole('button', { name: 'Coran', exact: true }).click()
-    await page.waitForLoadState('networkidle')
+    await expect(page.locator('#recognition-title')).toBeVisible()
 
     const fileInput = page.locator('input[type="file"]')
+    await expect(fileInput).toHaveAttribute('accept', /\.wav/)
     await fileInput.setInputFiles({
       name: 'test.pdf',
       mimeType: 'application/pdf',
