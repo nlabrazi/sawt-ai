@@ -6,7 +6,7 @@ test.describe('Verse Details and Feedback', () => {
     await setupMockApi(page)
     await page.goto('/')
     await page.getByRole('button', { name: 'Coran', exact: true }).click()
-    await page.waitForLoadState('networkidle')
+    await expect(page.locator('#recognition-title')).toBeVisible()
 
     const fileInput = page.locator('input[type="file"]')
     await fileInput.setInputFiles({
@@ -25,7 +25,7 @@ test.describe('Verse Details and Feedback', () => {
     await viewVerseButton.click()
 
     // Sheet should be opened
-    const sheet = page.getByRole('dialog')
+    const sheet = page.getByRole('dialog', { name: 'Passage détecté' })
     await expect(sheet).toBeVisible({ timeout: 15_000 })
     await expect(sheet.locator('.sheet-title')).toContainText('Al-Fatiha')
 

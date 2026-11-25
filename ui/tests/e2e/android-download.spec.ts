@@ -1,6 +1,8 @@
 import { expect, test } from '@playwright/test'
+import { setupMockApi } from './helpers/mock-api'
 
 test('offers the Android beta download without overflowing a narrow screen', async ({ page }) => {
+  await setupMockApi(page)
   await page.setViewportSize({ width: 320, height: 740 })
   await page.goto('/')
   const download = page.getByRole('link', {
