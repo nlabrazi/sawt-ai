@@ -29,15 +29,7 @@ useHead(() =>
         title: 'Review des tafsirs — Sawt AI',
         meta: [{ name: 'robots', content: 'noindex, nofollow' }],
       }
-    : {
-        script: [
-          {
-            src: 'https://umami.nabster.dev/script.js',
-            defer: true,
-            'data-website-id': '6c8e5246-8c6c-4964-a20d-f8e66169aed6',
-          },
-        ],
-      },
+    : {},
 )
 type Screen = 'home' | 'quran' | 'hadith' | 'faq'
 const mode = ref<Screen>('home')
