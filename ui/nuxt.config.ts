@@ -39,6 +39,7 @@ const structuredData = {
 }
 
 export default defineNuxtConfig({
+  extends: ['@nlabrazi/nuxt-layer'],
   buildDir: buildDirectory,
   ...(isAndroidBuild
     ? {
@@ -61,7 +62,22 @@ export default defineNuxtConfig({
     port: 3000,
   },
   runtimeConfig: {
+    health: {
+      service: 'sawt-ai',
+    },
     public: {
+      umami: {
+        websiteId: '6c8e5246-8c6c-4964-a20d-f8e66169aed6',
+        domains: 'sawt-ai.nabster.dev',
+        excludePaths: ['/internal/**'],
+        enabled: isAndroidBuild ? 'false' : '',
+      },
+      site: {
+        name: siteName,
+        url: siteUrl,
+        description: siteDescription,
+        ogImage: socialImage,
+      },
       apiBaseUrl: isAndroidBuild
         ? resolveMobileApiUrl(process.env.NUXT_PUBLIC_API_BASE_URL)
         : process.env.NUXT_PUBLIC_API_BASE_URL || 'http://localhost:8000',
